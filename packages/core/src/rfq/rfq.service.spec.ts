@@ -124,24 +124,25 @@ describe('RfqService', () => {
     });
 
     describe('getWholesalePrice', () => {
-        it('should apply wholesale discount', async () => {
-            const mockCustomer = [{ id: 1, tier_id: 1 }];
-            const mockTier = [{ name: 'Bronze', discount_percent: 10 }];
+        it('should apply wholesale discount for approved customer', async () => {
+            // Mock: customer with tier
+            const mockCustomer = [{ tier_name: 'Bronze', discount_percentage: 10 }];
 
-            mockPrismaService.$queryRawUnsafe
-                .mockResolvedValueOnce(mockCustomer)
-                .mockResolvedValueOnce(mockTier);
+            mockPrismaService.$queryRawUnsafe.mockResolvedValueOnce(mockCustomer);
 
             const result = await service.getWholesalePrice('tenant_test', 123, 10000, 10);
 
             expect(result.discount).toBe(10);
             expect(result.discountedPrice).toBe(9000); // 10% off
+            expect(result.tier).toBe('Bronze');
         });
 
         it('should return original price if not wholesale customer', async () => {
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce([]) // No approved customer
+                .mockResolvedValueOnce([]); // No tier match
 
-            const result = await service.getWholesalePrice('tenant_test', 123, 10000, 10);
+            const result = await service.getWholesalePrice('tenant_test', 123, 10000, 5);
 
             expect(result.discount).toBe(0);
             expect(result.discountedPrice).toBe(10000);

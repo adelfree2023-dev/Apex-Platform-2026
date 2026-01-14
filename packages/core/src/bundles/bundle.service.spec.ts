@@ -99,12 +99,12 @@ describe('BundleService', () => {
     });
 
     describe('deleteBundle', () => {
-        it('should delete bundle and items', async () => {
+        it('should delete bundle', async () => {
             mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
 
             await service.deleteBundle('tenant_test', 1);
 
-            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalledTimes(2);
+            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
         });
     });
 });

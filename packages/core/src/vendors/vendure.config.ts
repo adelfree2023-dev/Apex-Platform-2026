@@ -7,7 +7,7 @@
  * - Complete isolation of products, orders, customers
  */
 
-import { VendureConfig, DefaultSearchPlugin, DefaultJobQueuePlugin } from '@vendure/core';
+import { VendureConfig, DefaultSearchPlugin, DefaultJobQueuePlugin, LanguageCode } from '@vendure/core';
 import { AdminUiPlugin } from '@vendure/admin-ui-plugin';
 import { AssetServerPlugin } from '@vendure/asset-server-plugin';
 import path from 'path';
@@ -24,7 +24,7 @@ export interface TenantVendureConfig {
  */
 export function createVendureConfig(config: TenantVendureConfig): VendureConfig {
   const { tenantId, tenantSchema } = config;
-  
+
   return {
     apiOptions: {
       port: 3001,
@@ -61,38 +61,38 @@ export function createVendureConfig(config: TenantVendureConfig): VendureConfig 
           name: 'cooperativeEligible',
           type: 'boolean',
           defaultValue: false,
-          label: [{ languageCode: 'en', value: 'Cooperative Eligible' }],
+          label: [{ languageCode: LanguageCode.en, value: 'Cooperative Eligible' }],
         },
         {
           name: 'qualityScore',
           type: 'float',
           defaultValue: 0,
-          label: [{ languageCode: 'en', value: 'Quality Score' }],
+          label: [{ languageCode: LanguageCode.en, value: 'Quality Score' }],
         },
         {
           name: 'replenishmentLeadTime',
           type: 'int',
           defaultValue: 0,
-          label: [{ languageCode: 'en', value: 'Replenishment Lead Time (days)' }],
+          label: [{ languageCode: LanguageCode.en, value: 'Replenishment Lead Time (days)' }],
         },
         {
           name: 'specializationTags',
           type: 'string',
           list: true,
-          label: [{ languageCode: 'en', value: 'Specialization Tags' }],
+          label: [{ languageCode: LanguageCode.en, value: 'Specialization Tags' }],
         },
       ],
       Order: [
         {
           name: 'territory',
           type: 'string',
-          label: [{ languageCode: 'en', value: 'Territory' }],
+          label: [{ languageCode: LanguageCode.en, value: 'Territory' }],
         },
         {
           name: 'fulfillmentType',
           type: 'string',
           defaultValue: 'single',
-          label: [{ languageCode: 'en', value: 'Fulfillment Type' }],
+          label: [{ languageCode: LanguageCode.en, value: 'Fulfillment Type' }],
         },
       ],
     },

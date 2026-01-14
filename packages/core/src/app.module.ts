@@ -21,7 +21,7 @@ export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer) {
         consumer
             .apply(TenantMiddleware)
-            .exclude('health', 'api/admin/(.*)')  // Exclude health check and super admin routes
+            .exclude('health', 'api/admin/(.*)', 'api/shop/(.*)')  // Exclude health, admin, and shop routes
             .forRoutes('*');
     }
 }

@@ -22,6 +22,8 @@ import { RfqModule } from './rfq/rfq.module';
 import { SubscriptionModule } from './subscriptions/subscription.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
 import { BookingModule } from './bookings/booking.module';
+import { AiModule } from './ai/ai.module';
+import { AffiliateModule } from './affiliates/affiliate.module';
 import { TenantMiddleware } from './middleware/tenant.middleware';
 
 @Module({
@@ -47,6 +49,8 @@ import { TenantMiddleware } from './middleware/tenant.middleware';
         SubscriptionModule,
         LoyaltyModule,
         BookingModule,
+        AiModule,
+        AffiliateModule,
     ],
     controllers: [AppController],
     providers: [AppService],

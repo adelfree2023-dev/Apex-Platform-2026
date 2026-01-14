@@ -1,5 +1,5 @@
-import { getProducts, addToCart } from '@/lib/api';
-import ProductCard from '@/components/ProductCard';
+import { getProducts } from '@/lib/api';
+import ProductGrid from '@/components/ProductGrid';
 import Header from '@/components/Header';
 
 export default async function TenantHomePage({
@@ -34,19 +34,7 @@ export default async function TenantHomePage({
 
                 {/* Products Grid */}
                 {products.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {products.map((product: any) => (
-                            <ProductCard
-                                key={product.id}
-                                product={product}
-                                onAddToCart={async (productId) => {
-                                    'use server';
-                                    const sessionId = 'session_' + Date.now();
-                                    await addToCart(tenantId, sessionId, productId, 1);
-                                }}
-                            />
-                        ))}
-                    </div>
+                    <ProductGrid products={products} />
                 ) : (
                     <div className="text-center py-16">
                         <span className="text-6xl mb-4 block">📦</span>
@@ -65,3 +53,4 @@ export default async function TenantHomePage({
         </div>
     );
 }
+

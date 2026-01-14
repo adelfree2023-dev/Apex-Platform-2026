@@ -1,0 +1,76 @@
+// Apex Platform - Shared Schema (Super Admin Only)
+// This schema contains models accessible from the public schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// TENANT REGISTRY (Super Admin Access Only)
+// ============================================
+
+model Tenant {
+  id                    String   @id @default(uuid())
+  name                  String
+  subdomain             String   @unique
+  businessType          String   // RETAIL | SERVICE | EDUCATION | HEALTHCARE
+  territory             String   // Geographic territory (e.g., "maadi", "nasr_city")
+  cooperationPreference String   @default("open") // open | selective | closed
+  fulfillmentRadius     Int      @default(10) // km
+  status                String   @default("active") // active | suspended | pending
+  suspendedReason       String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([subdomain])
+  @@index([territory])
+  @@index([businessType])
+}
+
+// ============================================
+// EVENT SOURCING (Cooperative Intelligence Ready)
+// ============================================
+
+model Event {
+  id                 String   @id @default(uuid())
+  type               String   // e.g., "tenant.created", "order.placed", "product.viewed"
+  tenantId           String
+  territory          String?  // For cross-tenant analytics
+  businessType       String?  // For specialization insights
+  specializationTags String[] // e.g., ["breakfast", "natural", "organic"]
+  payload            Json
+  timestamp          DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([territory])
+  @@index([timestamp])
+}
+
+// ============================================
+// AUDIT LOG (Central Governance)
+// ============================================
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String   // Who performed the action
+  actorType  String   // superadmin | system | tenant_admin
+  action     String   // What action was performed
+  targetType String   // Type of target (tenant, user, order, etc.)
+  targetId   String   // ID of the target
+  tenantId   String?  // Which tenant was affected (if applicable)
+  ipAddress  String?
+  userAgent  String?
+  details    Json?    // Additional context
+  timestamp  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([tenantId])
+  @@index([action])
+  @@index([timestamp])
+}

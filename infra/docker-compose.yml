@@ -1,0 +1,65 @@
+# Apex Platform Infrastructure
+# PostgreSQL + Redis for development
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database (Schema-per-Tenant)
+  postgres:
+    image: postgres:15
+    container_name: apex-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: apex_platform
+      POSTGRES_USER: apex_user
+      POSTGRES_PASSWORD: apex_secure_pass_2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U apex_user -d apex_platform"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - apex-network
+
+  # Redis Cache (Tenant-prefixed keys)
+  redis:
+    image: redis:7-alpine
+    container_name: apex-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - apex-network
+
+  # Adminer (Database UI) - Development only
+  adminer:
+    image: adminer:latest
+    container_name: apex-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - apex-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  apex-network:
+    driver: bridge

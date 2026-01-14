@@ -51,7 +51,7 @@ export class SearchService {
 
         try {
             // Build WHERE clauses
-            const whereClauses: string[] = ['p.enabled = true'];
+            const whereClauses: string[] = ['(p.enabled = true OR p.enabled IS NULL)'];
             const params: any[] = [];
             let paramIndex = 1;
 
@@ -74,13 +74,13 @@ export class SearchService {
             }
 
             // Price range
-            if (minPrice !== undefined) {
+            if (minPrice !== undefined && minPrice > 0) {
                 whereClauses.push(`pv.price >= $${paramIndex}`);
                 params.push(minPrice);
                 paramIndex++;
             }
 
-            if (maxPrice !== undefined) {
+            if (maxPrice !== undefined && maxPrice > 0) {
                 whereClauses.push(`pv.price <= $${paramIndex}`);
                 params.push(maxPrice);
                 paramIndex++;
@@ -88,7 +88,7 @@ export class SearchService {
 
             // In stock filter
             if (inStock) {
-                whereClauses.push(`pv.stock_on_hand > 0`);
+                whereClauses.push(`(pv.stock_on_hand > 0 OR pv.stock_on_hand IS NULL)`);
             }
 
             // Build ORDER BY

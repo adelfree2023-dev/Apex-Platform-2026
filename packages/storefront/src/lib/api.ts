@@ -123,3 +123,43 @@ export async function processPayment(
     if (!res.ok) throw new Error('Failed to process payment');
     return res.json();
 }
+
+// ==================== CATEGORIES (Phase 05) ====================
+
+export interface Category {
+    id: number;
+    name: string;
+    slug: string;
+    description: string;
+    product_count: number;
+}
+
+// Get all categories
+export async function getCategories(tenantId: string): Promise<{ success: boolean; data: Category[] }> {
+    const res = await fetch(`${API_BASE}/api/shop/${tenantId}/categories`, {
+        cache: 'no-store',
+    });
+    if (!res.ok) throw new Error('Failed to fetch categories');
+    return res.json();
+}
+
+// Get products by category
+export async function getProductsByCategory(tenantId: string, categorySlug: string): Promise<{ success: boolean; data: Product[] }> {
+    const res = await fetch(`${API_BASE}/api/shop/${tenantId}/categories/${categorySlug}/products`, {
+        cache: 'no-store',
+    });
+    if (!res.ok) throw new Error('Failed to fetch products by category');
+    return res.json();
+}
+
+// ==================== SEARCH (Phase 05) ====================
+
+// Search products
+export async function searchProducts(tenantId: string, query: string): Promise<{ success: boolean; data: Product[] }> {
+    const res = await fetch(`${API_BASE}/api/shop/${tenantId}/products/search?q=${encodeURIComponent(query)}`, {
+        cache: 'no-store',
+    });
+    if (!res.ok) throw new Error('Failed to search products');
+    return res.json();
+}
+

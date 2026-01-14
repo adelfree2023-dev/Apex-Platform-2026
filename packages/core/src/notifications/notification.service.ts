@@ -5,7 +5,8 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { EventsService } from '../events/events.service';
+import { EventService } from '../events/event.service';
+
 
 export interface NotificationPayload {
     type: 'order' | 'payment' | 'fulfillment' | 'system' | 'promo';
@@ -20,7 +21,7 @@ export class NotificationService {
 
     constructor(
         private readonly prisma: PrismaService,
-        private readonly eventService: EventsService,
+        private readonly eventService: EventService,
     ) { }
 
     /**

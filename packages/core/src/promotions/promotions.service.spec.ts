@@ -119,18 +119,12 @@ describe('PromotionsService', () => {
 
     describe('createReview', () => {
         it('should create a product review', async () => {
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{ id: 1, rating: 5 }]);
             mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
-
-            const mockReview = [{
-                id: 1, product_id: 1, rating: 5, title: 'Great!',
-            }];
-
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockReview);
 
             const result = await service.createReview('tenant_test', 1, 123, 5, 'Great!', 'Amazing product');
 
-            expect(result).toBeDefined();
+            expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalled();
         });
     });
 

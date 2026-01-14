@@ -14,6 +14,7 @@ import { PromotionsModule } from './promotions/promotions.module';
 import { I18nModule } from './i18n/i18n.module';
 import { AuthModule } from './auth/auth.module';
 import { ShippingModule } from './shipping/shipping.module';
+import { BundleModule } from './bundles/bundle.module';
 import { TenantMiddleware } from './middleware/tenant.middleware';
 
 @Module({
@@ -31,6 +32,7 @@ import { TenantMiddleware } from './middleware/tenant.middleware';
         I18nModule,
         AuthModule,
         ShippingModule,
+        BundleModule,
     ],
     controllers: [AppController],
     providers: [AppService],

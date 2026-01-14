@@ -8,6 +8,7 @@ import { VendureModule } from './vendors/vendure.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AdminModule } from './admin/admin.module';
 import { NotificationModule } from './notifications/notification.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { TenantMiddleware } from './middleware/tenant.middleware';
 
 @Module({
@@ -19,6 +20,7 @@ import { TenantMiddleware } from './middleware/tenant.middleware';
         PaymentsModule,
         AdminModule,
         NotificationModule,
+        AnalyticsModule,
     ],
     controllers: [AppController],
     providers: [AppService],

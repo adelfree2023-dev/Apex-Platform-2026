@@ -30,16 +30,34 @@ describe('I18nService', () => {
         expect(service).toBeDefined();
     });
 
-    describe('createI18nTables', () => {
-        it('should create i18n tables', async () => {
+    describe('createTranslationTable', () => {
+        it('should create translation table', async () => {
             mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
-            await service.createI18nTables('tenant_test');
+            await service.createTranslationTable('tenant_test');
             expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
         });
     });
 
-    describe('getTranslations', () => {
-        it('should return translations for locale', async () => {
+    describe('getTranslation', () => {
+        it('should return translation for key', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{ value: 'مرحباً' }]);
+
+            const result = await service.getTranslation('tenant_test', 'ar', 'welcome');
+
+            expect(result).toBe('مرحباً');
+        });
+
+        it('should return key if translation not found', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
+
+            const result = await service.getTranslation('tenant_test', 'ar', 'unknown_key');
+
+            expect(result).toBe('unknown_key');
+        });
+    });
+
+    describe('getAllTranslations', () => {
+        it('should return all translations for locale', async () => {
             const mockTranslations = [
                 { key: 'welcome', value: 'مرحباً' },
                 { key: 'products', value: 'المنتجات' },
@@ -47,9 +65,18 @@ describe('I18nService', () => {
 
             mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockTranslations);
 
-            const result = await service.getTranslations('tenant_test', 'ar');
+            const result = await service.getAllTranslations('tenant_test', 'ar');
 
-            expect(Object.keys(result).length).toBeGreaterThan(0);
+            expect(result['welcome']).toBe('مرحباً');
+            expect(result['products']).toBe('المنتجات');
+        });
+
+        it('should return empty object on error', async () => {
+            mockPrismaService.$queryRawUnsafe.mockRejectedValue(new Error('DB error'));
+
+            const result = await service.getAllTranslations('tenant_test', 'ar');
+
+            expect(result).toEqual({});
         });
     });
 
@@ -63,18 +90,26 @@ describe('I18nService', () => {
         });
     });
 
-    describe('getAvailableLocales', () => {
-        it('should return available locales', async () => {
-            const mockLocales = [
-                { code: 'en', name: 'English' },
-                { code: 'ar', name: 'Arabic' },
-            ];
+    describe('translateProduct', () => {
+        it('should translate product name and description', async () => {
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce([{ value: 'عسل طبيعي' }])
+                .mockResolvedValueOnce([{ value: 'أجود أنواع العسل' }]);
 
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockLocales);
+            const result = await service.translateProduct('tenant_test', 1, 'ar');
 
-            const result = await service.getAvailableLocales('tenant_test');
+            expect(result.name).toBe('عسل طبيعي');
+            expect(result.description).toBe('أجود أنواع العسل');
+        });
+    });
 
-            expect(result.length).toBe(2);
+    describe('setProductTranslation', () => {
+        it('should set product translations', async () => {
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+
+            await service.setProductTranslation('tenant_test', 1, 'ar', 'منتج', 'وصف المنتج');
+
+            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalledTimes(2);
         });
     });
 });

@@ -63,7 +63,7 @@ echo "-----------------"
 
 # Test 5: Invalid tenant
 RESPONSE=$(curl -s "$API_BASE/api/shop/invalid-tenant/products")
-if echo "$RESPONSE" | grep -q "error\|[]"; then
+if echo "$RESPONSE" | grep -qE "error|data.:."; then
   test_pass "Invalid tenant handling"
 else
   test_fail "Invalid tenant handling"

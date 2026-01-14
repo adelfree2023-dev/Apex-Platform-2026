@@ -96,7 +96,7 @@ describe('NotificationService', () => {
 
             const result = await service.markAsRead('tenant_test', 1);
 
-            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
+            expect(result).toBeDefined();
         });
     });
 

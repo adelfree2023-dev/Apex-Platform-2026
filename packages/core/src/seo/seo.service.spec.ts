@@ -41,8 +41,8 @@ describe('SeoService', () => {
     describe('getMetaTags', () => {
         it('should return meta tags for page', async () => {
             const mockMeta = [{
-                id: 1, page_type: 'product', page_id: 1,
-                title: 'Product Title', description: 'Product Description',
+                title: 'Product Title',
+                description: 'Product Description',
                 keywords: 'product, shop',
             }];
 
@@ -50,23 +50,24 @@ describe('SeoService', () => {
 
             const result = await service.getMetaTags('tenant_test', 'product', 1);
 
-            expect(result.title).toBe('Product Title');
+            expect(result).not.toBeNull();
+            expect(result?.title).toBe('Product Title');
         });
 
-        it('should return default meta if not found', async () => {
+        it('should return null if not found', async () => {
             mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
 
             const result = await service.getMetaTags('tenant_test', 'product', 999);
 
-            expect(result).toBeDefined();
+            expect(result).toBeNull();
         });
     });
 
-    describe('updateMetaTags', () => {
-        it('should update meta tags', async () => {
+    describe('setMetaTags', () => {
+        it('should set meta tags', async () => {
             mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
 
-            await service.updateMetaTags('tenant_test', 'product', 1, {
+            await service.setMetaTags('tenant_test', 'product', 1, {
                 title: 'New Title',
                 description: 'New Description',
             });
@@ -75,15 +76,22 @@ describe('SeoService', () => {
         });
     });
 
+    describe('getProductMeta', () => {
+        it('should return product meta with fallback', async () => {
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce([]) // No custom meta
+                .mockResolvedValueOnce([{ name: 'Product', description: 'Desc' }]); // Product data
+
+            const result = await service.getProductMeta('tenant_test', 1);
+
+            expect(result).toBeDefined();
+        });
+    });
+
     describe('generateSitemap', () => {
         it('should generate sitemap XML', async () => {
-            const mockProducts = [
-                { slug: 'product-1', updated_at: new Date() },
-                { slug: 'product-2', updated_at: new Date() },
-            ];
-            const mockCategories = [
-                { slug: 'category-1', updated_at: new Date() },
-            ];
+            const mockProducts = [{ slug: 'product-1', updated_at: new Date() }];
+            const mockCategories = [{ slug: 'category-1', updated_at: new Date() }];
 
             mockPrismaService.$queryRawUnsafe
                 .mockResolvedValueOnce(mockProducts)
@@ -98,10 +106,24 @@ describe('SeoService', () => {
 
     describe('generateRobotsTxt', () => {
         it('should generate robots.txt', () => {
-            const result = service.generateRobotsTxt('https://store.com');
+            const result = service.generateRobotsTxt('https://store.com', 'tenant-id');
 
             expect(result).toContain('User-agent');
             expect(result).toContain('Sitemap');
+        });
+    });
+
+    describe('getAllSeoEntries', () => {
+        it('should return all SEO entries', async () => {
+            const mockEntries = [
+                { id: 1, page_type: 'product', title: 'Product 1' },
+            ];
+
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockEntries);
+
+            const result = await service.getAllSeoEntries('tenant_test');
+
+            expect(result.length).toBe(1);
         });
     });
 });

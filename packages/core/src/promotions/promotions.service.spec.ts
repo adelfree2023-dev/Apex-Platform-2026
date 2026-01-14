@@ -30,102 +30,147 @@ describe('PromotionsService', () => {
         expect(service).toBeDefined();
     });
 
-    describe('createPromotionTables', () => {
-        it('should create promotion tables', async () => {
+    describe('createPromotionsTables', () => {
+        it('should create promotions tables', async () => {
             mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
-            await service.createPromotionTables('tenant_test');
+            await service.createPromotionsTables('tenant_test');
             expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
         });
     });
 
-    describe('createPromotion', () => {
-        it('should create a new promotion', async () => {
-            const mockPromo = [{
-                id: 1, name: 'Summer Sale', code: 'SUMMER20',
-                discount_type: 'percentage', discount_value: 20,
-                is_active: true, created_at: new Date(),
+    describe('createCoupon', () => {
+        it('should create a coupon', async () => {
+            const mockCoupon = [{
+                id: 1, code: 'SUMMER20', type: 'percentage',
+                discount: 20, is_active: true,
             }];
 
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockPromo);
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockCoupon);
 
-            const result = await service.createPromotion('tenant_test', {
-                name: 'Summer Sale',
+            const result = await service.createCoupon('tenant_test', {
                 code: 'SUMMER20',
-                discountType: 'percentage',
-                discountValue: 20,
+                type: 'percentage',
+                discount: 20,
             });
 
-            expect(result.name).toBe('Summer Sale');
             expect(result.code).toBe('SUMMER20');
         });
     });
 
-    describe('getPromotions', () => {
-        it('should return all active promotions', async () => {
-            const mockPromos = [
-                { id: 1, name: 'Sale 1', code: 'SALE1', is_active: true },
-                { id: 2, name: 'Sale 2', code: 'SALE2', is_active: true },
-            ];
-
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockPromos);
-
-            const result = await service.getPromotions('tenant_test');
-
-            expect(result.length).toBeGreaterThan(0);
-        });
-    });
-
-    describe('validatePromoCode', () => {
-        it('should validate a promo code', async () => {
-            const mockPromo = [{
-                id: 1, name: 'Test', code: 'TEST10',
-                discount_type: 'percentage', discount_value: 10,
-                min_order_value: 5000, is_active: true,
-                start_date: new Date('2026-01-01'),
-                end_date: new Date('2026-12-31'),
+    describe('validateCoupon', () => {
+        it('should validate a valid coupon', async () => {
+            const mockCoupon = [{
+                id: 1, code: 'TEST10', type: 'percentage',
+                discount: 10, min_order_amount: 5000,
+                is_active: true, expiry_date: new Date('2026-12-31'),
+                usage_limit: 100, usage_count: 5,
             }];
 
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockPromo);
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockCoupon);
 
-            const result = await service.validatePromoCode('tenant_test', 'TEST10', 10000);
+            const result = await service.validateCoupon('tenant_test', 'TEST10', 10000);
 
             expect(result.valid).toBe(true);
-            expect(result.discount).toBe(10);
         });
 
-        it('should reject invalid promo code', async () => {
+        it('should reject invalid coupon', async () => {
             mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
 
-            const result = await service.validatePromoCode('tenant_test', 'INVALID', 10000);
+            const result = await service.validateCoupon('tenant_test', 'INVALID', 10000);
 
             expect(result.valid).toBe(false);
         });
     });
 
-    describe('applyPromotion', () => {
-        it('should apply promotion to order', async () => {
-            const mockPromo = [{
-                id: 1, discount_type: 'percentage', discount_value: 10,
-                min_order_value: 0, is_active: true,
-            }];
+    describe('getCoupons', () => {
+        it('should return all coupons', async () => {
+            const mockCoupons = [
+                { id: 1, code: 'COUPON1', type: 'percentage', discount: 10 },
+                { id: 2, code: 'COUPON2', type: 'fixed', discount: 500 },
+            ];
 
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockPromo);
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockCoupons);
 
-            const result = await service.applyPromotion('tenant_test', 'TEST10', 10000);
+            const result = await service.getCoupons('tenant_test');
 
-            expect(result.originalAmount).toBe(10000);
-            expect(result.discountAmount).toBe(1000);
-            expect(result.finalAmount).toBe(9000);
+            expect(result.length).toBe(2);
         });
     });
 
-    describe('deletePromotion', () => {
-        it('should delete a promotion', async () => {
+    describe('applyCoupon', () => {
+        it('should apply coupon (increment usage)', async () => {
             mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
 
-            await service.deletePromotion('tenant_test', 1);
+            await service.applyCoupon('tenant_test', 'TEST10');
 
             expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
+        });
+    });
+
+    describe('deleteCoupon', () => {
+        it('should delete a coupon', async () => {
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+
+            await service.deleteCoupon('tenant_test', 1);
+
+            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
+        });
+    });
+
+    describe('createReview', () => {
+        it('should create a product review', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+
+            const mockReview = [{
+                id: 1, product_id: 1, rating: 5, title: 'Great!',
+            }];
+
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockReview);
+
+            const result = await service.createReview('tenant_test', 1, 123, 5, 'Great!', 'Amazing product');
+
+            expect(result).toBeDefined();
+        });
+    });
+
+    describe('getProductReviews', () => {
+        it('should return product reviews', async () => {
+            const mockReviews = [
+                { id: 1, rating: 5, title: 'Great' },
+                { id: 2, rating: 4, title: 'Good' },
+            ];
+
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockReviews);
+
+            const result = await service.getProductReviews('tenant_test', 1);
+
+            expect(result.reviews.length).toBe(2);
+        });
+    });
+
+    describe('adjustStock', () => {
+        it('should adjust stock level', async () => {
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{ stock_on_hand: 100 }]);
+
+            const result = await service.adjustStock('tenant_test', 1, -10, 'Sale');
+
+            expect(result).toBeDefined();
+        });
+    });
+
+    describe('getLowStockProducts', () => {
+        it('should return low stock products', async () => {
+            const mockProducts = [
+                { id: 1, name: 'Low Stock Product', stock_on_hand: 5 },
+            ];
+
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockProducts);
+
+            const result = await service.getLowStockProducts('tenant_test', 10);
+
+            expect(result.length).toBe(1);
         });
     });
 });

@@ -50,7 +50,7 @@ export class EventService {
                 territory: event.territory || null,
                 businessType: event.businessType || null,
                 specializationTags: event.specializationTags || [],
-                payload: sanitizedPayload,
+                payload: sanitizedPayload as any,
                 timestamp: event.timestamp || new Date(),
             },
         });

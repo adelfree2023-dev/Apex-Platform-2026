@@ -7,7 +7,13 @@
  * - Complete isolation of products, orders, customers
  */
 
-import { TenantContext } from '@apex/shared/types/tenant.types';
+export interface TenantContext {
+    tenantId: string;
+    tenantSchema: string;
+    territory: string;
+    businessType: string;
+    tenantName: string;
+}
 
 export interface VendureConfig {
     apiUrl: string;

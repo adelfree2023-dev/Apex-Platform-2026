@@ -151,8 +151,18 @@ export class SearchService {
 
             const products = await this.prisma.$queryRawUnsafe(productsQuery, ...params);
 
+            // Convert BigInt to Number for JSON serialization
+            const serializedProducts = (products as any[]).map(p => ({
+                ...p,
+                id: Number(p.id),
+                variant_id: p.variant_id ? Number(p.variant_id) : null,
+                price: p.price ? Number(p.price) : 0,
+                stock_on_hand: p.stock_on_hand ? Number(p.stock_on_hand) : 0,
+                order_count: p.order_count ? Number(p.order_count) : 0,
+            }));
+
             return {
-                products: products as any[],
+                products: serializedProducts,
                 total,
                 page,
                 totalPages: Math.ceil(total / limit),

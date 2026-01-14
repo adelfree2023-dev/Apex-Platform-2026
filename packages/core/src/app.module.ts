@@ -10,6 +10,7 @@ import { AdminModule } from './admin/admin.module';
 import { NotificationModule } from './notifications/notification.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { SearchModule } from './search/search.module';
+import { PromotionsModule } from './promotions/promotions.module';
 import { TenantMiddleware } from './middleware/tenant.middleware';
 
 @Module({
@@ -23,6 +24,7 @@ import { TenantMiddleware } from './middleware/tenant.middleware';
         NotificationModule,
         AnalyticsModule,
         SearchModule,
+        PromotionsModule,
     ],
     controllers: [AppController],
     providers: [AppService],

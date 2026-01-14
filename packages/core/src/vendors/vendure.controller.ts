@@ -3,7 +3,7 @@
  * Shop API endpoints for tenant e-commerce operations
  */
 
-import { Controller, Get, Post, Body, Param, Req, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Req, Headers, HttpException, HttpStatus } from '@nestjs/common';
 import { Request } from 'express';
 import { VendureService, ProductInput } from './vendure.service';
 
@@ -65,6 +65,171 @@ export class VendureController {
         }
     }
 
+    // ==================== CART ENDPOINTS (Phase 02) ====================
+
+    /**
+     * Get cart for session
+     */
+    @Get(':tenantId/cart')
+    async getCart(
+        @Param('tenantId') tenantId: string,
+        @Headers('x-session-id') sessionId: string,
+        @Req() req: Request,
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+        const session = sessionId || `session_${Date.now()}`;
+
+        try {
+            const cart = await this.vendureService.getCart(tenantSchema, session);
+            return {
+                success: true,
+                data: cart,
+                sessionId: session,
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to get cart: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Add item to cart
+     */
+    @Post(':tenantId/cart')
+    async addToCart(
+        @Param('tenantId') tenantId: string,
+        @Headers('x-session-id') sessionId: string,
+        @Body() body: { productId: number; quantity: number },
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+        const session = sessionId || `session_${Date.now()}`;
+
+        if (!body.productId || !body.quantity) {
+            throw new HttpException(
+                'Missing required fields: productId, quantity',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        try {
+            const cartItem = await this.vendureService.addToCart(
+                tenantSchema,
+                session,
+                body.productId,
+                body.quantity,
+            );
+            return {
+                success: true,
+                data: cartItem,
+                sessionId: session,
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to add to cart: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Update cart item quantity
+     */
+    @Put(':tenantId/cart/:itemId')
+    async updateCartItem(
+        @Param('tenantId') tenantId: string,
+        @Param('itemId') itemId: string,
+        @Body() body: { quantity: number },
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        try {
+            const item = await this.vendureService.updateCartItem(
+                tenantSchema,
+                parseInt(itemId, 10),
+                body.quantity,
+            );
+            return {
+                success: true,
+                data: item,
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to update cart item: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Remove item from cart
+     */
+    @Delete(':tenantId/cart/:itemId')
+    async removeFromCart(
+        @Param('tenantId') tenantId: string,
+        @Param('itemId') itemId: string,
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        try {
+            const result = await this.vendureService.removeCartItem(
+                tenantSchema,
+                parseInt(itemId, 10),
+            );
+            return {
+                success: true,
+                data: result,
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to remove from cart: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Checkout - Create order from cart
+     */
+    @Post(':tenantId/checkout')
+    async checkout(
+        @Param('tenantId') tenantId: string,
+        @Headers('x-session-id') sessionId: string,
+        @Body() body: { customerEmail: string; territory?: string },
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+        const session = sessionId || `session_${Date.now()}`;
+
+        if (!body.customerEmail) {
+            throw new HttpException(
+                'Missing required field: customerEmail',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        try {
+            const order = await this.vendureService.checkout(
+                tenantSchema,
+                session,
+                body.customerEmail,
+                body.territory || 'default',
+            );
+            return {
+                success: true,
+                data: order,
+                message: 'Order created successfully',
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to checkout: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    // ==================== ORDER ENDPOINTS ====================
+
     /**
      * Get all orders for tenant
      */
@@ -88,26 +253,30 @@ export class VendureController {
     }
 
     /**
-     * Create an order for tenant
+     * Get order by ID
      */
-    @Post(':tenantId/orders')
-    async createOrder(
+    @Get(':tenantId/orders/:orderId')
+    async getOrderById(
         @Param('tenantId') tenantId: string,
-        @Body() body: { customerId: number; territory?: string },
-        @Req() req: Request,
+        @Param('orderId') orderId: string,
     ) {
-        const tenantSchema = req.tenantSchema || `tenant_${tenantId.replace(/-/g, '_')}`;
-        const territory = body.territory || req.territory || 'default';
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
 
         try {
-            const order = await this.vendureService.createOrder(tenantSchema, body.customerId, territory);
+            const order = await this.vendureService.getOrderById(
+                tenantSchema,
+                parseInt(orderId, 10),
+            );
+            if (!order) {
+                throw new HttpException('Order not found', HttpStatus.NOT_FOUND);
+            }
             return {
                 success: true,
                 data: order,
             };
         } catch (error) {
             throw new HttpException(
-                `Failed to create order: ${error}`,
+                `Failed to get order: ${error}`,
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
@@ -126,3 +295,4 @@ export class VendureController {
         };
     }
 }
+

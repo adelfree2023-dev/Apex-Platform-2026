@@ -124,7 +124,8 @@ describe('TenantsService', () => {
 
             const result = await service.findBySubdomain('test');
 
-            expect(result.subdomain).toBe('test');
+            expect(result).not.toBeNull();
+            expect(result?.subdomain).toBe('test');
         });
     });
 

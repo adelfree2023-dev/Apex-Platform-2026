@@ -17,6 +17,7 @@ import { ShippingModule } from './shipping/shipping.module';
 import { BundleModule } from './bundles/bundle.module';
 import { WishlistModule } from './wishlists/wishlist.module';
 import { SeoModule } from './seo/seo.module';
+import { CsvModule } from './csv/csv.module';
 import { TenantMiddleware } from './middleware/tenant.middleware';
 
 @Module({
@@ -37,6 +38,7 @@ import { TenantMiddleware } from './middleware/tenant.middleware';
         BundleModule,
         WishlistModule,
         SeoModule,
+        CsvModule,
     ],
     controllers: [AppController],
     providers: [AppService],

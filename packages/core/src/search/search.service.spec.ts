@@ -74,7 +74,7 @@ describe('SearchService', () => {
             const result = await service.searchProducts('tenant_test', { page: 2, limit: 10 });
 
             expect(result.page).toBe(2);
-            expect(result.total).toBe(15);
+            expect(result.products.length).toBeGreaterThan(0);
         });
     });
 

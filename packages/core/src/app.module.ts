@@ -16,6 +16,7 @@ import { AuthModule } from './auth/auth.module';
 import { ShippingModule } from './shipping/shipping.module';
 import { BundleModule } from './bundles/bundle.module';
 import { WishlistModule } from './wishlists/wishlist.module';
+import { SeoModule } from './seo/seo.module';
 import { TenantMiddleware } from './middleware/tenant.middleware';
 
 @Module({
@@ -35,6 +36,7 @@ import { TenantMiddleware } from './middleware/tenant.middleware';
         ShippingModule,
         BundleModule,
         WishlistModule,
+        SeoModule,
     ],
     controllers: [AppController],
     providers: [AppService],

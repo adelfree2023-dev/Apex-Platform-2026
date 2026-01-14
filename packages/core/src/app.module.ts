@@ -15,6 +15,7 @@ import { I18nModule } from './i18n/i18n.module';
 import { AuthModule } from './auth/auth.module';
 import { ShippingModule } from './shipping/shipping.module';
 import { BundleModule } from './bundles/bundle.module';
+import { WishlistModule } from './wishlists/wishlist.module';
 import { TenantMiddleware } from './middleware/tenant.middleware';
 
 @Module({
@@ -33,6 +34,7 @@ import { TenantMiddleware } from './middleware/tenant.middleware';
         AuthModule,
         ShippingModule,
         BundleModule,
+        WishlistModule,
     ],
     controllers: [AppController],
     providers: [AppService],

@@ -1,0 +1,88 @@
+{
+    "config": {
+        "target": "http://34.102.65.89:3001",
+        "phases": [
+            {
+                "duration": 30,
+                "arrivalRate": 10,
+                "name": "Warm up"
+            },
+            {
+                "duration": 60,
+                "arrivalRate": 50,
+                "name": "Sustained load"
+            },
+            {
+                "duration": 30,
+                "arrivalRate": 100,
+                "name": "Peak load"
+            }
+        ],
+        "defaults": {
+            "headers": {
+                "Content-Type": "application/json"
+            }
+        }
+    },
+    "scenarios": [
+        {
+            "name": "Health Check",
+            "weight": 1,
+            "flow": [
+                {
+                    "get": {
+                        "url": "/health"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Get Products",
+            "weight": 3,
+            "flow": [
+                {
+                    "get": {
+                        "url": "/api/shop/b6374184-6f5a-424b-a071-69576fe09251/products"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Get Cart",
+            "weight": 2,
+            "flow": [
+                {
+                    "get": {
+                        "url": "/api/shop/b6374184-6f5a-424b-a071-69576fe09251/cart",
+                        "headers": {
+                            "x-session-id": "load-test-session"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Add to Cart Flow",
+            "weight": 1,
+            "flow": [
+                {
+                    "get": {
+                        "url": "/api/shop/b6374184-6f5a-424b-a071-69576fe09251/products"
+                    }
+                },
+                {
+                    "post": {
+                        "url": "/api/shop/b6374184-6f5a-424b-a071-69576fe09251/cart",
+                        "headers": {
+                            "x-session-id": "load-test-{{ $randomNumber() }}"
+                        },
+                        "json": {
+                            "productId": 1,
+                            "quantity": 1
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

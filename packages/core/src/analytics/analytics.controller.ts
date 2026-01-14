@@ -72,13 +72,15 @@ export class AnalyticsController {
             const data = await this.analyticsService.getOrdersByStatus(tenantSchema);
             return {
                 success: true,
-                data,
+                data: data || [],
             };
         } catch (error) {
-            throw new HttpException(
-                `Failed to get orders by status: ${error}`,
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
+            // Return empty array instead of error for graceful degradation
+            return {
+                success: true,
+                data: [],
+                warning: 'Could not fetch order status breakdown',
+            };
         }
     }
 

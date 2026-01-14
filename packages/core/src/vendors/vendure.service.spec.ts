@@ -50,7 +50,6 @@ describe('VendureService', () => {
                 tenantName: 'Test Store',
             });
 
-            // Should create multiple tables
             expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
         });
     });
@@ -111,32 +110,60 @@ describe('VendureService', () => {
     });
 
     describe('Cart Operations', () => {
-        it('should create cart for session', async () => {
-            mockPrismaService.$queryRawUnsafe
-                .mockResolvedValueOnce([]) // No existing cart
-                .mockResolvedValueOnce([{ id: 1, session_id: 'session-123', total: 0 }]); // Created cart
+        it('should get existing cart for session', async () => {
+            // Mock: cart already exists
+            const mockCart = [{ id: 1, session_id: 'session-123', total: 0 }];
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockCart);
 
             const result = await service.getOrCreateCart('tenant_test', 'session-123');
 
-            expect(result).toBeDefined();
+            expect(result.id).toBe(1);
+            expect(result.session_id).toBe('session-123');
         });
 
-        it('should add item to cart', async () => {
-            const mockCart = [{ id: 1, session_id: 'session-123', total: 0 }];
-            const mockProduct = [{ id: 1, name: 'Product', price: 10000, stock_on_hand: 50 }];
-            const mockCartItem = [{ id: 1, cart_id: 1, product_variant_id: 1, quantity: 2 }];
-
+        it('should create new cart if none exists', async () => {
+            // Mock: no existing cart, then create new
             mockPrismaService.$queryRawUnsafe
-                .mockResolvedValueOnce(mockCart) // getOrCreateCart
-                .mockResolvedValueOnce(mockProduct) // Get product
-                .mockResolvedValueOnce([]) // No existing item
-                .mockResolvedValueOnce(mockCartItem); // Created item
+                .mockResolvedValueOnce([]) // No existing cart
+                .mockResolvedValueOnce([{ id: 2, session_id: 'new-session', total: 0 }]); // Created cart
 
-            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+            const result = await service.getOrCreateCart('tenant_test', 'new-session');
+
+            expect(result.id).toBe(2);
+            expect(result.session_id).toBe('new-session');
+        });
+
+        it('should add new item to cart', async () => {
+            // Mock sequence for addToCart:
+            // 1. getOrCreateCart - returns existing cart
+            // 2. Get product with variant - returns product
+            // 3. Check existing item - not found
+            // 4. Insert new cart item - returns item
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce([{ id: 1, session_id: 'session-123', total: 0 }]) // Cart
+                .mockResolvedValueOnce([{ variant_id: 1, price: 10000, stock_on_hand: 50, name: 'Product' }]) // Product
+                .mockResolvedValueOnce([]) // No existing item in cart
+                .mockResolvedValueOnce([{ id: 1, cart_id: 1, product_id: 1, quantity: 2, unit_price: 10000 }]); // New item
+
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined); // updateCartTotals
 
             const result = await service.addToCart('tenant_test', 'session-123', 1, 2);
 
-            expect(result).toBeDefined();
+            expect(result.id).toBe(1);
+            expect(result.quantity).toBe(2);
+        });
+
+        it('should update quantity if item already in cart', async () => {
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce([{ id: 1, session_id: 'session-123', total: 0 }]) // Cart
+                .mockResolvedValueOnce([{ variant_id: 1, price: 10000, stock_on_hand: 50, name: 'Product' }]) // Product
+                .mockResolvedValueOnce([{ id: 5, cart_id: 1, product_id: 1, quantity: 2 }]) // Existing item
+                .mockResolvedValueOnce([{ id: 5, cart_id: 1, product_id: 1, quantity: 4 }]); // Updated item
+
+            const result = await service.addToCart('tenant_test', 'session-123', 1, 2);
+
+            expect(result.id).toBe(5);
+            expect(result.quantity).toBe(4);
         });
     });
 
@@ -155,6 +182,7 @@ describe('VendureService', () => {
             const result = await service.getOrderById('tenant_test', 1);
 
             expect(result.code).toBe('ORD-001');
+            expect(result.total).toBe(50000);
         });
 
         it('should return null for non-existent order', async () => {
@@ -179,27 +207,20 @@ describe('VendureService', () => {
 
     describe('Checkout Flow', () => {
         it('should create order from cart', async () => {
-            const mockCart = [{
-                id: 1,
-                session_id: 'session-123',
-                total: 50000,
-                items: [{ product_variant_id: 1, quantity: 2 }],
-            }];
-            const mockCustomer = [{ id: 1 }];
-            const mockOrder = [{ id: 1, code: 'ORD-001', total: 50000, state: 'Active' }];
-
+            // Complex mock sequence for checkout
             mockPrismaService.$queryRawUnsafe
-                .mockResolvedValueOnce(mockCart) // Get cart
-                .mockResolvedValueOnce([{ product_variant_id: 1, quantity: 2 }]) // Cart items
-                .mockResolvedValueOnce(mockCustomer) // Get/create customer
-                .mockResolvedValueOnce(mockOrder); // Create order
+                .mockResolvedValueOnce([{ id: 1, session_id: 'session', total: 50000 }]) // Get cart
+                .mockResolvedValueOnce([{ product_variant_id: 1, quantity: 2, unit_price: 25000 }]) // Cart items
+                .mockResolvedValueOnce([{ id: 1 }]) // Get/create customer
+                .mockResolvedValueOnce([{ id: 1, code: 'ORD-001', total: 50000, state: 'Active' }]); // Created order
 
             mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
             mockEventService.record.mockResolvedValue(undefined);
 
-            const result = await service.checkout('tenant_test', 'session-123', 'customer@test.com', 'Cairo');
+            const result = await service.checkout('tenant_test', 'session', 'customer@test.com', 'Cairo');
 
             expect(result.code).toBe('ORD-001');
+            expect(result.total).toBe(50000);
         });
     });
 
@@ -215,7 +236,6 @@ describe('VendureService', () => {
         });
 
         it('should not allow cross-tenant queries', async () => {
-            // This test documents that all queries are scoped to tenant schema
             const tenantA = 'tenant_store_a';
             const tenantB = 'tenant_store_b';
 
@@ -224,10 +244,11 @@ describe('VendureService', () => {
             await service.getProducts(tenantA);
             await service.getProducts(tenantB);
 
-            // Verify each call uses the correct schema
             const calls = mockPrismaService.$queryRawUnsafe.mock.calls;
             expect(calls[0][0]).toContain(tenantA);
             expect(calls[1][0]).toContain(tenantB);
+            expect(calls[0][0]).not.toContain(tenantB);
+            expect(calls[1][0]).not.toContain(tenantA);
         });
     });
 });

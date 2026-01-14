@@ -119,12 +119,30 @@ describe('PromotionsService', () => {
 
     describe('createReview', () => {
         it('should create a product review', async () => {
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{ id: 1, rating: 5 }]);
-            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+            // Mock sequence for createReview:
+            // 1. Check if already reviewed - no existing
+            // 2. Check if customer purchased - yes (verified)
+            // 3. Insert review - return created review
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce([]) // No existing review
+                .mockResolvedValueOnce([{ id: 1 }]) // Customer purchased
+                .mockResolvedValueOnce([{
+                    id: 1, product_id: 1, customer_id: 123, rating: 5,
+                    title: 'Great!', comment: 'Amazing', is_verified: true
+                }]);
 
-            const result = await service.createReview('tenant_test', 1, 123, 5, 'Great!', 'Amazing product');
+            const result = await service.createReview('tenant_test', 1, 123, 5, 'Great!', 'Amazing');
 
-            expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalled();
+            expect(result.id).toBe(1);
+            expect(result.rating).toBe(5);
+            expect(result.isVerified).toBe(true);
+        });
+
+        it('should throw error if already reviewed', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValueOnce([{ id: 99 }]); // Already exists
+
+            await expect(service.createReview('tenant_test', 1, 123, 5))
+                .rejects.toThrow('already reviewed');
         });
     });
 

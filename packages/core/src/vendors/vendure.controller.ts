@@ -294,5 +294,149 @@ export class VendureController {
             timestamp: new Date().toISOString(),
         };
     }
+
+    // ==================== CATEGORY ENDPOINTS (Phase 05) ====================
+
+    /**
+     * Get all categories for tenant
+     */
+    @Get(':tenantId/categories')
+    async getCategories(@Param('tenantId') tenantId: string) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        try {
+            const categories = await this.vendureService.getCategories(tenantSchema);
+            return {
+                success: true,
+                data: categories,
+                count: categories.length,
+            };
+        } catch (error) {
+            // If table doesn't exist, return empty array
+            return {
+                success: true,
+                data: [],
+                count: 0,
+            };
+        }
+    }
+
+    /**
+     * Get products by category
+     */
+    @Get(':tenantId/categories/:slug/products')
+    async getProductsByCategory(
+        @Param('tenantId') tenantId: string,
+        @Param('slug') slug: string,
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        try {
+            const products = await this.vendureService.getProductsByCategory(tenantSchema, slug);
+            return {
+                success: true,
+                data: products,
+                count: products.length,
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to get products by category: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Create category
+     */
+    @Post(':tenantId/categories')
+    async createCategory(
+        @Param('tenantId') tenantId: string,
+        @Body() body: { name: string; slug: string; description?: string; parentId?: number; imageUrl?: string },
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        if (!body.name || !body.slug) {
+            throw new HttpException(
+                'Missing required fields: name, slug',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        try {
+            // Ensure category table exists
+            await this.vendureService.createCategoryTable(tenantSchema);
+            const category = await this.vendureService.createCategory(tenantSchema, body);
+            return {
+                success: true,
+                data: category,
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to create category: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Migrate tenant to add category table
+     */
+    @Post(':tenantId/migrate-categories')
+    async migrateCategories(@Param('tenantId') tenantId: string) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        try {
+            await this.vendureService.createCategoryTable(tenantSchema);
+            return {
+                success: true,
+                message: 'Category table created successfully',
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to migrate categories: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    // ==================== SEARCH ENDPOINTS (Phase 05) ====================
+
+    /**
+     * Search products
+     */
+    @Get(':tenantId/products/search')
+    async searchProducts(
+        @Param('tenantId') tenantId: string,
+        @Req() req: Request,
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+        const query = req.query.q as string || '';
+
+        if (!query || query.length < 2) {
+            return {
+                success: true,
+                data: [],
+                count: 0,
+                message: 'Search query must be at least 2 characters',
+            };
+        }
+
+        try {
+            const products = await this.vendureService.searchProducts(tenantSchema, query);
+            return {
+                success: true,
+                data: products,
+                count: products.length,
+                query,
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to search products: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
 }
+
 

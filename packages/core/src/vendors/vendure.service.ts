@@ -539,5 +539,119 @@ export class VendureService implements OnModuleInit {
       lines: orderLines as any[],
     };
   }
+
+  // ==================== CATEGORY METHODS (Phase 05) ====================
+
+  /**
+   * Create category table (migration)
+   */
+  async createCategoryTable(tenantSchema: string): Promise<void> {
+    await this.prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "${tenantSchema}"."vendure_category" (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) NOT NULL UNIQUE,
+        description TEXT,
+        parent_id INT REFERENCES "${tenantSchema}"."vendure_category"(id),
+        image_url TEXT,
+        sort_order INT DEFAULT 0,
+        enabled BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    // Add category_id to products table
+    await this.prisma.$executeRawUnsafe(`
+      ALTER TABLE "${tenantSchema}"."vendure_product"
+      ADD COLUMN IF NOT EXISTS category_id INT REFERENCES "${tenantSchema}"."vendure_category"(id)
+    `);
+  }
+
+  /**
+   * Get all categories
+   */
+  async getCategories(tenantSchema: string): Promise<any[]> {
+    const categories = await this.prisma.$queryRawUnsafe(`
+      SELECT c.*, 
+        (SELECT COUNT(*) FROM "${tenantSchema}"."vendure_product" p WHERE p.category_id = c.id) as product_count
+      FROM "${tenantSchema}"."vendure_category" c
+      WHERE c.enabled = true
+      ORDER BY c.sort_order ASC, c.name ASC
+    `);
+    return categories as any[];
+  }
+
+  /**
+   * Get category by slug
+   */
+  async getCategoryBySlug(tenantSchema: string, slug: string): Promise<any> {
+    const category = await this.prisma.$queryRawUnsafe(`
+      SELECT * FROM "${tenantSchema}"."vendure_category"
+      WHERE slug = $1 AND enabled = true
+    `, slug);
+    return (category as any[])[0] || null;
+  }
+
+  /**
+   * Get products by category
+   */
+  async getProductsByCategory(tenantSchema: string, categorySlug: string): Promise<any[]> {
+    const products = await this.prisma.$queryRawUnsafe(`
+      SELECT p.*, pv.sku, pv.price, pv.stock_on_hand, c.name as category_name
+      FROM "${tenantSchema}"."vendure_product" p
+      LEFT JOIN "${tenantSchema}"."vendure_product_variant" pv ON pv.product_id = p.id
+      LEFT JOIN "${tenantSchema}"."vendure_category" c ON c.id = p.category_id
+      WHERE c.slug = $1 AND p.enabled = true
+      ORDER BY p.created_at DESC
+    `, categorySlug);
+    return products as any[];
+  }
+
+  /**
+   * Create category
+   */
+  async createCategory(tenantSchema: string, data: { name: string; slug: string; description?: string; parentId?: number; imageUrl?: string }): Promise<any> {
+    const category = await this.prisma.$queryRawUnsafe(`
+      INSERT INTO "${tenantSchema}"."vendure_category" (name, slug, description, parent_id, image_url)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `, data.name, data.slug, data.description || '', data.parentId || null, data.imageUrl || null);
+    return (category as any[])[0];
+  }
+
+  /**
+   * Update product category
+   */
+  async updateProductCategory(tenantSchema: string, productId: number, categoryId: number): Promise<any> {
+    const product = await this.prisma.$queryRawUnsafe(`
+      UPDATE "${tenantSchema}"."vendure_product"
+      SET category_id = $1, updated_at = NOW()
+      WHERE id = $2
+      RETURNING *
+    `, categoryId, productId);
+    return (product as any[])[0];
+  }
+
+  // ==================== SEARCH METHODS (Phase 05) ====================
+
+  /**
+   * Search products
+   */
+  async searchProducts(tenantSchema: string, query: string): Promise<any[]> {
+    const searchTerm = `%${query}%`;
+    const products = await this.prisma.$queryRawUnsafe(`
+      SELECT p.*, pv.sku, pv.price, pv.stock_on_hand, c.name as category_name
+      FROM "${tenantSchema}"."vendure_product" p
+      LEFT JOIN "${tenantSchema}"."vendure_product_variant" pv ON pv.product_id = p.id
+      LEFT JOIN "${tenantSchema}"."vendure_category" c ON c.id = p.category_id
+      WHERE p.enabled = true 
+        AND (p.name ILIKE $1 OR p.description ILIKE $1 OR pv.sku ILIKE $1)
+      ORDER BY p.name ASC
+      LIMIT 50
+    `, searchTerm);
+    return products as any[];
+  }
 }
+
 

@@ -82,11 +82,13 @@ describe('SubscriptionService', () => {
                 current_period_start: new Date(),
                 current_period_end: new Date(),
             }];
+            const mockPayment = [{ id: 1 }];
 
             mockPrismaService.$queryRawUnsafe
                 .mockResolvedValueOnce(mockPlan) // getPlan
                 .mockResolvedValueOnce(mockExisting) // check existing
-                .mockResolvedValueOnce(mockSubscription); // create subscription
+                .mockResolvedValueOnce(mockSubscription) // create subscription
+                .mockResolvedValueOnce(mockPayment); // create payment
 
             const result = await service.subscribe('tenant_test', 123, 1);
 

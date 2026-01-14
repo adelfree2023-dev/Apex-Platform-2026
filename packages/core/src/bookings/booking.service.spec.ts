@@ -73,18 +73,20 @@ describe('BookingService', () => {
     describe('createBooking', () => {
         it('should create a booking successfully', async () => {
             const mockService = [{ id: 1, duration_minutes: 30 }];
+            const mockHours = [{ day_of_week: 1, open_time: '09:00', close_time: '17:00' }];
             const mockExisting: any[] = [];
             const mockBooking = [{ id: 1, customer_id: 123, service_id: 1, status: 'pending' }];
 
             mockPrismaService.$queryRawUnsafe
-                .mockResolvedValueOnce(mockService)
-                .mockResolvedValueOnce(mockExisting)
-                .mockResolvedValueOnce(mockBooking);
+                .mockResolvedValueOnce(mockService) // get service
+                .mockResolvedValueOnce(mockHours) // get business hours
+                .mockResolvedValueOnce(mockExisting) // check existing
+                .mockResolvedValueOnce(mockBooking); // create booking
 
             const result = await service.createBooking('tenant_test', {
                 customerId: 123,
                 serviceId: 1,
-                date: '2026-01-20',
+                date: '2026-01-20', // Monday
                 timeSlot: '10:00',
             });
 

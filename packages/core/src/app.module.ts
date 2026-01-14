@@ -13,6 +13,7 @@ import { SearchModule } from './search/search.module';
 import { PromotionsModule } from './promotions/promotions.module';
 import { I18nModule } from './i18n/i18n.module';
 import { AuthModule } from './auth/auth.module';
+import { ShippingModule } from './shipping/shipping.module';
 import { TenantMiddleware } from './middleware/tenant.middleware';
 
 @Module({
@@ -29,6 +30,7 @@ import { TenantMiddleware } from './middleware/tenant.middleware';
         PromotionsModule,
         I18nModule,
         AuthModule,
+        ShippingModule,
     ],
     controllers: [AppController],
     providers: [AppService],

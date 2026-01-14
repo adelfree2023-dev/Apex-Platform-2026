@@ -73,6 +73,7 @@ describe('SubscriptionService', () => {
     describe('subscribe', () => {
         it('should create a new subscription', async () => {
             const mockPlan = [{ id: 1, price: 9900, interval: 'monthly' }];
+            const mockExisting: any[] = []; // No existing subscription
             const mockSubscription = [{
                 id: 1,
                 customer_id: 123,
@@ -83,8 +84,9 @@ describe('SubscriptionService', () => {
             }];
 
             mockPrismaService.$queryRawUnsafe
-                .mockResolvedValueOnce(mockPlan)
-                .mockResolvedValueOnce(mockSubscription);
+                .mockResolvedValueOnce(mockPlan) // getPlan
+                .mockResolvedValueOnce(mockExisting) // check existing
+                .mockResolvedValueOnce(mockSubscription); // create subscription
 
             const result = await service.subscribe('tenant_test', 123, 1);
 

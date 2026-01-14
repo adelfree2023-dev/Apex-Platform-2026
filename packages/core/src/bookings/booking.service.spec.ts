@@ -103,7 +103,7 @@ describe('BookingService', () => {
         });
     });
 
-    describe('getBookings', () => {
+    describe('getAllBookings', () => {
         it('should return all bookings', async () => {
             const mockBookings = [
                 { id: 1, customer_id: 123, service_id: 1, booking_date: new Date(), time_slot: '10:00', status: 'confirmed', service_name: 'Consultation' },
@@ -111,7 +111,7 @@ describe('BookingService', () => {
 
             mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockBookings);
 
-            const result = await service.getBookings('tenant_test');
+            const result = await service.getAllBookings('tenant_test');
 
             expect(result).toHaveLength(1);
         });

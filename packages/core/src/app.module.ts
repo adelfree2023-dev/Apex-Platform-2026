@@ -7,6 +7,7 @@ import { EventsModule } from './events/events.module';
 import { VendureModule } from './vendors/vendure.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AdminModule } from './admin/admin.module';
+import { NotificationModule } from './notifications/notification.module';
 import { TenantMiddleware } from './middleware/tenant.middleware';
 
 @Module({
@@ -17,6 +18,7 @@ import { TenantMiddleware } from './middleware/tenant.middleware';
         VendureModule,
         PaymentsModule,
         AdminModule,
+        NotificationModule,
     ],
     controllers: [AppController],
     providers: [AppService],

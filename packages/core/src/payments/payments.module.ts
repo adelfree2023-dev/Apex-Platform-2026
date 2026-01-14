@@ -1,10 +1,11 @@
 /**
  * Payments Module
- * Stripe payment integration for Apex Platform
+ * Multi-channel payment integration for Apex Platform
  */
 
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
+import { PaymentGatewayService } from './payment-gateway.service';
 import { PaymentsController, StripeWebhookController } from './payments.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { EventsModule } from '../events/events.module';
@@ -15,7 +16,8 @@ import { EventsModule } from '../events/events.module';
         EventsModule,
     ],
     controllers: [PaymentsController, StripeWebhookController],
-    providers: [PaymentsService],
-    exports: [PaymentsService],
+    providers: [PaymentsService, PaymentGatewayService],
+    exports: [PaymentsService, PaymentGatewayService],
 })
 export class PaymentsModule { }
+

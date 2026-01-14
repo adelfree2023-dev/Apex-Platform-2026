@@ -655,7 +655,227 @@ export class VendureController {
             );
         }
     }
+
+    // ==================== ORDER FULFILLMENT ENDPOINTS (Phase 09) ====================
+
+    /**
+     * Migrate to add fulfillment tables
+     */
+    @Post(':tenantId/migrate-fulfillment')
+    async migrateFulfillment(@Param('tenantId') tenantId: string) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        try {
+            await this.vendureService.createFulfillmentTable(tenantSchema);
+            return {
+                success: true,
+                message: 'Fulfillment and returns tables created successfully',
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to migrate fulfillment: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Update order status
+     */
+    @Put(':tenantId/orders/:orderId/status')
+    async updateOrderStatus(
+        @Param('tenantId') tenantId: string,
+        @Param('orderId') orderId: string,
+        @Body() body: { status: string },
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        if (!body.status) {
+            throw new HttpException(
+                'Status is required',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        try {
+            const order = await this.vendureService.updateOrderStatus(
+                tenantSchema,
+                parseInt(orderId, 10),
+                body.status,
+            );
+            return {
+                success: true,
+                data: order,
+                message: `Order status updated to ${body.status}`,
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to update order status: ${error}`,
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+    }
+
+    /**
+     * Ship order (create fulfillment)
+     */
+    @Post(':tenantId/orders/:orderId/ship')
+    async shipOrder(
+        @Param('tenantId') tenantId: string,
+        @Param('orderId') orderId: string,
+        @Body() body: { trackingCode?: string; carrier?: string; notes?: string },
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        try {
+            const fulfillment = await this.vendureService.createFulfillment(
+                tenantSchema,
+                parseInt(orderId, 10),
+                body,
+            );
+            return {
+                success: true,
+                data: fulfillment,
+                message: 'Order shipped successfully',
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to ship order: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Mark order as delivered
+     */
+    @Post(':tenantId/orders/:orderId/deliver')
+    async deliverOrder(
+        @Param('tenantId') tenantId: string,
+        @Param('orderId') orderId: string,
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        try {
+            const order = await this.vendureService.markDelivered(
+                tenantSchema,
+                parseInt(orderId, 10),
+            );
+            return {
+                success: true,
+                data: order,
+                message: 'Order marked as delivered',
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to mark as delivered: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Get order fulfillment details
+     */
+    @Get(':tenantId/orders/:orderId/fulfillment')
+    async getOrderFulfillment(
+        @Param('tenantId') tenantId: string,
+        @Param('orderId') orderId: string,
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        try {
+            const fulfillment = await this.vendureService.getFulfillment(
+                tenantSchema,
+                parseInt(orderId, 10),
+            );
+            return {
+                success: true,
+                data: fulfillment,
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to get fulfillment: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Create return request
+     */
+    @Post(':tenantId/orders/:orderId/return')
+    async createReturn(
+        @Param('tenantId') tenantId: string,
+        @Param('orderId') orderId: string,
+        @Body() body: { reason: string },
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        if (!body.reason) {
+            throw new HttpException(
+                'Reason is required',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        try {
+            const returnRequest = await this.vendureService.createReturn(
+                tenantSchema,
+                parseInt(orderId, 10),
+                body.reason,
+            );
+            return {
+                success: true,
+                data: returnRequest,
+                message: 'Return request created',
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to create return: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Process refund
+     */
+    @Post(':tenantId/returns/:returnId/refund')
+    async processRefund(
+        @Param('tenantId') tenantId: string,
+        @Param('returnId') returnId: string,
+        @Body() body: { refundAmount: number },
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        if (!body.refundAmount || body.refundAmount <= 0) {
+            throw new HttpException(
+                'Refund amount must be greater than 0',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        try {
+            const returnRequest = await this.vendureService.processRefund(
+                tenantSchema,
+                parseInt(returnId, 10),
+                body.refundAmount,
+            );
+            return {
+                success: true,
+                data: returnRequest,
+                message: 'Refund processed successfully',
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to process refund: ${error}`,
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+    }
 }
+
 
 
 

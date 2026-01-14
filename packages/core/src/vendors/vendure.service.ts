@@ -540,6 +540,173 @@ export class VendureService implements OnModuleInit {
     };
   }
 
+  // ==================== ORDER FULFILLMENT METHODS (Phase 09) ====================
+
+  /**
+   * Update order status
+   */
+  async updateOrderStatus(tenantSchema: string, orderId: number, status: string): Promise<any> {
+    const validStatuses = ['AddingItems', 'PaymentPending', 'PaymentAuthorized', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'Refunded'];
+
+    if (!validStatuses.includes(status)) {
+      throw new Error(`Invalid status. Valid statuses: ${validStatuses.join(', ')}`);
+    }
+
+    const order = await this.prisma.$queryRawUnsafe(`
+      UPDATE "${tenantSchema}"."vendure_order"
+      SET state = $1, updated_at = NOW()
+      WHERE id = $2
+      RETURNING *
+    `, status, orderId);
+
+    if ((order as any[]).length === 0) {
+      throw new Error('Order not found');
+    }
+
+    // Log status change
+    await this.eventService.record({
+      type: 'order.status_changed',
+      tenantId: tenantSchema,
+      territory: 'default',
+      businessType: 'RETAIL',
+      payload: {
+        orderId,
+        newStatus: status,
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    return (order as any[])[0];
+  }
+
+  /**
+   * Create fulfillment table (migration)
+   */
+  async createFulfillmentTable(tenantSchema: string): Promise<void> {
+    // Fulfillment table
+    await this.prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "${tenantSchema}"."vendure_fulfillment" (
+        id SERIAL PRIMARY KEY,
+        order_id INT REFERENCES "${tenantSchema}"."vendure_order"(id),
+        tracking_code VARCHAR(255),
+        carrier VARCHAR(100),
+        shipped_at TIMESTAMP,
+        delivered_at TIMESTAMP,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    // Returns table
+    await this.prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "${tenantSchema}"."vendure_return" (
+        id SERIAL PRIMARY KEY,
+        order_id INT REFERENCES "${tenantSchema}"."vendure_order"(id),
+        reason TEXT NOT NULL,
+        status VARCHAR(50) DEFAULT 'Requested',
+        refund_amount INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+  }
+
+  /**
+   * Create fulfillment (ship order)
+   */
+  async createFulfillment(tenantSchema: string, orderId: number, data: { trackingCode?: string; carrier?: string; notes?: string }): Promise<any> {
+    // Update order status to Shipped
+    await this.updateOrderStatus(tenantSchema, orderId, 'Shipped');
+
+    // Create fulfillment record
+    const fulfillment = await this.prisma.$queryRawUnsafe(`
+      INSERT INTO "${tenantSchema}"."vendure_fulfillment" (order_id, tracking_code, carrier, shipped_at, notes)
+      VALUES ($1, $2, $3, NOW(), $4)
+      RETURNING *
+    `, orderId, data.trackingCode || null, data.carrier || null, data.notes || null);
+
+    return (fulfillment as any[])[0];
+  }
+
+  /**
+   * Mark order as delivered
+   */
+  async markDelivered(tenantSchema: string, orderId: number): Promise<any> {
+    // Update order status
+    await this.updateOrderStatus(tenantSchema, orderId, 'Delivered');
+
+    // Update fulfillment
+    await this.prisma.$executeRawUnsafe(`
+      UPDATE "${tenantSchema}"."vendure_fulfillment"
+      SET delivered_at = NOW(), updated_at = NOW()
+      WHERE order_id = $1
+    `, orderId);
+
+    return this.getOrderById(tenantSchema, orderId);
+  }
+
+  /**
+   * Create return request
+   */
+  async createReturn(tenantSchema: string, orderId: number, reason: string): Promise<any> {
+    const returnRequest = await this.prisma.$queryRawUnsafe(`
+      INSERT INTO "${tenantSchema}"."vendure_return" (order_id, reason, status)
+      VALUES ($1, $2, 'Requested')
+      RETURNING *
+    `, orderId, reason);
+
+    return (returnRequest as any[])[0];
+  }
+
+  /**
+   * Process refund
+   */
+  async processRefund(tenantSchema: string, returnId: number, refundAmount: number): Promise<any> {
+    // Update return status
+    const returnRequest = await this.prisma.$queryRawUnsafe(`
+      UPDATE "${tenantSchema}"."vendure_return"
+      SET status = 'Refunded', refund_amount = $1, updated_at = NOW()
+      WHERE id = $2
+      RETURNING *
+    `, refundAmount, returnId);
+
+    if ((returnRequest as any[]).length === 0) {
+      throw new Error('Return request not found');
+    }
+
+    const returnData = (returnRequest as any[])[0];
+
+    // Update order status to Refunded
+    await this.updateOrderStatus(tenantSchema, returnData.order_id, 'Refunded');
+
+    return returnData;
+  }
+
+  /**
+   * Get order fulfillment
+   */
+  async getFulfillment(tenantSchema: string, orderId: number): Promise<any> {
+    const fulfillment = await this.prisma.$queryRawUnsafe(`
+      SELECT * FROM "${tenantSchema}"."vendure_fulfillment"
+      WHERE order_id = $1
+    `, orderId);
+
+    return (fulfillment as any[])[0] || null;
+  }
+
+  /**
+   * Get return request
+   */
+  async getReturn(tenantSchema: string, orderId: number): Promise<any> {
+    const returnRequest = await this.prisma.$queryRawUnsafe(`
+      SELECT * FROM "${tenantSchema}"."vendure_return"
+      WHERE order_id = $1
+    `, orderId);
+
+    return (returnRequest as any[])[0] || null;
+  }
+
   // ==================== CATEGORY METHODS (Phase 05) ====================
 
   /**

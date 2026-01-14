@@ -19,6 +19,7 @@ import { WishlistModule } from './wishlists/wishlist.module';
 import { SeoModule } from './seo/seo.module';
 import { CsvModule } from './csv/csv.module';
 import { RfqModule } from './rfq/rfq.module';
+import { SubscriptionModule } from './subscriptions/subscription.module';
 import { TenantMiddleware } from './middleware/tenant.middleware';
 
 @Module({
@@ -41,6 +42,7 @@ import { TenantMiddleware } from './middleware/tenant.middleware';
         SeoModule,
         CsvModule,
         RfqModule,
+        SubscriptionModule,
     ],
     controllers: [AppController],
     providers: [AppService],

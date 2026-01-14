@@ -21,6 +21,7 @@ import { CsvModule } from './csv/csv.module';
 import { RfqModule } from './rfq/rfq.module';
 import { SubscriptionModule } from './subscriptions/subscription.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
+import { BookingModule } from './bookings/booking.module';
 import { TenantMiddleware } from './middleware/tenant.middleware';
 
 @Module({
@@ -45,6 +46,7 @@ import { TenantMiddleware } from './middleware/tenant.middleware';
         RfqModule,
         SubscriptionModule,
         LoyaltyModule,
+        BookingModule,
     ],
     controllers: [AppController],
     providers: [AppService],

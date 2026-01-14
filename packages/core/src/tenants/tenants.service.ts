@@ -1,6 +1,7 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EventService } from '../events/event.service';
+import { VendureService } from '../vendors/vendure.service';
 import { execSync } from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -18,6 +19,8 @@ export class TenantsService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly eventService: EventService,
+        @Inject(forwardRef(() => VendureService))
+        private readonly vendureService: VendureService,
     ) { }
 
     /**
@@ -45,6 +48,7 @@ export class TenantsService {
         }
 
         const tenantId = uuidv4();
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
 
         // Create tenant in shared schema
         const tenant = await this.prisma.tenant.create({
@@ -65,8 +69,16 @@ export class TenantsService {
         // Create isolated PostgreSQL schema
         await this.createTenantSchema(tenantId);
 
-        // Run migrations for the new tenant schema
-        await this.runMigrationsForSchema(tenantId);
+        // Initialize Vendure for this tenant (creates e-commerce tables)
+        await this.vendureService.initializeTenant({
+            tenantId: tenant.id,
+            tenantSchema,
+            territory: tenant.territory,
+            businessType: tenant.businessType,
+            tenantName: tenant.name,
+        });
+
+        console.log(`🛒 Vendure initialized for tenant: ${tenant.subdomain}`);
 
         // Log event for Cooperative Intelligence
         await this.eventService.record({
@@ -79,6 +91,7 @@ export class TenantsService {
                 subdomain: tenant.subdomain,
                 cooperationPreference: tenant.cooperationPreference,
                 fulfillmentRadius: tenant.fulfillmentRadius,
+                vendureInitialized: true,
             },
         });
 

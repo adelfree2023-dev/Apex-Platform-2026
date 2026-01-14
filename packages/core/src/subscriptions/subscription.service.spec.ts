@@ -1,5 +1,5 @@
 /**
- * Subscription Service Unit Tests — FIXED
+ * Subscription Service Unit Tests — FIXED v2
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -49,8 +49,8 @@ describe('SubscriptionService', () => {
     describe('getPlans', () => {
         it('should return all active plans', async () => {
             const mockPlans = [
-                { id: 1, name: 'Basic', slug: 'basic', price: 9900, interval: 'monthly', features: '["Feature 1"]', is_active: true },
-                { id: 2, name: 'Pro', slug: 'pro', price: 19900, interval: 'monthly', features: '["Feature 1","Feature 2"]', is_active: true },
+                { id: 1, name: 'Basic', description: 'Basic plan', price: 9900, interval: 'monthly', interval_count: 1, is_active: true },
+                { id: 2, name: 'Pro', description: 'Pro plan', price: 19900, interval: 'monthly', interval_count: 1, is_active: true },
             ];
 
             mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockPlans);
@@ -72,26 +72,36 @@ describe('SubscriptionService', () => {
 
     describe('subscribe', () => {
         it('should create a new subscription', async () => {
-            const mockPlan = [{ id: 1, price: 9900, interval: 'monthly' }];
-            const mockExisting: any[] = []; // No existing subscription
-            const mockSubscription = [{
+            // Mock getPlan response
+            const mockPlan = [{ id: 1, name: 'Basic', price: 9900, interval: 'monthly', interval_count: 1, is_active: true }];
+            // Mock check existing (empty = no existing subscription)
+            const mockExisting: any[] = [];
+            // Mock create subscription
+            const mockNewSub = [{ id: 1, customer_id: 123, plan_id: 1 }];
+            // Mock getSubscription for final return
+            const mockFinalSub = [{
                 id: 1,
                 customer_id: 123,
                 plan_id: 1,
                 status: 'active',
+                plan_name: 'Basic',
+                plan_price: 9900,
+                plan_interval: 'monthly',
                 current_period_start: new Date(),
                 current_period_end: new Date(),
             }];
-            const mockPayment = [{ id: 1 }];
 
             mockPrismaService.$queryRawUnsafe
                 .mockResolvedValueOnce(mockPlan) // getPlan
                 .mockResolvedValueOnce(mockExisting) // check existing
-                .mockResolvedValueOnce(mockSubscription) // create subscription
-                .mockResolvedValueOnce(mockPayment); // create payment
+                .mockResolvedValueOnce(mockNewSub) // create subscription
+                .mockResolvedValueOnce(mockFinalSub); // getSubscription
+
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined); // record payment
 
             const result = await service.subscribe('tenant_test', 123, 1);
 
+            expect(result).not.toBeNull();
             expect(result.customerId).toBe(123);
             expect(result.status).toBe('active');
         });
@@ -102,32 +112,42 @@ describe('SubscriptionService', () => {
             await expect(service.subscribe('tenant_test', 123, 999))
                 .rejects.toThrow('Plan not found');
         });
+
+        it('should fail if already subscribed', async () => {
+            const mockPlan = [{ id: 1, price: 9900, interval: 'monthly', interval_count: 1, is_active: true }];
+            const mockExisting = [{ id: 99 }]; // Already subscribed
+
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce(mockPlan)
+                .mockResolvedValueOnce(mockExisting);
+
+            await expect(service.subscribe('tenant_test', 123, 1))
+                .rejects.toThrow('Already subscribed to this plan');
+        });
     });
 
     describe('cancelSubscription', () => {
         it('should cancel an active subscription', async () => {
             mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{
+                id: 1, customer_id: 123, plan_id: 1, status: 'cancelled',
+                plan_name: 'Basic', plan_price: 9900, plan_interval: 'monthly',
+                current_period_start: new Date(), current_period_end: new Date(),
+            }]);
 
-            await service.cancelSubscription('tenant_test', 1);
+            const result = await service.cancelSubscription('tenant_test', 1);
 
-            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
+            expect(result.status).toBe('cancelled');
         });
     });
 
     describe('getCustomerSubscriptions', () => {
         it('should return customer subscriptions', async () => {
-            const mockSubs = [
-                {
-                    id: 1,
-                    customer_id: 123,
-                    plan_id: 1,
-                    status: 'active',
-                    plan_name: 'Basic',
-                    plan_price: 9900,
-                    current_period_start: new Date(),
-                    current_period_end: new Date(),
-                },
-            ];
+            const mockSubs = [{
+                id: 1, customer_id: 123, plan_id: 1, status: 'active',
+                plan_name: 'Basic', plan_price: 9900, plan_interval: 'monthly',
+                current_period_start: new Date(), current_period_end: new Date(),
+            }];
 
             mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockSubs);
 
@@ -149,12 +169,9 @@ describe('SubscriptionService', () => {
     describe('getSubscription', () => {
         it('should return subscription by ID', async () => {
             const mockSub = [{
-                id: 1,
-                customer_id: 123,
-                plan_id: 1,
-                status: 'active',
-                current_period_start: new Date(),
-                current_period_end: new Date(),
+                id: 1, customer_id: 123, plan_id: 1, status: 'active',
+                plan_name: 'Basic', plan_price: 9900, plan_interval: 'monthly',
+                current_period_start: new Date(), current_period_end: new Date(),
             }];
 
             mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockSub);

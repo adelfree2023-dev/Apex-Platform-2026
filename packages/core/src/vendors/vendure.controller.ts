@@ -437,6 +437,225 @@ export class VendureController {
             );
         }
     }
+
+    // ==================== WALLET ENDPOINTS (Phase 07) ====================
+
+    /**
+     * Migrate to add wallet tables
+     */
+    @Post(':tenantId/migrate-wallet')
+    async migrateWallet(@Param('tenantId') tenantId: string) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        try {
+            await this.vendureService.createWalletTable(tenantSchema);
+            return {
+                success: true,
+                message: 'Wallet and gift card tables created successfully',
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to migrate wallet: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Get wallet balance
+     */
+    @Get(':tenantId/wallet/:customerId')
+    async getWallet(
+        @Param('tenantId') tenantId: string,
+        @Param('customerId') customerId: string,
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        try {
+            const wallet = await this.vendureService.getOrCreateWallet(
+                tenantSchema,
+                parseInt(customerId, 10),
+            );
+            return {
+                success: true,
+                data: wallet,
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to get wallet: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Add funds to wallet
+     */
+    @Post(':tenantId/wallet/:customerId/add-funds')
+    async addFunds(
+        @Param('tenantId') tenantId: string,
+        @Param('customerId') customerId: string,
+        @Body() body: { amount: number; description?: string },
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        if (!body.amount || body.amount <= 0) {
+            throw new HttpException(
+                'Amount must be greater than 0',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        try {
+            const wallet = await this.vendureService.addFunds(
+                tenantSchema,
+                parseInt(customerId, 10),
+                body.amount,
+                body.description || 'Funds added',
+            );
+            return {
+                success: true,
+                data: wallet,
+                message: `Added ${body.amount} to wallet`,
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to add funds: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Get wallet transactions
+     */
+    @Get(':tenantId/wallet/:customerId/transactions')
+    async getTransactions(
+        @Param('tenantId') tenantId: string,
+        @Param('customerId') customerId: string,
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        try {
+            const transactions = await this.vendureService.getWalletTransactions(
+                tenantSchema,
+                parseInt(customerId, 10),
+            );
+            return {
+                success: true,
+                data: transactions,
+                count: transactions.length,
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to get transactions: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    // ==================== GIFT CARD ENDPOINTS (Phase 07) ====================
+
+    /**
+     * Create gift card
+     */
+    @Post(':tenantId/gift-cards')
+    async createGiftCard(
+        @Param('tenantId') tenantId: string,
+        @Body() body: { value: number; expiresAt?: string },
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        if (!body.value || body.value <= 0) {
+            throw new HttpException(
+                'Value must be greater than 0',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        try {
+            const expiresAt = body.expiresAt ? new Date(body.expiresAt) : undefined;
+            const giftCard = await this.vendureService.createGiftCard(
+                tenantSchema,
+                body.value,
+                expiresAt,
+            );
+            return {
+                success: true,
+                data: giftCard,
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to create gift card: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Get gift card by code
+     */
+    @Get(':tenantId/gift-cards/:code')
+    async getGiftCard(
+        @Param('tenantId') tenantId: string,
+        @Param('code') code: string,
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        try {
+            const giftCard = await this.vendureService.getGiftCard(tenantSchema, code);
+            if (!giftCard) {
+                throw new HttpException('Gift card not found', HttpStatus.NOT_FOUND);
+            }
+            return {
+                success: true,
+                data: giftCard,
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to get gift card: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Redeem gift card
+     */
+    @Post(':tenantId/gift-cards/:code/redeem')
+    async redeemGiftCard(
+        @Param('tenantId') tenantId: string,
+        @Param('code') code: string,
+        @Body() body: { customerId: number },
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        if (!body.customerId) {
+            throw new HttpException(
+                'Customer ID is required',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        try {
+            const result = await this.vendureService.redeemGiftCard(
+                tenantSchema,
+                code,
+                body.customerId,
+            );
+            return {
+                success: true,
+                data: result,
+                message: 'Gift card redeemed successfully',
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to redeem gift card: ${error}`,
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+    }
 }
+
 
 

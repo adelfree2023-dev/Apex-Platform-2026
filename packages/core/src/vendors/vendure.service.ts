@@ -652,6 +652,231 @@ export class VendureService implements OnModuleInit {
     `, searchTerm);
     return products as any[];
   }
+
+  // ==================== WALLET METHODS (Phase 07) ====================
+
+  /**
+   * Create wallet table (migration)
+   */
+  async createWalletTable(tenantSchema: string): Promise<void> {
+    // Wallet table
+    await this.prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "${tenantSchema}"."vendure_wallet" (
+        id SERIAL PRIMARY KEY,
+        customer_id INT REFERENCES "${tenantSchema}"."vendure_customer"(id),
+        balance INT DEFAULT 0,
+        currency VARCHAR(10) DEFAULT 'EGP',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    // Gift card table
+    await this.prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "${tenantSchema}"."vendure_gift_card" (
+        id SERIAL PRIMARY KEY,
+        code VARCHAR(50) NOT NULL UNIQUE,
+        initial_value INT NOT NULL,
+        current_value INT NOT NULL,
+        currency VARCHAR(10) DEFAULT 'EGP',
+        expires_at TIMESTAMP,
+        redeemed_by INT REFERENCES "${tenantSchema}"."vendure_customer"(id),
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    // Wallet transactions table
+    await this.prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "${tenantSchema}"."vendure_wallet_transaction" (
+        id SERIAL PRIMARY KEY,
+        wallet_id INT REFERENCES "${tenantSchema}"."vendure_wallet"(id),
+        type VARCHAR(50) NOT NULL,
+        amount INT NOT NULL,
+        description TEXT,
+        reference_id VARCHAR(255),
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+  }
+
+  /**
+   * Get or create wallet for customer
+   */
+  async getOrCreateWallet(tenantSchema: string, customerId: number): Promise<any> {
+    // Try to find existing wallet
+    const existing = await this.prisma.$queryRawUnsafe(`
+      SELECT * FROM "${tenantSchema}"."vendure_wallet"
+      WHERE customer_id = $1
+    `, customerId);
+
+    if ((existing as any[]).length > 0) {
+      return (existing as any[])[0];
+    }
+
+    // Create new wallet
+    const wallet = await this.prisma.$queryRawUnsafe(`
+      INSERT INTO "${tenantSchema}"."vendure_wallet" (customer_id, balance)
+      VALUES ($1, 0)
+      RETURNING *
+    `, customerId);
+
+    return (wallet as any[])[0];
+  }
+
+  /**
+   * Get wallet balance
+   */
+  async getWalletBalance(tenantSchema: string, customerId: number): Promise<number> {
+    const wallet = await this.getOrCreateWallet(tenantSchema, customerId);
+    return wallet.balance || 0;
+  }
+
+  /**
+   * Add funds to wallet
+   */
+  async addFunds(tenantSchema: string, customerId: number, amount: number, description: string = 'Funds added'): Promise<any> {
+    const wallet = await this.getOrCreateWallet(tenantSchema, customerId);
+
+    // Update balance
+    await this.prisma.$executeRawUnsafe(`
+      UPDATE "${tenantSchema}"."vendure_wallet"
+      SET balance = balance + $1, updated_at = NOW()
+      WHERE id = $2
+    `, amount, wallet.id);
+
+    // Record transaction
+    await this.prisma.$queryRawUnsafe(`
+      INSERT INTO "${tenantSchema}"."vendure_wallet_transaction" (wallet_id, type, amount, description)
+      VALUES ($1, 'credit', $2, $3)
+    `, wallet.id, amount, description);
+
+    // Return updated wallet
+    const updated = await this.prisma.$queryRawUnsafe(`
+      SELECT * FROM "${tenantSchema}"."vendure_wallet"
+      WHERE id = $1
+    `, wallet.id);
+
+    return (updated as any[])[0];
+  }
+
+  /**
+   * Deduct from wallet
+   */
+  async deductFunds(tenantSchema: string, customerId: number, amount: number, description: string = 'Payment'): Promise<any> {
+    const wallet = await this.getOrCreateWallet(tenantSchema, customerId);
+
+    if (wallet.balance < amount) {
+      throw new Error('Insufficient wallet balance');
+    }
+
+    // Update balance
+    await this.prisma.$executeRawUnsafe(`
+      UPDATE "${tenantSchema}"."vendure_wallet"
+      SET balance = balance - $1, updated_at = NOW()
+      WHERE id = $2
+    `, amount, wallet.id);
+
+    // Record transaction
+    await this.prisma.$queryRawUnsafe(`
+      INSERT INTO "${tenantSchema}"."vendure_wallet_transaction" (wallet_id, type, amount, description)
+      VALUES ($1, 'debit', $2, $3)
+    `, wallet.id, amount, description);
+
+    // Return updated wallet
+    const updated = await this.prisma.$queryRawUnsafe(`
+      SELECT * FROM "${tenantSchema}"."vendure_wallet"
+      WHERE id = $1
+    `, wallet.id);
+
+    return (updated as any[])[0];
+  }
+
+  /**
+   * Get wallet transactions
+   */
+  async getWalletTransactions(tenantSchema: string, customerId: number): Promise<any[]> {
+    const wallet = await this.getOrCreateWallet(tenantSchema, customerId);
+
+    const transactions = await this.prisma.$queryRawUnsafe(`
+      SELECT * FROM "${tenantSchema}"."vendure_wallet_transaction"
+      WHERE wallet_id = $1
+      ORDER BY created_at DESC
+      LIMIT 50
+    `, wallet.id);
+
+    return transactions as any[];
+  }
+
+  // ==================== GIFT CARD METHODS (Phase 07) ====================
+
+  /**
+   * Create gift card
+   */
+  async createGiftCard(tenantSchema: string, value: number, expiresAt?: Date): Promise<any> {
+    const code = `GC-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+    const giftCard = await this.prisma.$queryRawUnsafe(`
+      INSERT INTO "${tenantSchema}"."vendure_gift_card" (code, initial_value, current_value, expires_at)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+    `, code, value, value, expiresAt || null);
+
+    return (giftCard as any[])[0];
+  }
+
+  /**
+   * Get gift card by code
+   */
+  async getGiftCard(tenantSchema: string, code: string): Promise<any> {
+    const giftCard = await this.prisma.$queryRawUnsafe(`
+      SELECT * FROM "${tenantSchema}"."vendure_gift_card"
+      WHERE code = $1 AND is_active = true
+    `, code);
+
+    return (giftCard as any[])[0] || null;
+  }
+
+  /**
+   * Redeem gift card
+   */
+  async redeemGiftCard(tenantSchema: string, code: string, customerId: number): Promise<any> {
+    const giftCard = await this.getGiftCard(tenantSchema, code);
+
+    if (!giftCard) {
+      throw new Error('Gift card not found or inactive');
+    }
+
+    if (giftCard.redeemed_by) {
+      throw new Error('Gift card already redeemed');
+    }
+
+    if (giftCard.expires_at && new Date(giftCard.expires_at) < new Date()) {
+      throw new Error('Gift card has expired');
+    }
+
+    // Mark as redeemed
+    await this.prisma.$executeRawUnsafe(`
+      UPDATE "${tenantSchema}"."vendure_gift_card"
+      SET redeemed_by = $1, updated_at = NOW()
+      WHERE id = $2
+    `, customerId, giftCard.id);
+
+    // Add funds to wallet
+    const wallet = await this.addFunds(
+      tenantSchema,
+      customerId,
+      giftCard.current_value,
+      `Gift card redeemed: ${code}`
+    );
+
+    return {
+      giftCard: { ...giftCard, redeemed_by: customerId },
+      wallet,
+    };
+  }
 }
+
 
 

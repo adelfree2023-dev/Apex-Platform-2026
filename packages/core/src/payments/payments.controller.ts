@@ -1,18 +1,96 @@
 /**
  * Payments Controller
- * API endpoints for Stripe payment processing
+ * API endpoints for multi-channel payment processing
  */
 
 import { Controller, Post, Get, Body, Param, Req, RawBodyRequest, HttpException, HttpStatus } from '@nestjs/common';
 import { Request } from 'express';
 import { PaymentsService, CreatePaymentIntentInput } from './payments.service';
+import { PaymentGatewayService, ProcessPaymentInput, PaymentMethod } from './payment-gateway.service';
 
 @Controller('api/shop')
 export class PaymentsController {
-    constructor(private readonly paymentsService: PaymentsService) { }
+    constructor(
+        private readonly paymentsService: PaymentsService,
+        private readonly paymentGatewayService: PaymentGatewayService,
+    ) { }
 
     /**
-     * Create payment intent for an order
+     * Get supported payment methods
+     */
+    @Get(':tenantId/payments/methods')
+    async getSupportedMethods(@Param('tenantId') tenantId: string) {
+        return {
+            success: true,
+            methods: this.paymentGatewayService.getSupportedMethods(),
+            currency: 'egp',
+        };
+    }
+
+    /**
+     * Process payment with any method
+     */
+    @Post(':tenantId/payments/process')
+    async processPayment(
+        @Param('tenantId') tenantId: string,
+        @Body() body: { orderId: number; method: PaymentMethod; customerEmail?: string },
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        if (!body.orderId || !body.method) {
+            throw new HttpException('Missing orderId or method', HttpStatus.BAD_REQUEST);
+        }
+
+        try {
+            const result = await this.paymentGatewayService.processPayment(
+                tenantSchema,
+                tenantId,
+                {
+                    orderId: body.orderId,
+                    method: body.method,
+                    customerEmail: body.customerEmail,
+                },
+            );
+
+            return {
+                success: true,
+                ...result,
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Failed to process payment: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Confirm payment (for COD or manual confirmation)
+     */
+    @Post(':tenantId/payments/confirm')
+    async confirmPayment(
+        @Param('tenantId') tenantId: string,
+        @Body() body: { orderId: number },
+    ) {
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        try {
+            const result = await this.paymentGatewayService.confirmPayment(
+                tenantSchema,
+                tenantId,
+                body.orderId,
+            );
+            return result;
+        } catch (error) {
+            throw new HttpException(
+                `Failed to confirm payment: ${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Create Stripe payment intent (direct)
      */
     @Post(':tenantId/payments/create-intent')
     async createPaymentIntent(

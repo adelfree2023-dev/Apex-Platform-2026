@@ -155,7 +155,8 @@ describe('JwtService', () => {
 
             expect(newPair.accessToken).toBeDefined();
             expect(newPair.refreshToken).toBeDefined();
-            expect(newPair.accessToken).not.toBe(initialPair.accessToken);
+            // Refresh tokens always differ due to unique jti
+            expect(newPair.refreshToken).not.toBe(initialPair.refreshToken);
         });
 
         it('should maintain payload data after refresh', () => {

@@ -1,14 +1,18 @@
 /**
  * Apex Platform - Main Entry Point
- * Security: Helmet + CORS + Rate Limiting
+ * Security: Helmet + CORS + Rate Limiting + Exception Filter
  */
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
+import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
+
+    // ✅ Security: Global Exception Filter (Error Masking)
+    app.useGlobalFilters(new AllExceptionsFilter());
 
     // ✅ Security: Helmet Middleware
     app.use(helmet({

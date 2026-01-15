@@ -27,6 +27,7 @@ import { BookingModule } from './bookings/booking.module';
 import { AiModule } from './ai/ai.module';
 import { AffiliateModule } from './affiliates/affiliate.module';
 import { MarketplaceModule } from './marketplace/marketplace.module';
+import { AuditModule } from './audit/audit.module';
 import { TenantMiddleware } from './middleware/tenant.middleware';
 
 @Module({
@@ -73,6 +74,7 @@ import { TenantMiddleware } from './middleware/tenant.middleware';
         AiModule,
         AffiliateModule,
         MarketplaceModule,
+        AuditModule, // ✅ Security: Audit Logging
     ],
     controllers: [AppController],
     providers: [

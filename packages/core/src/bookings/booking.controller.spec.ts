@@ -199,11 +199,14 @@ describe('BookingController', () => {
             expect(result.data.status).toBe('confirmed');
         });
 
-        it('should handle not found', async () => {
+        it('should return found: false for non-existent booking', async () => {
             mockBookingService.getBooking.mockResolvedValue(null);
 
-            await expect(controller.getBooking('test-store', '999'))
-                .rejects.toThrow(HttpException);
+            const result = await controller.getBooking('test-store', '999');
+
+            expect(result.success).toBe(true);
+            expect(result.found).toBe(false);
+            expect(result.data).toBeNull();
         });
     });
 

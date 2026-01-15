@@ -105,7 +105,8 @@ describe('TenantsService', () => {
 
             const result = await service.findById('uuid-123');
 
-            expect(result.name).toBe('Test Store');
+            expect(result).not.toBeNull();
+            expect(result!.name).toBe('Test Store');
         });
 
         it('should return null for non-existent tenant', async () => {

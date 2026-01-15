@@ -41,8 +41,8 @@ describe('ShippingService', () => {
     describe('getShippingZones', () => {
         it('should return shipping zones', async () => {
             const mockZones = [
-                { id: 1, name: 'Cairo', countries: ['EG'] },
-                { id: 2, name: 'International', countries: ['US', 'UK'] },
+                { id: 1, name: 'Cairo', regions: ['EG'], rate: 5000 },
+                { id: 2, name: 'International', regions: ['US', 'UK'], rate: 10000 },
             ];
 
             mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockZones);
@@ -53,54 +53,33 @@ describe('ShippingService', () => {
         });
     });
 
-    describe('getShippingMethods', () => {
-        it('should return shipping methods for zone', async () => {
-            const mockMethods = [
-                { id: 1, name: 'Standard', price: 5000, estimated_days: 5 },
-                { id: 2, name: 'Express', price: 10000, estimated_days: 2 },
-            ];
-
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockMethods);
-
-            const result = await service.getShippingMethods('tenant_test', 1);
-
-            expect(result.length).toBe(2);
-        });
-    });
-
     describe('calculateShipping', () => {
         it('should calculate shipping cost', async () => {
-            const mockMethod = [{
-                id: 1, name: 'Standard', base_price: 5000,
-                price_per_kg: 1000, free_shipping_threshold: 50000,
+            const mockZone = [{
+                id: 1, name: 'Cairo', rate: 5000,
+                min_order_for_free: 50000, estimated_days: 3,
             }];
 
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockMethod);
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockZone);
 
-            const result = await service.calculateShipping('tenant_test', {
-                methodId: 1,
-                weight: 2,
-                orderTotal: 30000,
-            });
+            // calculateShipping(tenantSchema, region, orderTotal)
+            const result = await service.calculateShipping('tenant_test', 'Cairo', 30000);
 
-            expect(result.cost).toBeGreaterThan(0);
+            expect(result.rate).toBe(5000);
+            expect(result.freeShipping).toBe(false);
         });
 
         it('should return free shipping above threshold', async () => {
-            const mockMethod = [{
-                id: 1, name: 'Standard', base_price: 5000,
-                price_per_kg: 1000, free_shipping_threshold: 50000,
+            const mockZone = [{
+                id: 1, name: 'Cairo', rate: 5000,
+                min_order_for_free: 50000, estimated_days: 3,
             }];
 
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockMethod);
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockZone);
 
-            const result = await service.calculateShipping('tenant_test', {
-                methodId: 1,
-                weight: 2,
-                orderTotal: 60000,
-            });
+            const result = await service.calculateShipping('tenant_test', 'Cairo', 60000);
 
-            expect(result.cost).toBe(0);
+            expect(result.rate).toBe(0);
             expect(result.freeShipping).toBe(true);
         });
     });
@@ -114,22 +93,22 @@ describe('ShippingService', () => {
 
             mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockShipment);
 
-            const result = await service.createShipment('tenant_test', {
-                orderId: 100,
-                carrier: 'DHL',
-            });
+            // createShipment(tenantSchema, orderId, carrier, trackingNumber)
+            const result = await service.createShipment('tenant_test', 100, 'DHL', 'TRK123');
 
-            expect(result.trackingNumber).toBeDefined();
+            expect(result.trackingNumber).toBe('TRK123');
         });
     });
 
     describe('updateShipmentStatus', () => {
         it('should update shipment status', async () => {
-            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+            const mockUpdated = [{ id: 1, status: 'shipped' }];
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockUpdated);
 
-            await service.updateShipmentStatus('tenant_test', 1, 'shipped');
+            const result = await service.updateShipmentStatus('tenant_test', 1, 'shipped');
 
-            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
+            expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalled();
         });
     });
 });
+

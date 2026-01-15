@@ -135,13 +135,14 @@ describe('SocialAuthService', () => {
 
     describe('validateSession', () => {
         it('should return session data for valid token', async () => {
-            const sessionData = [{ id: 1, customer_id: 100, expires_at: new Date(Date.now() + 3600000) }];
+            // Mock returns raw DB data with customer_id, service transforms to customerId
+            const sessionData = [{ id: 1, customer_id: 100, email: 'test@test.com', first_name: 'Test', expires_at: new Date(Date.now() + 3600000) }];
             mockPrismaService.$queryRawUnsafe.mockResolvedValue(sessionData);
 
             const result = await service.validateSession('tenant_test', 'valid-token');
 
             expect(result).toBeDefined();
-            expect(result!.customer_id).toBe(100);
+            expect(result!.customerId).toBe(100); // Service returns customerId, not customer_id
         });
 
         it('should return null for invalid session', async () => {

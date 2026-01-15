@@ -721,11 +721,21 @@ describe('VendureService', () => {
 
     describe('createDefaultChannel', () => {
         it('should create default channel for tenant', async () => {
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{ id: 1, code: 'default' }]);
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
 
             await service.createDefaultChannel('tenant-id', 'tenant_test', 'Test Store');
 
-            expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalled();
+            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
+        });
+    });
+
+    describe('updateCartTotals', () => {
+        it('should update cart totals', async () => {
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+
+            await service.updateCartTotals('tenant_test', 1);
+
+            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
         });
     });
 
@@ -763,17 +773,6 @@ describe('VendureService', () => {
             const result = service.getAdminApiUrl('tenant-id');
 
             expect(typeof result).toBe('string');
-        });
-    });
-
-    describe('updateCartTotals', () => {
-        it('should update cart totals', async () => {
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{ total: 50000 }]);
-            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
-
-            await service.updateCartTotals('tenant_test', 1);
-
-            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
         });
     });
 

@@ -80,6 +80,7 @@ Include \`X-Tenant-Id\` header for tenant-specific operations.
         .setVersion('1.0.0')
         .setContact('Apex Team', 'https://apex-platform.com', 'api@apex-platform.com')
         .setLicense('Proprietary', 'https://apex-platform.com/license')
+        .addServer('http://34.102.65.89:3001', 'Live Server')
         .addServer('http://localhost:3001', 'Development Server')
         .addServer('https://api.apex-platform.com', 'Production Server')
         .addBearerAuth({

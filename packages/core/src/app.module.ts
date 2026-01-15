@@ -1,4 +1,6 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -29,6 +31,24 @@ import { TenantMiddleware } from './middleware/tenant.middleware';
 
 @Module({
     imports: [
+        // ✅ Security: Rate Limiting (Plan-Based)
+        ThrottlerModule.forRoot([
+            {
+                name: 'short',
+                ttl: 1000,    // 1 second
+                limit: 5,     // 5 requests per second
+            },
+            {
+                name: 'medium',
+                ttl: 10000,   // 10 seconds
+                limit: 30,    // 30 requests per 10 seconds
+            },
+            {
+                name: 'long',
+                ttl: 60000,   // 1 minute
+                limit: 100,   // 100 requests per minute (Starter plan)
+            },
+        ]),
         PrismaModule,
         TenantsModule,
         EventsModule,
@@ -55,7 +75,14 @@ import { TenantMiddleware } from './middleware/tenant.middleware';
         MarketplaceModule,
     ],
     controllers: [AppController],
-    providers: [AppService],
+    providers: [
+        AppService,
+        // ✅ Security: Global Rate Limiting Guard
+        {
+            provide: APP_GUARD,
+            useClass: ThrottlerGuard,
+        },
+    ],
 })
 export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer) {

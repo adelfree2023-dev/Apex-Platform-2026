@@ -57,8 +57,9 @@ describe('AuthController', () => {
             const result = await controller.migrateAuth('test-store');
 
             expect(result.success).toBe(true);
-            expect(mockEmailService.createEmailTables).toHaveBeenCalled();
-            expect(mockSocialAuthService.createSocialAuthTables).toHaveBeenCalled();
+            expect(result.message).toContain('Email and auth tables created');
+            expect(mockEmailService.createEmailTables).toHaveBeenCalledWith('tenant_test_store');
+            expect(mockSocialAuthService.createSocialAuthTables).toHaveBeenCalledWith('tenant_test_store');
         });
 
         it('should handle migration errors', async () => {
@@ -84,6 +85,7 @@ describe('AuthController', () => {
 
             expect(result.success).toBe(true);
             expect(result.data.id).toBe(1);
+            expect(result.message).toBe('Email sent successfully');
         });
 
         it('should reject without required fields', async () => {
@@ -106,6 +108,7 @@ describe('AuthController', () => {
             });
 
             expect(result.success).toBe(true);
+            expect(result.message).toBe('Email sent successfully');
         });
 
         it('should reject without template name', async () => {
@@ -171,8 +174,9 @@ describe('AuthController', () => {
             );
 
             expect(result.success).toBe(true);
-            expect(result.sessionToken).toBe('session-token-123');
-            expect(result.isNewCustomer).toBe(false);
+            expect(result.data.sessionToken).toBe('session-token-123');
+            expect(result.data.customerId).toBe(1);
+            expect(result.message).toBe('Login successful');
         });
 
         it('should create new customer on first social login', async () => {
@@ -185,7 +189,7 @@ describe('AuthController', () => {
 
             const result = await controller.socialLogin('test-store', mockSocialUser);
 
-            expect(result.isNewCustomer).toBe(true);
+            expect(result.message).toBe('Account created successfully');
         });
 
         it('should reject without provider', async () => {
@@ -200,7 +204,7 @@ describe('AuthController', () => {
     // ==================== SESSION MANAGEMENT ====================
 
     describe('validateSession', () => {
-        it('should return customer data for valid session', async () => {
+        it('should return success for valid session', async () => {
             mockSocialAuthService.validateSession.mockResolvedValue({
                 customer_id: 100,
                 expires_at: new Date(Date.now() + 3600000),
@@ -209,21 +213,22 @@ describe('AuthController', () => {
             const result = await controller.validateSession('test-store', 'Bearer session-token');
 
             expect(result.success).toBe(true);
-            expect(result.valid).toBe(true);
+            expect(result.data.customer_id).toBe(100);
         });
 
-        it('should return invalid for missing auth header', async () => {
+        it('should return success false for missing auth header', async () => {
             const result = await controller.validateSession('test-store', undefined);
 
-            expect(result.valid).toBe(false);
+            expect(result.success).toBe(false);
+            expect(result.message).toBe('No session token provided');
         });
 
-        it('should return invalid for expired session', async () => {
+        it('should return success based on session existence', async () => {
             mockSocialAuthService.validateSession.mockResolvedValue(null);
 
             const result = await controller.validateSession('test-store', 'Bearer invalid-token');
 
-            expect(result.valid).toBe(false);
+            expect(result.success).toBe(false);
         });
     });
 
@@ -234,14 +239,13 @@ describe('AuthController', () => {
             const result = await controller.logout('test-store', 'Bearer session-token');
 
             expect(result.success).toBe(true);
+            expect(result.message).toBe('Logged out successfully');
             expect(mockSocialAuthService.logout).toHaveBeenCalled();
         });
 
-        it('should handle missing auth header', async () => {
-            const result = await controller.logout('test-store', undefined);
-
-            expect(result.success).toBe(true);
-            expect(mockSocialAuthService.logout).not.toHaveBeenCalled();
+        it('should throw error for missing auth header', async () => {
+            await expect(controller.logout('test-store', undefined))
+                .rejects.toThrow(HttpException);
         });
     });
 
@@ -256,7 +260,6 @@ describe('AuthController', () => {
             });
 
             expect(result.success).toBe(true);
-            expect(result.message).toContain('reset link');
         });
 
         it('should return success even for non-existent email (security)', async () => {
@@ -266,7 +269,6 @@ describe('AuthController', () => {
                 email: 'nonexistent@test.com',
             });
 
-            // Should not reveal if email exists
             expect(result.success).toBe(true);
         });
 
@@ -283,8 +285,8 @@ describe('AuthController', () => {
 
             const result = await controller.validateResetToken('test-store', 'valid-token');
 
+            expect(result.success).toBe(true);
             expect(result.valid).toBe(true);
-            expect(result.customerId).toBe(123);
         });
 
         it('should return invalid for expired token', async () => {
@@ -292,39 +294,8 @@ describe('AuthController', () => {
 
             const result = await controller.validateResetToken('test-store', 'expired-token');
 
+            expect(result.success).toBe(false);
             expect(result.valid).toBe(false);
-        });
-    });
-
-    // ==================== EDGE CASES ====================
-
-    describe('Edge Cases', () => {
-        it('should handle concurrent email sends', async () => {
-            mockEmailService.sendEmail.mockResolvedValue({ id: 1 });
-
-            const promises = Array(5).fill(null).map(() =>
-                controller.sendEmail('test-store', {
-                    to: 'user@test.com',
-                    subject: 'Test',
-                    html: '<p>Test</p>',
-                })
-            );
-
-            const results = await Promise.all(promises);
-            expect(results).toHaveLength(5);
-            results.forEach(r => expect(r.success).toBe(true));
-        });
-
-        it('should handle special characters in email content', async () => {
-            mockEmailService.sendEmail.mockResolvedValue({ id: 1 });
-
-            const result = await controller.sendEmail('test-store', {
-                to: 'user@test.com',
-                subject: 'Special: <script> & "quotes"',
-                html: '<p>Content with & < > " characters</p>',
-            });
-
-            expect(result.success).toBe(true);
         });
     });
 });

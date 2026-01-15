@@ -68,7 +68,7 @@ export type RefreshTokenDto = z.infer<typeof RefreshTokenSchema>;
 export function validateDto<T>(schema: z.ZodSchema<T>, data: unknown): T {
     const result = schema.safeParse(data);
     if (!result.success) {
-        const errors = result.error.errors.map(e => `${e.path.join('.')}: ${e.message}`);
+        const errors = result.error.issues.map((e: z.ZodIssue) => `${e.path.join('.')}: ${e.message}`);
         throw new Error(`Validation failed: ${errors.join(', ')}`);
     }
     return result.data;

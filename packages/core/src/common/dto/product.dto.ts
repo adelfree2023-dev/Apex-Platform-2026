@@ -54,7 +54,7 @@ export const ProductSchema = z.object({
     isActive: z.boolean()
         .optional()
         .default(true),
-    metadata: z.record(z.any())
+    metadata: z.record(z.string(), z.any())
         .optional(),
 });
 

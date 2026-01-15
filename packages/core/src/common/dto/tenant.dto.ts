@@ -47,7 +47,7 @@ export const UpdateTenantSchema = z.object({
     email: z.string().email().optional(),
     phone: z.string().regex(/^\+?[0-9]{10,15}$/).optional(),
     logo: z.string().url().optional(),
-    settings: z.record(z.any()).optional(),
+    settings: z.record(z.string(), z.any()).optional(),
 });
 
 // Type exports

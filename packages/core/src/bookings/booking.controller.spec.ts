@@ -138,7 +138,7 @@ describe('BookingController', () => {
                 customerId: 1,
                 serviceId: 1,
                 date: '2026-01-20',
-                time: '10:00',
+                timeSlot: '10:00',
             });
 
             expect(result.success).toBe(true);
@@ -150,7 +150,7 @@ describe('BookingController', () => {
                 customerId: undefined as any,
                 serviceId: 1,
                 date: '2026-01-20',
-                time: '10:00',
+                timeSlot: '10:00',
             })).rejects.toThrow(HttpException);
         });
     });

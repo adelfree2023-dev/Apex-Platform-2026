@@ -69,7 +69,7 @@ describe('PaymentsController', () => {
 
             const result = await controller.processPayment('test-store', {
                 orderId: 1,
-                method: 'cod',
+                method: 'cash',
             });
 
             expect(result.success).toBe(true);
@@ -79,7 +79,7 @@ describe('PaymentsController', () => {
         it('should throw without orderId', async () => {
             await expect(controller.processPayment('test-store', {
                 orderId: undefined as any,
-                method: 'cod',
+                method: 'cash',
             })).rejects.toThrow(HttpException);
         });
 

@@ -53,6 +53,7 @@ describe('AffiliateController', () => {
             const result = await controller.applyAffiliate('test-store', {
                 name: 'John',
                 email: 'john@test.com',
+                commissionRate: 10,
             });
             expect(result.success).toBe(true);
         });
@@ -61,6 +62,7 @@ describe('AffiliateController', () => {
             await expect(controller.applyAffiliate('test-store', {
                 name: '',
                 email: 'john@test.com',
+                commissionRate: 10,
             })).rejects.toThrow(HttpException);
         });
     });

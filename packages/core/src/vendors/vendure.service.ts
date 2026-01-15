@@ -87,7 +87,7 @@ export class VendureService implements OnModuleInit {
   /**
    * Create Vendure tables in tenant schema
    */
-  async createVendureTables(tenantSchema: string): Promise<void> {
+  private async createVendureTables(tenantSchema: string): Promise<void> {
     // Create essential Vendure tables
     await this.prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "${tenantSchema}"."vendure_channel" (
@@ -200,7 +200,7 @@ export class VendureService implements OnModuleInit {
   /**
    * Create default channel for tenant
    */
-  async createDefaultChannel(tenantId: string, tenantSchema: string, tenantName: string): Promise<void> {
+  private async createDefaultChannel(tenantId: string, tenantSchema: string, tenantName: string): Promise<void> {
     const channelCode = tenantId.replace(/-/g, '_');
     const token = `${channelCode}_${Date.now()}`;
 
@@ -433,7 +433,7 @@ export class VendureService implements OnModuleInit {
   /**
    * Update cart totals
    */
-  async updateCartTotals(tenantSchema: string, cartId: number): Promise<void> {
+  private async updateCartTotals(tenantSchema: string, cartId: number): Promise<void> {
     await this.prisma.$executeRawUnsafe(`
       UPDATE "${tenantSchema}"."vendure_cart"
       SET 

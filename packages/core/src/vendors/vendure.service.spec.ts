@@ -707,37 +707,8 @@ describe('VendureService', () => {
     });
 
     // ==================== ADDITIONAL METHOD TESTS ====================
-
-    describe('createVendureTables', () => {
-        it('should create all required tables', async () => {
-            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
-
-            await service.createVendureTables('tenant_test');
-
-            // Should call executeRawUnsafe multiple times for different tables
-            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
-        });
-    });
-
-    describe('createDefaultChannel', () => {
-        it('should create default channel for tenant', async () => {
-            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
-
-            await service.createDefaultChannel('tenant-id', 'tenant_test', 'Test Store');
-
-            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
-        });
-    });
-
-    describe('updateCartTotals', () => {
-        it('should update cart totals', async () => {
-            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
-
-            await service.updateCartTotals('tenant_test', 1);
-
-            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
-        });
-    });
+    // Note: createVendureTables, createDefaultChannel, updateCartTotals
+    // are private methods tested indirectly through initializeTenant, addToCart, etc.
 
     describe('createOrder', () => {
         it('should create order for customer', async () => {

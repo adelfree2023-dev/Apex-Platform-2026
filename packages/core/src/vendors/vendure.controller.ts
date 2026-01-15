@@ -6,17 +6,38 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Req, Headers, HttpException, HttpStatus } from '@nestjs/common';
 import { Request } from 'express';
 import { VendureService, ProductInput } from './vendure.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('api/shop')
 export class VendureController {
-    constructor(private readonly vendureService: VendureService) { }
+    constructor(
+        private readonly vendureService: VendureService,
+        private readonly prisma: PrismaService,
+    ) { }
+
+    /**
+     * Helper: Resolve tenant schema from subdomain
+     * Looks up tenant by subdomain and returns UUID-based schema
+     */
+    private async resolveTenantSchema(subdomain: string): Promise<string> {
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { subdomain },
+            select: { id: true },
+        });
+
+        if (!tenant) {
+            throw new HttpException(`Tenant not found: ${subdomain}`, HttpStatus.NOT_FOUND);
+        }
+
+        return `tenant_${tenant.id.replace(/-/g, '_')}`;
+    }
 
     /**
      * Get all products for tenant
      */
     @Get(':tenantId/products')
     async getProducts(@Param('tenantId') tenantId: string, @Req() req: Request) {
-        const tenantSchema = req.tenantSchema || `tenant_${tenantId.replace(/-/g, '_')}`;
+        const tenantSchema = req.tenantSchema || await this.resolveTenantSchema(tenantId);
 
         try {
             const products = await this.vendureService.getProducts(tenantSchema);
@@ -42,7 +63,7 @@ export class VendureController {
         @Body() input: ProductInput,
         @Req() req: Request,
     ) {
-        const tenantSchema = req.tenantSchema || `tenant_${tenantId.replace(/-/g, '_')}`;
+        const tenantSchema = req.tenantSchema || await this.resolveTenantSchema(tenantId);
 
         if (!input.name || !input.slug || !input.price) {
             throw new HttpException(
@@ -76,7 +97,7 @@ export class VendureController {
         @Headers('x-session-id') sessionId: string,
         @Req() req: Request,
     ) {
-        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+        const tenantSchema = await this.resolveTenantSchema(tenantId);
         const session = sessionId || `session_${Date.now()}`;
 
         try {
@@ -103,7 +124,7 @@ export class VendureController {
         @Headers('x-session-id') sessionId: string,
         @Body() body: { productId: number; quantity: number },
     ) {
-        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+        const tenantSchema = await this.resolveTenantSchema(tenantId);
         const session = sessionId || `session_${Date.now()}`;
 
         if (!body.productId || !body.quantity) {
@@ -142,7 +163,7 @@ export class VendureController {
         @Param('itemId') itemId: string,
         @Body() body: { quantity: number },
     ) {
-        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+        const tenantSchema = await this.resolveTenantSchema(tenantId);
 
         try {
             const item = await this.vendureService.updateCartItem(
@@ -170,7 +191,7 @@ export class VendureController {
         @Param('tenantId') tenantId: string,
         @Param('itemId') itemId: string,
     ) {
-        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+        const tenantSchema = await this.resolveTenantSchema(tenantId);
 
         try {
             const result = await this.vendureService.removeCartItem(
@@ -198,7 +219,7 @@ export class VendureController {
         @Headers('x-session-id') sessionId: string,
         @Body() body: { customerEmail: string; territory?: string },
     ) {
-        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+        const tenantSchema = await this.resolveTenantSchema(tenantId);
         const session = sessionId || `session_${Date.now()}`;
 
         if (!body.customerEmail) {
@@ -260,7 +281,7 @@ export class VendureController {
         @Param('tenantId') tenantId: string,
         @Param('orderId') orderId: string,
     ) {
-        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+        const tenantSchema = await this.resolveTenantSchema(tenantId);
 
         try {
             const order = await this.vendureService.getOrderById(

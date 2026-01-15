@@ -16,17 +16,9 @@ async function bootstrap() {
     // ✅ Security: Global Exception Filter (Error Masking)
     app.useGlobalFilters(new AllExceptionsFilter());
 
-    // ✅ Security: Helmet Middleware
+    // ✅ Security: Helmet Middleware (CSP disabled for Swagger compatibility)
     app.use(helmet({
-        contentSecurityPolicy: {
-            directives: {
-                defaultSrc: ["'self'"],
-                styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-                fontSrc: ["'self'", "https://fonts.gstatic.com"],
-                imgSrc: ["'self'", "data:", "https:"],
-                scriptSrc: ["'self'", "'unsafe-inline'"], // Required for Swagger UI
-            },
-        },
+        contentSecurityPolicy: false, // Disabled to allow Swagger UI
         crossOriginEmbedderPolicy: false,
         hsts: { maxAge: 31536000, includeSubDomains: true },
         frameguard: { action: 'deny' },

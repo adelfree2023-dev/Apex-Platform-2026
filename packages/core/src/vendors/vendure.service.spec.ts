@@ -855,13 +855,15 @@ describe('VendureService', () => {
         });
 
         it('should handle wallet operations correctly', async () => {
-            // Add funds
+            // addFunds calls: getOrCreateWallet, executeRaw (update), queryRaw (insert), queryRaw (select)
             mockPrismaService.$queryRawUnsafe
                 .mockResolvedValueOnce([{ id: 1, balance: 0 }]) // getOrCreateWallet
-                .mockResolvedValueOnce([{ id: 1, balance: 50000 }]); // after addFunds
+                .mockResolvedValueOnce(undefined) // INSERT transaction
+                .mockResolvedValueOnce([{ id: 1, balance: 50000 }]); // final SELECT
             mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
 
             const wallet = await service.addFunds('tenant_test', 123, 50000, 'Deposit');
+            expect(wallet).toBeDefined();
             expect(wallet.balance).toBe(50000);
         });
 

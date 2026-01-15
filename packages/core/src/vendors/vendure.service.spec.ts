@@ -705,4 +705,243 @@ describe('VendureService', () => {
             expect(calls[1][0]).toContain('tenant_b');
         });
     });
+
+    // ==================== ADDITIONAL METHOD TESTS ====================
+
+    describe('createVendureTables', () => {
+        it('should create all required tables', async () => {
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+
+            await service.createVendureTables('tenant_test');
+
+            // Should call executeRawUnsafe multiple times for different tables
+            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
+        });
+    });
+
+    describe('createDefaultChannel', () => {
+        it('should create default channel for tenant', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{ id: 1, code: 'default' }]);
+
+            await service.createDefaultChannel('tenant-id', 'tenant_test', 'Test Store');
+
+            expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalled();
+        });
+    });
+
+    describe('createOrder', () => {
+        it('should create order for customer', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{
+                id: 1, code: 'ORD-001', customer_id: 123, state: 'AddingItems',
+            }]);
+
+            const result = await service.createOrder('tenant_test', 123, 'Cairo');
+
+            expect(result.customer_id).toBe(123);
+            expect(result.code).toContain('ORD');
+        });
+    });
+
+    describe('getTenantConfig', () => {
+        it('should return undefined for non-existent tenant', () => {
+            const result = service.getTenantConfig('non-existent');
+
+            expect(result).toBeUndefined();
+        });
+    });
+
+    describe('getShopApiUrl', () => {
+        it('should return shop API URL', () => {
+            const result = service.getShopApiUrl('tenant-id');
+
+            expect(typeof result).toBe('string');
+        });
+    });
+
+    describe('getAdminApiUrl', () => {
+        it('should return admin API URL', () => {
+            const result = service.getAdminApiUrl('tenant-id');
+
+            expect(typeof result).toBe('string');
+        });
+    });
+
+    describe('updateCartTotals', () => {
+        it('should update cart totals', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{ total: 50000 }]);
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+
+            await service.updateCartTotals('tenant_test', 1);
+
+            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
+        });
+    });
+
+    // ==================== EDGE CASES ====================
+
+    describe('Edge Cases', () => {
+        it('should handle empty product list', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
+            const result = await service.getProducts('tenant_test');
+            expect(result).toEqual([]);
+        });
+
+        it('should handle empty order list', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
+            const result = await service.getOrders('tenant_test');
+            expect(result).toEqual([]);
+        });
+
+        it('should handle empty category list', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
+            const result = await service.getCategories('tenant_test');
+            expect(result).toEqual([]);
+        });
+
+        it('should handle product not found in search', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
+            const result = await service.searchProducts('tenant_test', 'nonexistent');
+            expect(result).toEqual([]);
+        });
+
+        it('should handle wallet not found for customer', async () => {
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce([]) // No wallet
+                .mockResolvedValueOnce([{ id: 1, balance: 0 }]); // Created wallet
+
+            const result = await service.getOrCreateWallet('tenant_test', 999);
+            expect(result.balance).toBe(0);
+        });
+    });
+
+    // ==================== ERROR HANDLING ====================
+
+    describe('Error Handling', () => {
+        it('should throw error for invalid order status', async () => {
+            await expect(service.updateOrderStatus('tenant_test', 1, 'INVALID'))
+                .rejects.toThrow('Invalid status');
+        });
+
+        it('should throw error when order not found for status update', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
+            await expect(service.updateOrderStatus('tenant_test', 999, 'Shipped'))
+                .rejects.toThrow('Order not found');
+        });
+
+        it('should throw error for insufficient wallet balance', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{ id: 1, balance: 1000 }]);
+            await expect(service.deductFunds('tenant_test', 123, 50000))
+                .rejects.toThrow('Insufficient');
+        });
+
+        it('should throw error if gift card not found', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
+            await expect(service.redeemGiftCard('tenant_test', 'INVALID', 123))
+                .rejects.toThrow('Gift card not found');
+        });
+
+        it('should throw error if return request not found', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
+            await expect(service.processRefund('tenant_test', 999, 50000))
+                .rejects.toThrow('Return request not found');
+        });
+
+        it('should throw error when adding to cart with invalid product', async () => {
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce([{ id: 1 }]) // Cart exists
+                .mockResolvedValueOnce([]); // Product not found
+
+            await expect(service.addToCart('tenant_test', 'session', 999, 1))
+                .rejects.toThrow('Product not found');
+        });
+
+        it('should throw error on checkout with empty cart', async () => {
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce([{ id: 1, subtotal: 0, total: 0 }])
+                .mockResolvedValueOnce([]);
+
+            await expect(service.checkout('tenant_test', 'session', 'test@test.com', 'Cairo'))
+                .rejects.toThrow('Cart is empty');
+        });
+    });
+
+    // ==================== COMPLEX WORKFLOWS ====================
+
+    describe('Complex Workflows', () => {
+        it('should complete full order lifecycle', async () => {
+            // 1. Create cart
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce([{ id: 1, session_id: 'session' }]);
+
+            const cart = await service.getOrCreateCart('tenant_test', 'session');
+            expect(cart.id).toBe(1);
+
+            // 2. Update order status through lifecycle
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{ id: 1, state: 'Processing' }]);
+            mockEventService.record.mockResolvedValue(undefined);
+
+            const order = await service.updateOrderStatus('tenant_test', 1, 'Processing');
+            expect(order.state).toBe('Processing');
+        });
+
+        it('should handle wallet operations correctly', async () => {
+            // Add funds
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce([{ id: 1, balance: 0 }]) // getOrCreateWallet
+                .mockResolvedValueOnce([{ id: 1, balance: 50000 }]); // after addFunds
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+
+            const wallet = await service.addFunds('tenant_test', 123, 50000, 'Deposit');
+            expect(wallet.balance).toBe(50000);
+        });
+
+        it('should create gift card with correct value', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{
+                id: 1, code: 'GC-TEST123', value: 100000, current_value: 100000,
+            }]);
+
+            const giftCard = await service.createGiftCard('tenant_test', 100000);
+            expect(giftCard.value).toBe(100000);
+            expect(giftCard.code).toContain('GC-');
+        });
+
+        it('should redeem gift card and add to wallet', async () => {
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce([{ id: 1, code: 'GC-ABC', current_value: 50000 }]) // getGiftCard
+                .mockResolvedValueOnce([{ id: 1, balance: 0 }]) // getOrCreateWallet in addFunds
+                .mockResolvedValueOnce([{ id: 1, balance: 50000 }]); // after addFunds
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+
+            const result = await service.redeemGiftCard('tenant_test', 'GC-ABC', 123);
+            expect(result).toBeDefined();
+            expect(result.giftCard).toBeDefined();
+        });
+    });
+
+    // ==================== PERFORMANCE SCENARIOS ====================
+
+    describe('Performance Scenarios', () => {
+        it('should handle multiple concurrent cart operations', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{ id: 1 }]);
+
+            const promises = [
+                service.getOrCreateCart('tenant_test', 'session-1'),
+                service.getOrCreateCart('tenant_test', 'session-2'),
+                service.getOrCreateCart('tenant_test', 'session-3'),
+            ];
+
+            const results = await Promise.all(promises);
+            expect(results).toHaveLength(3);
+        });
+
+        it('should handle multiple order queries', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([
+                { id: 1, code: 'ORD-001' },
+                { id: 2, code: 'ORD-002' },
+            ]);
+
+            const result = await service.getOrders('tenant_test');
+            expect(result).toHaveLength(2);
+        });
+    });
 });

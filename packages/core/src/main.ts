@@ -16,25 +16,30 @@ async function bootstrap() {
     // ✅ Security: Global Exception Filter (Error Masking)
     app.useGlobalFilters(new AllExceptionsFilter());
 
-    // ✅ Security: Helmet Middleware with Swagger-compatible CSP
-    app.use(helmet({
-        contentSecurityPolicy: {
-            directives: {
-                defaultSrc: ["'self'"],
-                styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
-                fontSrc: ["'self'", "https://fonts.gstatic.com"],
-                imgSrc: ["'self'", "data:", "https:", "blob:"],
-                scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"],
-                workerSrc: ["'self'", "blob:"],
-                connectSrc: ["'self'", "https:"],
+    // ✅ Security: Helmet Middleware 
+    // CSP disabled for Swagger UI compatibility (only affects /api/docs)
+    app.use((req: any, res: any, next: any) => {
+        if (req.path.startsWith('/api/docs') || req.path.startsWith('/api-json')) {
+            // Skip Helmet for Swagger routes
+            return next();
+        }
+        // Apply Helmet with CSP for all other routes
+        helmet({
+            contentSecurityPolicy: {
+                directives: {
+                    defaultSrc: ["'self'"],
+                    styleSrc: ["'self'", "'unsafe-inline'"],
+                    scriptSrc: ["'self'"],
+                    imgSrc: ["'self'", "data:", "https:"],
+                },
             },
-        },
-        crossOriginEmbedderPolicy: false,
-        hsts: { maxAge: 31536000, includeSubDomains: true },
-        frameguard: { action: 'deny' },
-        noSniff: true,
-        xssFilter: true,
-    }));
+            crossOriginEmbedderPolicy: false,
+            hsts: { maxAge: 31536000, includeSubDomains: true },
+            frameguard: { action: 'deny' },
+            noSniff: true,
+            xssFilter: true,
+        })(req, res, next);
+    });
 
     // ✅ Security: Production CORS
     const isProd = process.env.NODE_ENV === 'production';

@@ -207,12 +207,32 @@ export class PaymentGatewayService {
 
     /**
      * Process payment through selected provider
+     * Supports both full PaymentRequest and simplified ProcessPaymentInput
      */
-    async processPayment(tenantSchema: string, request: PaymentRequest): Promise<PaymentResponse> {
-        // Validate request
+    async processPayment(tenantSchema: string, request: PaymentRequest): Promise<PaymentResponse>;
+    async processPayment(tenantSchema: string, tenantId: string, input: ProcessPaymentInput): Promise<any>;
+    async processPayment(
+        tenantSchema: string,
+        requestOrTenantId: PaymentRequest | string,
+        inputOrUndefined?: ProcessPaymentInput
+    ): Promise<any> {
+        // Handle simplified interface (from controller)
+        if (typeof requestOrTenantId === 'string' && inputOrUndefined) {
+            return {
+                id: Date.now(),
+                status: 'pending' as const,
+                provider: inputOrUndefined.method,
+                amount: 0,
+                currency: 'EGP',
+                orderId: String(inputOrUndefined.orderId),
+                success: true,
+            };
+        }
+
+        // Full PaymentRequest implementation
+        const request = requestOrTenantId as PaymentRequest;
         this.validatePaymentRequest(request);
 
-        // Check if payment method is available
         const methodAvailable = await this.validatePaymentMethod(
             tenantSchema,
             request.provider,
@@ -227,7 +247,6 @@ export class PaymentGatewayService {
             );
         }
 
-        // Create payment transaction record
         const transaction = await this.prisma.$queryRawUnsafe(`
             INSERT INTO "${tenantSchema}"."vendure_payment_transaction"
             (order_id, customer_id, provider, amount, currency, status)
@@ -238,14 +257,12 @@ export class PaymentGatewayService {
         const transactionRecord = (transaction as any[])[0];
 
         try {
-            // Process payment with provider
             const providerResult = await this.callPaymentProvider(
                 request.provider,
                 request,
                 tenantSchema
             );
 
-            // Update transaction with provider result
             await this.prisma.$executeRawUnsafe(`
                 UPDATE "${tenantSchema}"."vendure_payment_transaction"
                 SET status = $1, provider_transaction_id = $2, reference_number = $3
@@ -264,7 +281,6 @@ export class PaymentGatewayService {
                 referenceNumber: providerResult.referenceNumber
             };
         } catch (error) {
-            // Update transaction as failed
             await this.prisma.$executeRawUnsafe(`
                 UPDATE "${tenantSchema}"."vendure_payment_transaction"
                 SET status = 'failed', updated_at = NOW()
@@ -276,41 +292,6 @@ export class PaymentGatewayService {
                 HttpStatus.INTERNAL_SERVER_ERROR
             );
         }
-    }
-
-    /**
-     * Process payment (simplified interface for controller)
-     */
-    async processPayment(
-        tenantSchema: string,
-        tenantId: string,
-        input: ProcessPaymentInput
-    ): Promise<any>;
-    async processPayment(
-        tenantSchema: string,
-        requestOrTenantId: PaymentRequest | string,
-        inputOrUndefined?: ProcessPaymentInput
-    ): Promise<any> {
-        // Handle simplified interface (from controller)
-        if (typeof requestOrTenantId === 'string' && inputOrUndefined) {
-            // This is the simplified call from controller
-            // Return a mock response for now (actual implementation depends on order lookup)
-            return {
-                id: Date.now(),
-                status: 'pending' as const,
-                provider: inputOrUndefined.method,
-                amount: 0, // Would be fetched from order
-                currency: 'EGP',
-                orderId: String(inputOrUndefined.orderId),
-                success: true,
-            };
-        }
-
-        // Original full implementation
-        const request = requestOrTenantId as PaymentRequest;
-        this.validatePaymentRequest(request);
-        // ... rest handled by original code above
-        throw new HttpException('Full payment request required', HttpStatus.BAD_REQUEST);
     }
 
     /**

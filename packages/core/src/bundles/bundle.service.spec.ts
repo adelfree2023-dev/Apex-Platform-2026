@@ -107,4 +107,96 @@ describe('BundleService', () => {
             expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
         });
     });
+    // ==================== GET BUNDLE BY SLUG ====================
+
+    describe('getBundleBySlug', () => {
+        it('should return bundle by slug', async () => {
+            const mockBundle = [{
+                id: 1, name: 'Bundle Slug', slug: 'slug-1', is_active: true
+            }];
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce(mockBundle) // getBundleBySlug
+                .mockResolvedValueOnce([]); // getBundleItems
+
+            const result = await service.getBundleBySlug('tenant_test', 'slug-1');
+            expect(result.slug).toBe('slug-1');
+        });
+
+        it('should return null if slug not found', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
+            const result = await service.getBundleBySlug('tenant_test', 'unknown');
+            expect(result).toBeNull();
+        });
+    });
+
+    // ==================== UPDATE BUNDLE ====================
+
+    describe('updateBundle', () => {
+        it('should update bundle fields', async () => {
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+
+            // Mock getBundle response for the return value
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce([{ id: 1, name: 'Updated Name', bundle_price: 6000 }]) // getBundle
+                .mockResolvedValueOnce([]); // getItems
+
+            const result = await service.updateBundle('tenant_test', 1, {
+                name: 'Updated Name', bundlePrice: 6000
+            });
+
+            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalledWith(
+                expect.stringContaining('UPDATE'),
+                'Updated Name',
+                6000,
+                1
+            );
+            expect(result.name).toBe('Updated Name');
+        });
+    });
+
+    // ==================== ADD BUNDLE TO CART ====================
+
+    describe('addBundleToCart', () => {
+        it('should add bundle items to cart', async () => {
+            // Mock getBundle with items
+            const mockBundle = [{ id: 1, name: 'Cart Bundle' }];
+            const mockItems = [
+                { id: 1, variantId: 101, quantity: 2, stockOnHand: 10, productName: 'Item 1' },
+                { id: 2, variantId: 102, quantity: 1, stockOnHand: 5, productName: 'Item 2' }
+            ];
+
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce(mockBundle) // getBundle
+                .mockResolvedValueOnce(mockItems); // getBundleItems
+
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+
+            const result = await service.addBundleToCart('tenant_test', 'session-123', 1);
+
+            expect(result.success).toBe(true);
+            // Verify items are added to cart
+            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalledTimes(2);
+        });
+
+        it('should fail if bundle not found', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]); // getBundle returns empty
+
+            await expect(service.addBundleToCart('tenant_test', 's-1', 99))
+                .rejects.toThrow('Bundle not found');
+        });
+
+        it('should fail if insufficient stock', async () => {
+            const mockBundle = [{ id: 1, name: 'Stock Bundle' }];
+            const mockItems = [
+                { id: 1, variantId: 101, quantity: 5, stockOnHand: 2, productName: 'Low Stock Item' } // Request 5, have 2
+            ];
+
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce(mockBundle)
+                .mockResolvedValueOnce(mockItems);
+
+            await expect(service.addBundleToCart('tenant_test', 's-1', 1))
+                .rejects.toThrow('Insufficient stock for Low Stock Item');
+        });
+    });
 });

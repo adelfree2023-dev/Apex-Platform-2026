@@ -200,15 +200,15 @@ describe('PromotionsController', () => {
                     { id: 1, rating: 5, title: 'Great' },
                     { id: 2, rating: 4, title: 'Good' },
                 ],
-                averageRating: 4.5,
-                totalReviews: 2,
+                avgRating: 4.5,
+                count: 2,
             });
 
             const result = await controller.getProductReviews('test-store', '100');
 
             expect(result.success).toBe(true);
-            expect(result.data.averageRating).toBe(4.5);
-            expect(result.data.reviews).toHaveLength(2);
+            expect(result.avgRating).toBe(4.5);
+            expect(result.reviews).toHaveLength(2);
         });
 
         it('should return empty on error', async () => {
@@ -216,7 +216,7 @@ describe('PromotionsController', () => {
 
             const result = await controller.getProductReviews('test-store', '100');
 
-            expect(result.data.reviews).toEqual([]);
+            expect(result.reviews).toEqual([]);
         });
     });
 

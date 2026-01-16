@@ -140,5 +140,53 @@ describe('AnalyticsService', () => {
 
             expect(result).toBeDefined();
         });
+        describe('Error Handling', () => {
+            it('getOverviewStats should return default on error', async () => {
+                mockPrismaService.$queryRawUnsafe.mockRejectedValue(new Error('DB fail'));
+                const result = await service.getOverviewStats('tenant_test');
+                expect(result.totalRevenue).toBe(0);
+            });
+
+            it('getRevenueByPeriod should return empty on error', async () => {
+                mockPrismaService.$queryRawUnsafe.mockRejectedValue(new Error('fail'));
+                const result = await service.getRevenueByPeriod('tenant_test', 'day', 30);
+                expect(result).toEqual([]);
+            });
+
+            it('getOrdersByStatus should return empty on error', async () => {
+                mockPrismaService.$queryRawUnsafe.mockRejectedValue(new Error('fail'));
+                const result = await service.getOrdersByStatus('tenant_test');
+                expect(result).toEqual([]);
+            });
+
+            it('getTopProducts should return empty on error', async () => {
+                mockPrismaService.$queryRawUnsafe.mockRejectedValue(new Error('fail'));
+                const result = await service.getTopProducts('tenant_test', 10);
+                expect(result).toEqual([]);
+            });
+
+            it('getRecentOrders should return empty on error', async () => {
+                mockPrismaService.$queryRawUnsafe.mockRejectedValue(new Error('fail'));
+                const result = await service.getRecentOrders('tenant_test', 10);
+                expect(result).toEqual([]);
+            });
+
+            it('getCustomerGrowth should return empty on error', async () => {
+                mockPrismaService.$queryRawUnsafe.mockRejectedValue(new Error('fail'));
+                const result = await service.getCustomerGrowth('tenant_test', 30);
+                expect(result).toEqual([]);
+            });
+
+            it('getWalletStats should return default on error', async () => {
+                mockPrismaService.$queryRawUnsafe.mockRejectedValue(new Error('fail'));
+                const result = await service.getWalletStats('tenant_test');
+                expect(result.totalDeposits).toBe(0);
+            });
+
+            it('getConversionMetrics should return default on error', async () => {
+                mockPrismaService.$queryRawUnsafe.mockRejectedValue(new Error('fail'));
+                const result = await service.getConversionMetrics('tenant_test');
+                expect(result.conversionRate).toBe(0);
+            });
+        });
     });
-});

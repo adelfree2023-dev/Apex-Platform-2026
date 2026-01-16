@@ -36,14 +36,21 @@ It is an **Operating System for the Digital Local Economy** — connecting Merch
 
 # 🗺️ Server Anatomy & Live Status
 
-### 🔴 Live Status: 34.102.65.89
-| Service | Port | Status | Details |
-|---------|------|--------|---------|
-| **PostgreSQL** | `5432` | ✅ **Running** | `apex-postgres` container (Schema-per-Tenant) |
-| **Redis** | `6379` | ✅ **Running** | `apex-redis` container (Caching/Queues) |
-| **Adminer** | `8080` | ✅ **Running** | `apex-adminer` container (DB GUI) |
-| **Backend API** | `3001` | 🔴 **STOPPED** | Node process needs restart |
-| **Storefront** | `3002` | 🔴 **STOPPED** | Node process needs restart |
+- **IP Address:** `194.195.87.161`
+- **OS:** Ubuntu 24.04 LTS
+- **Backend Port:** `3001` (Verified Online)
+- **Frontend Port:** `3000` (Stopped/Paused)
+- **Database:** PostgreSQL (Local)
+- **Process Manager:** PM2 (`apex-backend`)
+
+### 🚦 Live Status (16 Jan 2026)
+| Service | Status | Port | Version |
+|---------|--------|------|---------|
+| **Apex Backend** | 🟢 **ONLINE** | 3001 | v0.0.1 |
+| **Storefront** | 🔴 **PAUSED** | - | - |
+| **PostgreSQL** | 🟢 **ONLINE** | 5432 | 16.x |
+| **Redis** | 🟢 **ONLINE** | 6379 | 7.x |
+| **Adminer** | 🟢 **ONLINE** | 8080 | 4.x |
 
 ### 🏗️ Infrastructure Map
 ```mermaid
@@ -79,10 +86,14 @@ The platform consists of **5 Connected Projects**:
 
 # ⚙️ Technical Breakdown
 
-### 🔙 Backend (NestJS)
-*   **Status:** ✅ 90% Complete.
-*   **Modules:** 25 Modules Active (Tenants, Vendure, Payments, Analytics, etc.).
-*   **Missing:** BillingService, ReportsService, LicensesService.
+### 3. Backend Core (`packages/core`)
+- **Status:** ✅ **COMPLETE** (100% Core Services)
+- **Framework:** NestJS 10
+- **Key Modules:**
+  - `LicensesModule` (✅ Implemented & Verified)
+  - `BillingModule` (✅ Implemented & Verified)
+  - `ReportsModule` (✅ Implemented & Verified)
+  - `TenantsModule` (Schema-per-Tenant)
 *   **Test Coverage:** 83% (982/986 Tests Passing).
 
 ### 🎨 Frontend (Next.js)

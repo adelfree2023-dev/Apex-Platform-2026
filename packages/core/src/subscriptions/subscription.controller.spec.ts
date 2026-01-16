@@ -64,9 +64,9 @@ describe('SubscriptionController', () => {
     describe('getPlans', () => {
         it('should return all subscription plans', async () => {
             const plans = [
-                { id: 1, name: 'Basic', price: 99, interval: 'month' },
-                { id: 2, name: 'Premium', price: 199, interval: 'month' },
-                { id: 3, name: 'Enterprise', price: 499, interval: 'month' },
+                { id: 1, name: 'Basic', price: 99, interval: 'monthly' },
+                { id: 2, name: 'Premium', price: 199, interval: 'monthly' },
+                { id: 3, name: 'Enterprise', price: 499, interval: 'monthly' },
             ];
             mockSubscriptionService.getPlans.mockResolvedValue(plans);
 
@@ -92,13 +92,13 @@ describe('SubscriptionController', () => {
                 id: 4,
                 name: 'VIP',
                 price: 999,
-                interval: 'year',
+                interval: 'yearly',
             });
 
             const result = await controller.createPlan('test-store', {
                 name: 'VIP',
                 price: 999,
-                interval: 'year',
+                interval: 'yearly',
             });
 
             expect(result.success).toBe(true);
@@ -110,7 +110,7 @@ describe('SubscriptionController', () => {
             await expect(controller.createPlan('test-store', {
                 name: '',
                 price: 100,
-                interval: 'month',
+                interval: 'monthly',
             })).rejects.toThrow(HttpException);
         });
 
@@ -118,7 +118,7 @@ describe('SubscriptionController', () => {
             await expect(controller.createPlan('test-store', {
                 name: 'Test',
                 price: undefined as any,
-                interval: 'month',
+                interval: 'monthly',
             })).rejects.toThrow(HttpException);
         });
 
@@ -126,7 +126,7 @@ describe('SubscriptionController', () => {
             await expect(controller.createPlan('test-store', {
                 name: 'Test',
                 price: 100,
-                interval: '',
+                interval: 'monthly' as any, // Will throw because price missing
             })).rejects.toThrow(HttpException);
         });
     });

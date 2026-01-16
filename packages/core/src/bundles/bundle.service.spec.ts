@@ -159,10 +159,10 @@ describe('BundleService', () => {
     describe('addBundleToCart', () => {
         it('should add bundle items to cart', async () => {
             // Mock getBundle with items
-            const mockBundle = [{ id: 1, name: 'Cart Bundle' }];
+            const mockBundle = [{ id: 1, name: 'Cart Bundle', slug: 'cart-1', is_active: true }];
             const mockItems = [
-                { id: 1, variantId: 101, quantity: 2, stockOnHand: 10, productName: 'Item 1' },
-                { id: 2, variantId: 102, quantity: 1, stockOnHand: 5, productName: 'Item 2' }
+                { id: 1, variant_id: 101, quantity: 2, stock_on_hand: 10, product_name: 'Item 1', product_id: 1, sku: 'SKU1', price: 100 },
+                { id: 2, variant_id: 102, quantity: 1, stock_on_hand: 5, product_name: 'Item 2', product_id: 2, sku: 'SKU2', price: 200 }
             ];
 
             mockPrismaService.$queryRawUnsafe
@@ -186,9 +186,9 @@ describe('BundleService', () => {
         });
 
         it('should fail if insufficient stock', async () => {
-            const mockBundle = [{ id: 1, name: 'Stock Bundle' }];
+            const mockBundle = [{ id: 1, name: 'Stock Bundle', slug: 'stock-1', is_active: true }];
             const mockItems = [
-                { id: 1, variantId: 101, quantity: 5, stockOnHand: 2, productName: 'Low Stock Item' } // Request 5, have 2
+                { id: 1, variant_id: 101, quantity: 5, stock_on_hand: 2, product_name: 'Low Stock Item', product_id: 1, sku: 'SKU1', price: 100 } // Request 5, have 2
             ];
 
             mockPrismaService.$queryRawUnsafe

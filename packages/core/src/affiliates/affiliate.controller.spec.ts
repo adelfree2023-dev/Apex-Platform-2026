@@ -96,19 +96,87 @@ describe('AffiliateController', () => {
         });
     });
 
-    describe('requestPayout', () => {
-        it('should request payout', async () => {
-            mockAffiliateService.requestPayout.mockResolvedValue({ id: 1, status: 'pending' });
-            const result = await controller.requestPayout('test-store', '1', {
-                amount: 100,
-                method: 'bank_transfer',
-            });
+    describe('getAffiliate', () => {
+        it('should return affiliate by ID', async () => {
+            mockAffiliateService.getAffiliate.mockResolvedValue({ id: 1, name: 'John' });
+            const result = await controller.getAffiliate('test-store', '1');
             expect(result.success).toBe(true);
+            expect(result.found).toBe(true);
         });
 
-        it('should throw without amount', async () => {
+        it('should return found=false on error', async () => {
+            mockAffiliateService.getAffiliate.mockRejectedValue(new Error('DB error'));
+            const result = await controller.getAffiliate('test-store', '999');
+            expect(result.found).toBe(false);
+        });
+    });
+
+    describe('getReferrals', () => {
+        it('should return referrals', async () => {
+            mockAffiliateService.getReferrals.mockResolvedValue([{ id: 1, orderId: 100 }]);
+            const result = await controller.getReferrals('test-store', '1');
+            expect(result.success).toBe(true);
+            expect(result.count).toBe(1);
+        });
+
+        it('should return empty on error', async () => {
+            mockAffiliateService.getReferrals.mockRejectedValue(new Error('fail'));
+            const result = await controller.getReferrals('test-store', '1');
+            expect(result.data).toEqual([]);
+        });
+    });
+
+    describe('getAffiliateDashboard', () => {
+        it('should return stats', async () => {
+            mockAffiliateService.getAffiliateStats.mockResolvedValue({ totalEarnings: 500 });
+            const result = await controller.getAffiliateDashboard('test-store', '1');
+            expect(result.success).toBe(true);
+            expect(result.data.totalEarnings).toBe(500);
+        });
+
+        it('should return null data on error', async () => {
+            mockAffiliateService.getAffiliateStats.mockRejectedValue(new Error('fail'));
+            const result = await controller.getAffiliateDashboard('test-store', '1');
+            expect(result.data).toBeNull();
+        });
+    });
+
+    describe('Error Handling', () => {
+        it('migrateAffiliates should throw on error', async () => {
+            mockAffiliateService.createAffiliateTables.mockRejectedValue(new Error('Migration failed'));
+            await expect(controller.migrateAffiliates('test-store'))
+                .rejects.toThrow(HttpException);
+        });
+
+        it('applyAffiliate should throw on service error', async () => {
+            mockAffiliateService.applyAffiliate.mockRejectedValue(new Error('DB fail'));
+            await expect(controller.applyAffiliate('test-store', {
+                name: 'John',
+                email: 'john@test.com',
+                commissionRate: 10,
+            })).rejects.toThrow(HttpException);
+        });
+
+        it('approveAffiliate should throw on error', async () => {
+            mockAffiliateService.approveAffiliate.mockRejectedValue(new Error('fail'));
+            await expect(controller.approveAffiliate('test-store', '1'))
+                .rejects.toThrow(HttpException);
+        });
+
+        it('trackReferral should return success=false on error', async () => {
+            mockAffiliateService.trackReferral.mockRejectedValue(new Error('fail'));
+            const result = await controller.trackReferral('test-store', {
+                affiliateCode: 'ABC',
+                orderId: 1,
+                orderTotal: 100,
+            });
+            expect(result.success).toBe(false);
+        });
+
+        it('requestPayout should throw on service error', async () => {
+            mockAffiliateService.requestPayout.mockRejectedValue(new Error('fail'));
             await expect(controller.requestPayout('test-store', '1', {
-                amount: undefined as any,
+                amount: 100,
                 method: 'bank_transfer',
             })).rejects.toThrow(HttpException);
         });

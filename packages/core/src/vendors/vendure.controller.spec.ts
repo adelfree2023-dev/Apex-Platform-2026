@@ -24,6 +24,7 @@ describe('VendureController', () => {
         getOrderById: jest.fn(),
         getCategories: jest.fn(),
         getProductsByCategory: jest.fn(),
+        createCategoryTable: jest.fn(),
         createCategory: jest.fn(),
         migrateCategories: jest.fn(),
         searchProducts: jest.fn(),
@@ -235,6 +236,7 @@ describe('VendureController', () => {
 
     describe('createCategory', () => {
         it('should create category', async () => {
+            mockVendureService.createCategoryTable.mockResolvedValue(undefined);
             mockVendureService.createCategory.mockResolvedValue({ id: 1, name: 'Cat1' });
             const result = await controller.createCategory('test-store', { name: 'Cat1', slug: 'cat1' });
             expect(result.success).toBe(true);

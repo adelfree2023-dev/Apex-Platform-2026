@@ -147,17 +147,74 @@ describe('RfqService', () => {
             expect(result.discount).toBe(0);
             expect(result.discountedPrice).toBe(10000);
         });
+        it('should apply tier-based discount if quantity threshold met', async () => {
+            // Mock 1: Customer not approved
+            mockPrismaService.$queryRawUnsafe.mockResolvedValueOnce([]);
+
+            // Mock 2: Tier found (e.g. Silver Tier for > 50 items)
+            const mockTier = [{ name: 'Silver', discount_percentage: 10 }];
+            mockPrismaService.$queryRawUnsafe.mockResolvedValueOnce(mockTier);
+
+            const result = await service.getWholesalePrice('tenant_test', 123, 100, 50);
+
+            expect(result.discount).toBe(10);
+            expect(result.tier).toBe('Silver');
+        });
     });
 
-    describe('applyForWholesale', () => {
-        it('should create wholesale application', async () => {
-            const mockResult = [{ id: 1 }];
+    // ==================== UPDATE RFQ ====================
 
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockResult);
+    describe('updateRfq', () => {
+        it('should update RFQ status and price', async () => {
+            // Mock update execution
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
 
-            const result = await service.applyForWholesale('tenant_test', 123);
+            // Mock getRfq return
+            const mockRfq = [{
+                id: 1, customer_name: 'John', status: 'quoted',
+                quoted_total: 5000,
+                created_at: new Date()
+            }];
+            const mockItems = [];
 
-            expect(result.success).toBe(true);
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce(mockRfq) // getRfq query
+                .mockResolvedValueOnce(mockItems); // getRfqItems query
+
+            const result = await service.updateRfq('tenant_test', 1, {
+                status: 'quoted',
+                quotedTotal: 5000,
+                adminNotes: 'Approved'
+            });
+
+            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalledWith(
+                expect.stringContaining('UPDATE'),
+                expect.anything(), // status
+                expect.anything(), // quoted_total
+                expect.anything(), // admin_notes
+                1 // id
+            );
+            expect(result.status).toBe('quoted');
+            expect(result.quotedTotal).toBe(5000);
+        });
+
+        it('should update RFQ item prices', async () => {
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+            // Mock getRfq for return
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce([{ id: 1 }])
+                .mockResolvedValueOnce([]);
+
+            await service.updateRfq('tenant_test', 1, {
+                itemPrices: [{ itemId: 10, unitPrice: 50 }]
+            });
+
+            // Expect item update call
+            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalledWith(
+                expect.stringContaining('UPDATE'),
+                50,
+                10
+            );
         });
     });
 });

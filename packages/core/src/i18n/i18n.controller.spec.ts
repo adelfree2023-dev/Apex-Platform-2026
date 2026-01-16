@@ -13,7 +13,7 @@ describe('I18nController', () => {
     let controller: I18nController;
 
     const mockI18nService = {
-        createI18nTables: jest.fn(),
+        createTranslationTable: jest.fn(),
         getTranslation: jest.fn(),
         getAllTranslations: jest.fn(),
         setTranslation: jest.fn(),
@@ -22,6 +22,7 @@ describe('I18nController', () => {
     };
 
     const mockSmsService = {
+        createSmsTable: jest.fn(),
         sendSms: jest.fn(),
         sendTemplatedSms: jest.fn(),
         getTemplates: jest.fn(),
@@ -49,7 +50,8 @@ describe('I18nController', () => {
 
     describe('migrateI18n', () => {
         it('should create i18n tables', async () => {
-            mockI18nService.createI18nTables.mockResolvedValue(undefined);
+            mockI18nService.createTranslationTable.mockResolvedValue(undefined);
+            mockSmsService.createSmsTable.mockResolvedValue(undefined);
 
             const result = await controller.migrateI18n('test-store');
 

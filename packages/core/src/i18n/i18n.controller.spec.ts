@@ -73,7 +73,7 @@ describe('I18nController', () => {
             const result = await controller.getTranslation('test-store', 'greeting', 'ar');
 
             expect(result.success).toBe(true);
-            expect(result.data).toBe('مرحباً');
+            expect(result.value).toBe('مرحباً');
         });
 
         it('should use default language (en)', async () => {

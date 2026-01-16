@@ -345,4 +345,92 @@ describe('VendureController', () => {
             expect(result.status).toBe('ok');
         });
     });
+
+    // ==================== ERROR HANDLING ====================
+
+    describe('Error Handling', () => {
+        it('getProducts should throw on service error', async () => {
+            mockVendureService.getProducts.mockRejectedValue(new Error('DB fail'));
+            await expect(controller.getProducts('test-store', mockRequest as any))
+                .rejects.toThrow(HttpException);
+        });
+
+        it('createProduct should throw on service error', async () => {
+            mockVendureService.createProduct.mockRejectedValue(new Error('fail'));
+            await expect(controller.createProduct('test-store', { name: 'P1', slug: 'p1', price: 100 }, mockRequest as any))
+                .rejects.toThrow(HttpException);
+        });
+
+        it('getCart should throw on service error', async () => {
+            mockVendureService.getCart.mockRejectedValue(new Error('fail'));
+            await expect(controller.getCart('test-store', 'session-1', mockRequest as any))
+                .rejects.toThrow(HttpException);
+        });
+
+        it('addToCart should throw on service error', async () => {
+            mockVendureService.addToCart.mockRejectedValue(new Error('fail'));
+            await expect(controller.addToCart('test-store', 'session-1', { productId: 1, quantity: 1 }))
+                .rejects.toThrow(HttpException);
+        });
+
+        it('updateCartItem should throw on service error', async () => {
+            mockVendureService.updateCartItem.mockRejectedValue(new Error('fail'));
+            await expect(controller.updateCartItem('test-store', '1', { quantity: 5 }))
+                .rejects.toThrow(HttpException);
+        });
+
+        it('removeFromCart should throw on service error', async () => {
+            mockVendureService.removeCartItem.mockRejectedValue(new Error('fail'));
+            await expect(controller.removeFromCart('test-store', '1'))
+                .rejects.toThrow(HttpException);
+        });
+
+        it('checkout should throw on service error', async () => {
+            mockVendureService.checkout.mockRejectedValue(new Error('fail'));
+            await expect(controller.checkout('test-store', 'session-1', { customerEmail: 'test@test.com' }))
+                .rejects.toThrow(HttpException);
+        });
+
+        it('getCategories should throw on service error', async () => {
+            mockVendureService.getCategories.mockRejectedValue(new Error('fail'));
+            await expect(controller.getCategories('test-store'))
+                .rejects.toThrow(HttpException);
+        });
+
+        it('searchProducts should throw on service error', async () => {
+            mockVendureService.searchProducts.mockRejectedValue(new Error('fail'));
+            await expect(controller.searchProducts('test-store', mockRequest as any))
+                .rejects.toThrow(HttpException);
+        });
+
+        it('getWallet should throw on service error', async () => {
+            mockVendureService.getOrCreateWallet.mockRejectedValue(new Error('fail'));
+            await expect(controller.getWallet('test-store', '1'))
+                .rejects.toThrow(HttpException);
+        });
+
+        it('addFunds should throw on service error', async () => {
+            mockVendureService.addFunds.mockRejectedValue(new Error('fail'));
+            await expect(controller.addFunds('test-store', '1', { amount: 100 }))
+                .rejects.toThrow(HttpException);
+        });
+
+        it('getOrderFulfillment should throw on service error', async () => {
+            mockVendureService.getFulfillment.mockRejectedValue(new Error('fail'));
+            await expect(controller.getOrderFulfillment('test-store', '1'))
+                .rejects.toThrow(HttpException);
+        });
+
+        it('createReturn should throw on service error', async () => {
+            mockVendureService.createReturn.mockRejectedValue(new Error('fail'));
+            await expect(controller.createReturn('test-store', '1', { reason: 'R1' }))
+                .rejects.toThrow(HttpException);
+        });
+
+        it('processRefund should throw on service error', async () => {
+            mockVendureService.processRefund.mockRejectedValue(new Error('fail'));
+            await expect(controller.processRefund('test-store', '1', { refundAmount: 100 }))
+                .rejects.toThrow(HttpException);
+        });
+    });
 });

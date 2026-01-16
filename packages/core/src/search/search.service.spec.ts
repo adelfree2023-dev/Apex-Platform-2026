@@ -109,4 +109,89 @@ describe('SearchService', () => {
             expect(result.priceRange.min).toBe(1000);
         });
     });
+    it('should filter by category slug', async () => {
+        const mockProducts = [{ id: 1, name: 'Category Item' }];
+        const mockCount = [{ total: 1 }];
+
+        mockPrismaService.$queryRawUnsafe
+            .mockResolvedValueOnce(mockCount) // Count query
+            .mockResolvedValueOnce(mockProducts); // Product query
+
+        const result = await service.searchProducts('tenant_test', { categorySlug: 'food' });
+
+        expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalledWith(
+            expect.stringContaining('c.slug = $'),
+            expect.any(String) // matches 'food'
+        );
+        expect(result.products).toHaveLength(1);
+    });
+
+    it('should filter by inStock', async () => {
+        const mockProducts = [{ id: 1, name: 'Stock Item' }];
+        const mockCount = [{ total: 1 }];
+
+        mockPrismaService.$queryRawUnsafe
+            .mockResolvedValueOnce(mockCount)
+            .mockResolvedValueOnce(mockProducts);
+
+        await service.searchProducts('tenant_test', { inStock: true });
+
+        expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalledWith(
+            expect.stringContaining('pv.stock_on_hand > 0'),
+            expect.any(Number), // limit
+            expect.any(Number)  // offset
+        );
+    });
+
+    it('should apply sorting', async () => {
+        const mockProducts = [];
+        const mockCount = [{ total: 0 }];
+
+        mockPrismaService.$queryRawUnsafe
+            .mockResolvedValueOnce(mockCount)
+            .mockResolvedValueOnce(mockProducts);
+
+        await service.searchProducts('tenant_test', { sortBy: 'price_desc' });
+
+        expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalledWith(
+            expect.stringContaining('ORDER BY pv.price DESC'),
+            expect.any(Number),
+            expect.any(Number)
+        );
+    });
+
+    it('should handle search errors gracefully', async () => {
+        mockPrismaService.$queryRawUnsafe.mockRejectedValue(new Error('DB Error'));
+
+        const result = await service.searchProducts('tenant_test', { query: 'fail' });
+
+        expect(result.products).toEqual([]);
+        expect(result.total).toBe(0);
+    });
+});
+
+describe('getSearchSuggestions', () => {
+    it('should return empty if query is too short', async () => {
+        const result = await service.getSearchSuggestions('tenant_test', 'a');
+        expect(result).toEqual([]);
+    });
+
+    it('should handle db errors gracefully', async () => {
+        mockPrismaService.$queryRawUnsafe.mockRejectedValue(new Error('DB Error'));
+        const result = await service.getSearchSuggestions('tenant_test', 'error');
+        expect(result).toEqual([]);
+    });
+});
+
+describe('getSearchFacets', () => {
+    it('should handle db errors gracefully', async () => {
+        // Mock failures for all facet queries if possible, or just the first one throwing
+        mockPrismaService.$queryRawUnsafe.mockRejectedValue(new Error('DB Error'));
+
+        const result = await service.getSearchFacets('tenant_test');
+
+        expect(result.categories).toEqual([]);
+        expect(result.priceRange.min).toBe(0);
+    });
+});
 });

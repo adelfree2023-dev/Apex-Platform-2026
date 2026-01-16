@@ -30,7 +30,7 @@ describe('VendureController', () => {
         migrateWallet: jest.fn(),
         getOrCreateWallet: jest.fn(),
         addFunds: jest.fn(),
-        getTransactions: jest.fn(),
+        getWalletTransactions: jest.fn(),
         createGiftCard: jest.fn(),
         getGiftCard: jest.fn(),
         redeemGiftCard: jest.fn(),
@@ -279,7 +279,7 @@ describe('VendureController', () => {
 
     describe('getTransactions', () => {
         it('should return transactions', async () => {
-            mockVendureService.getTransactions.mockResolvedValue([]);
+            mockVendureService.getWalletTransactions.mockResolvedValue([]);
             const result = await controller.getTransactions('test-store', 'cust-1');
             expect(result.success).toBe(true);
         });

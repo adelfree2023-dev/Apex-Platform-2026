@@ -165,7 +165,7 @@ export class WishlistService {
             throw new Error('Item not in wishlist');
         }
 
-        const variantId = (item as any[])[0].product_variant_id;
+        let variantId = (item as any[])[0].product_variant_id;
 
         if (!variantId) {
             // Get default variant
@@ -177,6 +177,7 @@ export class WishlistService {
             if ((variant as any[]).length === 0) {
                 throw new Error('No variant found');
             }
+            variantId = (variant as any[])[0].id;
         }
 
         // Add to cart

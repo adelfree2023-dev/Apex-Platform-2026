@@ -87,7 +87,7 @@ describe('BundleController', () => {
             mockBundleService.getBundle.mockResolvedValue({
                 id: 1,
                 name: 'Tech Bundle',
-                items: [{ productId: 10, quantity: 1 }],
+                items: [{ productVariantId: 10, quantity: 1 }],
             });
 
             const result = await controller.getBundle('test-store', '1');
@@ -134,7 +134,7 @@ describe('BundleController', () => {
                 name: 'Gaming Bundle',
                 slug: 'gaming-bundle',
                 bundlePrice: 8000,
-                items: [{ productId: 10, quantity: 1 }],
+                items: [{ productVariantId: 10, quantity: 1 }],
             });
 
             expect(result.success).toBe(true);
@@ -146,7 +146,7 @@ describe('BundleController', () => {
                 name: '',
                 slug: 'test',
                 bundlePrice: 1000,
-                items: [{ productId: 1, quantity: 1 }],
+                items: [{ productVariantId: 1, quantity: 1 }],
             })).rejects.toThrow(HttpException);
         });
 
@@ -155,7 +155,7 @@ describe('BundleController', () => {
                 name: 'Test',
                 slug: '',
                 bundlePrice: 1000,
-                items: [{ productId: 1, quantity: 1 }],
+                items: [{ productVariantId: 1, quantity: 1 }],
             })).rejects.toThrow(HttpException);
         });
 

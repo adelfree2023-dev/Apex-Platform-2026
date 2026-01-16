@@ -190,4 +190,82 @@ describe('SubscriptionService', () => {
             expect(result).toBeNull();
         });
     });
+    // ==================== CREATE PLAN ====================
+
+    describe('createPlan', () => {
+        it('should create a new plan', async () => {
+            const planData = { name: 'New Plan', price: 5000, interval: 'yearly' as const };
+            const mockCreatedPlan = [{ ...planData, id: 3, interval_count: 1, is_active: true }];
+
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockCreatedPlan);
+
+            const result = await service.createPlan('tenant_test', planData);
+
+            expect(result.name).toBe('New Plan');
+            expect(result.interval).toBe('yearly');
+            expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalledWith(
+                expect.stringContaining('INSERT INTO'),
+                planData.name,
+                null,
+                planData.price,
+                planData.interval,
+                null,
+                null
+            );
+        });
+    });
+
+    // ==================== RENEW SUBSCRIPTION ====================
+
+    describe('renewSubscription', () => {
+        it('should renew an active subscription', async () => {
+            const mockSub = [{
+                id: 1, customer_id: 123, plan_id: 1, status: 'active',
+                current_period_end: new Date()
+            }];
+            const mockPlan = [{
+                id: 1, name: 'Basic', price: 9900, interval: 'monthly', interval_count: 1
+            }];
+
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce(mockSub) // getSubscription
+                .mockResolvedValueOnce(mockPlan) // getPlan
+                .mockResolvedValueOnce([{ // getSubscription (final)
+                    ...mockSub[0],
+                    current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                }]);
+
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+
+            const result = await service.renewSubscription('tenant_test', 1);
+
+            expect(result.currentPeriodEnd.getTime()).toBeGreaterThan(Date.now());
+            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalledTimes(2); // Update sub + Record payment
+        });
+
+        it('should fail if subscription not found', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
+            await expect(service.renewSubscription('tenant_test', 999))
+                .rejects.toThrow('Subscription not found');
+        });
+    });
+
+    // ==================== PAYMENT HISTORY ====================
+
+    describe('getPaymentHistory', () => {
+        it('should return payment history', async () => {
+            const mockPayments = [{
+                id: BigInt(1), subscription_id: BigInt(1), amount: 9900,
+                status: 'paid', payment_date: new Date()
+            }];
+
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockPayments);
+
+            const result = await service.getPaymentHistory('tenant_test', 1);
+
+            expect(result).toHaveLength(1);
+            expect(result[0].status).toBe('paid');
+        });
+    });
+
 });

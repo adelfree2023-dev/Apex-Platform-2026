@@ -100,8 +100,8 @@ describe('PromotionsController', () => {
             const result = await controller.validateCoupon('test-store', 'SAVE100', '500');
 
             expect(result.success).toBe(true);
-            expect(result.data.valid).toBe(true);
-            expect(result.data.discount).toBe(100);
+            expect(result.valid).toBe(true);
+            expect(result.discount).toBe(100);
         });
 
         it('should return invalid for expired coupon', async () => {
@@ -112,7 +112,7 @@ describe('PromotionsController', () => {
 
             const result = await controller.validateCoupon('test-store', 'EXPIRED', '500');
 
-            expect(result.data.valid).toBe(false);
+            expect(result.valid).toBe(false);
         });
     });
 

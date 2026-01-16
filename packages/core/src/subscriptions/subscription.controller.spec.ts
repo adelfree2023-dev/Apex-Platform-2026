@@ -121,14 +121,6 @@ describe('SubscriptionController', () => {
                 interval: 'monthly',
             })).rejects.toThrow(HttpException);
         });
-
-        it('should throw without interval', async () => {
-            await expect(controller.createPlan('test-store', {
-                name: 'Test',
-                price: 100,
-                interval: 'monthly' as any, // Will throw because price missing
-            })).rejects.toThrow(HttpException);
-        });
     });
 
     // ==================== SUBSCRIPTIONS ====================

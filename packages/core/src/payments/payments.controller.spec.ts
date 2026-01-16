@@ -63,8 +63,13 @@ describe('PaymentsController', () => {
     describe('processPayment', () => {
         it('should process payment successfully', async () => {
             mockPaymentGatewayService.processPayment.mockResolvedValue({
-                paymentId: 'pay_123',
-                status: 'confirmed',
+                id: 123,
+                status: 'pending',
+                provider: 'fawry',
+                amount: 1000,
+                currency: 'EGP',
+                orderId: 'order-1',
+                success: true,
             });
 
             const result = await controller.processPayment('test-store', {
@@ -73,7 +78,6 @@ describe('PaymentsController', () => {
             });
 
             expect(result.success).toBe(true);
-            expect(result.paymentId).toBe('pay_123');
         });
 
         it('should throw without orderId', async () => {

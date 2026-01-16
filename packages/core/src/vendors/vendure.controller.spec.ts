@@ -349,6 +349,11 @@ describe('VendureController', () => {
     // ==================== ERROR HANDLING ====================
 
     describe('Error Handling', () => {
+        beforeEach(() => {
+            // Setup tenant resolution mock for all error handling tests
+            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'uuid-123' });
+        });
+
         it('getProducts should throw on service error', async () => {
             mockVendureService.getProducts.mockRejectedValue(new Error('DB fail'));
             await expect(controller.getProducts('test-store', mockRequest as any))

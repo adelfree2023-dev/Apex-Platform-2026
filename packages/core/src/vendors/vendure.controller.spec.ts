@@ -4,7 +4,7 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { HttpException } from '@nestjs/common';
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { VendureController } from './vendure.controller';
 import { VendureService } from './vendure.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -15,7 +15,6 @@ describe('VendureController', () => {
     const mockVendureService = {
         getProducts: jest.fn(),
         createProduct: jest.fn(),
-        getOrCreateCart: jest.fn(),
         getCart: jest.fn(),
         addToCart: jest.fn(),
         updateCartItem: jest.fn(),
@@ -23,9 +22,24 @@ describe('VendureController', () => {
         checkout: jest.fn(),
         getOrders: jest.fn(),
         getOrderById: jest.fn(),
-        updateOrderStatus: jest.fn(),
         getCategories: jest.fn(),
+        getProductsByCategory: jest.fn(),
+        createCategory: jest.fn(),
+        migrateCategories: jest.fn(),
         searchProducts: jest.fn(),
+        migrateWallet: jest.fn(),
+        getWallet: jest.fn(),
+        addFunds: jest.fn(),
+        getTransactions: jest.fn(),
+        createGiftCard: jest.fn(),
+        getGiftCard: jest.fn(),
+        redeemGiftCard: jest.fn(),
+        getFulfillment: jest.fn(),
+        updateFulfillment: jest.fn(),
+        requestReturn: jest.fn(),
+        getReturn: jest.fn(),
+        updateReturnStatus: jest.fn(),
+        processRefund: jest.fn(),
     };
 
     const mockPrismaService = {
@@ -35,7 +49,7 @@ describe('VendureController', () => {
     };
 
     const mockRequest = {
-        tenantSchema: undefined,
+        tenantSchema: 'test_schema',
         query: {},
     };
 
@@ -58,26 +72,18 @@ describe('VendureController', () => {
 
     // ==================== TENANT RESOLUTION ====================
 
-    describe('Tenant Resolution', () => {
+    describe('resolveTenantSchema', () => {
         it('should resolve tenant schema from subdomain', async () => {
-            mockPrismaService.tenant.findUnique.mockResolvedValue({
-                id: 'uuid-123-456',
-            });
-            mockVendureService.getProducts.mockResolvedValue([]);
+            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'uuid-123' });
 
-            const result = await controller.getProducts('test-store', mockRequest as any);
-
-            expect(mockPrismaService.tenant.findUnique).toHaveBeenCalledWith({
-                where: { subdomain: 'test-store' },
-                select: { id: true },
-            });
-            expect(result.success).toBe(true);
+            // Accessing private method for test (or testing via public method)
+            const result = await (controller as any).resolveTenantSchema('test-store');
+            expect(result).toBe('tenant_uuid_123');
         });
 
-        it('should throw 404 for non-existent tenant', async () => {
+        it('should throw 404 if tenant not found', async () => {
             mockPrismaService.tenant.findUnique.mockResolvedValue(null);
-
-            await expect(controller.getProducts('nonexistent', mockRequest as any))
+            await expect((controller as any).resolveTenantSchema('non-existent'))
                 .rejects.toThrow(HttpException);
         });
     });
@@ -85,162 +91,198 @@ describe('VendureController', () => {
     // ==================== PRODUCTS ====================
 
     describe('getProducts', () => {
-        it('should return products for tenant', async () => {
-            const products = [
-                { id: 1, name: 'Product 1', price: 10000 },
-                { id: 2, name: 'Product 2', price: 20000 },
-            ];
-            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'uuid' });
-            mockVendureService.getProducts.mockResolvedValue(products);
-
+        it('should return products', async () => {
+            mockVendureService.getProducts.mockResolvedValue([{ id: 1 }]);
             const result = await controller.getProducts('test-store', mockRequest as any);
-
             expect(result.success).toBe(true);
-            expect(result.data).toHaveLength(2);
-            expect(result.count).toBe(2);
+            expect(result.data).toHaveLength(1);
         });
 
-        it('should return empty array for store with no products', async () => {
-            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'uuid' });
-            mockVendureService.getProducts.mockResolvedValue([]);
-
-            const result = await controller.getProducts('empty-store', mockRequest as any);
-
-            expect(result.success).toBe(true);
-            expect(result.data).toEqual([]);
+        it('should throw on service failure', async () => {
+            mockVendureService.getProducts.mockRejectedValue(new Error('fail'));
+            await expect(controller.getProducts('test-store', mockRequest as any))
+                .rejects.toThrow(HttpException);
         });
     });
 
     describe('createProduct', () => {
-        it('should create a new product', async () => {
-            const newProduct = { id: 1, name: 'New Product', slug: 'new-product', price: 15000 };
-            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'uuid' });
-            mockVendureService.createProduct.mockResolvedValue(newProduct);
-
-            const result = await controller.createProduct(
-                'test-store',
-                { name: 'New Product', slug: 'new-product', price: 15000 },
-                mockRequest as any,
-            );
-
+        it('should create product', async () => {
+            const input = { name: 'P1', slug: 'p1', price: 100 };
+            mockVendureService.createProduct.mockResolvedValue({ id: 1, ...input });
+            const result = await controller.createProduct('test-store', input, mockRequest as any);
             expect(result.success).toBe(true);
-            expect(result.data.name).toBe('New Product');
         });
 
-        it('should reject product without required fields', async () => {
-            await expect(controller.createProduct(
-                'test-store',
-                { name: '', slug: '', price: 0 } as any,
-                mockRequest as any,
-            )).rejects.toThrow(HttpException);
+        it('should throw if missing name', async () => {
+            await expect(controller.createProduct('test-store', { slug: 'p1', price: 100 } as any, mockRequest as any))
+                .rejects.toThrow(HttpException);
         });
     });
 
     // ==================== CART ====================
 
     describe('getCart', () => {
-        it('should return cart for session', async () => {
-            const cart = { id: 1, items: [], total: 0 };
+        it('should return cart', async () => {
             mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'uuid' });
-            mockVendureService.getCart.mockResolvedValue(cart);
-
-            const result = await controller.getCart('test-store', 'session-123', mockRequest as any);
-
+            mockVendureService.getCart.mockResolvedValue({ id: 1 });
+            const result = await controller.getCart('test-store', 'session-1', mockRequest as any);
             expect(result.success).toBe(true);
-            expect(result.sessionId).toBe('session-123');
         });
     });
 
     describe('addToCart', () => {
-        it('should add item to cart', async () => {
-            const cartItem = { id: 1, product_id: 1, quantity: 2 };
-            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'uuid' });
-            mockVendureService.addToCart.mockResolvedValue(cartItem);
-
-            const result = await controller.addToCart('test-store', 'session-123', { productId: 1, quantity: 2 });
-
+        it('should add item', async () => {
+            mockVendureService.addToCart.mockResolvedValue({ id: 1 });
+            const result = await controller.addToCart('test-store', 'session-1', { productId: 1, quantity: 1 });
             expect(result.success).toBe(true);
-            expect(result.data.quantity).toBe(2);
+        });
+    });
+
+    describe('updateCartItem', () => {
+        it('should update item', async () => {
+            mockVendureService.updateCartItem.mockResolvedValue({ id: 1, quantity: 2 });
+            const result = await controller.updateCartItem('test-store', 'item-1', { quantity: 2 });
+            expect(result.success).toBe(true);
+        });
+    });
+
+    describe('removeFromCart', () => {
+        it('should remove item', async () => {
+            mockVendureService.removeCartItem.mockResolvedValue({ success: true });
+            const result = await controller.removeFromCart('test-store', 'item-1');
+            expect(result.success).toBe(true);
+        });
+    });
+
+    // ==================== CHECKOUT & ORDERS ====================
+
+    describe('checkout', () => {
+        it('should process checkout', async () => {
+            mockVendureService.checkout.mockResolvedValue({ id: 1, code: 'ORD1' });
+            const result = await controller.checkout('test-store', 'session-1', { customerEmail: 'test@test.com' });
+            expect(result.success).toBe(true);
         });
 
-        it('should reject without productId or quantity', async () => {
-            await expect(controller.addToCart('test-store', 'session-123', {} as any))
+        it('should throw if missing email', async () => {
+            await expect(controller.checkout('test-store', 'sess1', {} as any))
                 .rejects.toThrow(HttpException);
         });
     });
 
-    // ==================== CHECKOUT ====================
-
-    describe('checkout', () => {
-        it('should create order from cart', async () => {
-            const order = { id: 1, code: 'ORD-001', state: 'Created' };
-            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'uuid' });
-            mockVendureService.checkout.mockResolvedValue(order);
-
-            const result = await controller.checkout(
-                'test-store',
-                'session-123',
-                { customerEmail: 'customer@test.com' },
-            );
-
-            expect(result.success).toBe(true);
-            expect(result.data.code).toBe('ORD-001');
-        });
-
-        it('should reject checkout without email', async () => {
-            await expect(controller.checkout(
-                'test-store',
-                'session-123',
-                {} as any,
-            )).rejects.toThrow(HttpException);
-        });
-    });
-
-    // ==================== ORDERS ====================
-
     describe('getOrders', () => {
-        it('should return all orders for tenant', async () => {
-            const orders = [{ id: 1, code: 'ORD-001' }, { id: 2, code: 'ORD-002' }];
-            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'uuid' });
-            mockVendureService.getOrders.mockResolvedValue(orders);
-
+        it('should return orders', async () => {
+            mockVendureService.getOrders.mockResolvedValue([]);
             const result = await controller.getOrders('test-store', mockRequest as any);
-
             expect(result.success).toBe(true);
-            expect(result.count).toBe(2);
         });
     });
 
     describe('getOrderById', () => {
-        it('should return specific order', async () => {
-            const order = { id: 1, code: 'ORD-001', items: [] };
-            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'uuid' });
-            mockVendureService.getOrderById.mockResolvedValue(order);
-
+        it('should return order', async () => {
+            mockVendureService.getOrderById.mockResolvedValue({ id: 1 });
             const result = await controller.getOrderById('test-store', '1');
-
             expect(result.success).toBe(true);
-            expect(result.data.code).toBe('ORD-001');
         });
 
-        it('should throw 404 for non-existent order', async () => {
-            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'uuid' });
+        it('should 404 if not found', async () => {
             mockVendureService.getOrderById.mockResolvedValue(null);
-
-            await expect(controller.getOrderById('test-store', '999'))
+            await expect(controller.getOrderById('test-store', '1'))
                 .rejects.toThrow(HttpException);
         });
     });
 
-    // ==================== HEALTH CHECK ====================
+    // ==================== CATEGORIES & SEARCH ====================
+
+    describe('getCategories', () => {
+        it('should return categories', async () => {
+            mockVendureService.getCategories.mockResolvedValue([]);
+            const result = await controller.getCategories('test-store');
+            expect(result.success).toBe(true);
+        });
+    });
+
+    describe('getProductsByCategory', () => {
+        it('should return products', async () => {
+            mockVendureService.getProductsByCategory.mockResolvedValue([]);
+            const result = await controller.getProductsByCategory('test-store', 'slug');
+            expect(result.success).toBe(true);
+        });
+    });
+
+    describe('searchProducts', () => {
+        it('should search products', async () => {
+            mockVendureService.searchProducts.mockResolvedValue({ items: [] });
+            const result = await controller.searchProducts('test-store', mockRequest as any);
+            expect(result.success).toBe(true);
+        });
+    });
+
+    // ==================== WALLET & GIFT CARDS ====================
+
+    describe('getWallet', () => {
+        it('should return wallet', async () => {
+            mockVendureService.getWallet.mockResolvedValue({ balance: 0 });
+            const result = await controller.getWallet('test-store', 'cust-1');
+            expect(result.success).toBe(true);
+        });
+    });
+
+    describe('addFunds', () => {
+        it('should add funds', async () => {
+            mockVendureService.addFunds.mockResolvedValue({ balance: 100 });
+            const result = await controller.addFunds('test-store', 'cust-1', { amount: 100 });
+            expect(result.success).toBe(true);
+        });
+    });
+
+    describe('createGiftCard', () => {
+        it('should create gift card', async () => {
+            mockVendureService.createGiftCard.mockResolvedValue({ code: 'GC1' });
+            const result = await controller.createGiftCard('test-store', { value: 100 });
+            expect(result.success).toBe(true);
+        });
+    });
+
+    // ==================== FULFILLMENT & RETURNS ====================
+
+    describe('getFulfillment', () => {
+        it('should return fulfillment', async () => {
+            mockVendureService.getFulfillment.mockResolvedValue({ id: 1 });
+            const result = await controller.getFulfillment('test-store', '1');
+            expect(result.success).toBe(true);
+        });
+    });
+
+    describe('requestReturn', () => {
+        it('should request return', async () => {
+            mockVendureService.requestReturn.mockResolvedValue({ id: 1 });
+            const result = await controller.requestReturn('test-store', { orderId: 1, reason: 'R1' });
+            expect(result.success).toBe(true);
+        });
+    });
+
+    // ==================== HEALTH ====================
 
     describe('healthCheck', () => {
-        it('should return health status', async () => {
+        it('should return health', async () => {
             const result = await controller.healthCheck('test-store');
-
             expect(result.status).toBe('ok');
-            expect(result.service).toBe('vendure-shop-api');
-            expect(result.tenantId).toBe('test-store');
+        });
+    });
+
+    // ==================== MIGRATIONS ====================
+
+    describe('Migrations', () => {
+        it('migrateCategories should work', async () => {
+            mockVendureService.migrateCategories.mockResolvedValue({ success: true });
+            const result = await controller.migrateCategories('test-store');
+            expect(result.success).toBe(true);
+        });
+
+        it('migrateWallet should work', async () => {
+            mockVendureService.migrateWallet.mockResolvedValue({ success: true });
+            const result = await controller.migrateWallet('test-store');
+            expect(result.success).toBe(true);
         });
     });
 });

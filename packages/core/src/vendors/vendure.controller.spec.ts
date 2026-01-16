@@ -38,8 +38,8 @@ describe('VendureController', () => {
         migrateFulfillment: jest.fn(),
         getFulfillment: jest.fn(),
         updateOrderStatus: jest.fn(),
-        shipOrder: jest.fn(),
-        deliverOrder: jest.fn(),
+        createFulfillment: jest.fn(),
+        markDelivered: jest.fn(),
         createReturn: jest.fn(),
         processRefund: jest.fn(),
     };
@@ -202,7 +202,7 @@ describe('VendureController', () => {
 
     describe('shipOrder', () => {
         it('should ship order', async () => {
-            mockVendureService.shipOrder.mockResolvedValue({ id: 1 });
+            mockVendureService.createFulfillment.mockResolvedValue({ id: 1 });
             const result = await controller.shipOrder('test-store', '1', { trackingCode: 'TRK123' });
             expect(result.success).toBe(true);
         });
@@ -210,7 +210,7 @@ describe('VendureController', () => {
 
     describe('deliverOrder', () => {
         it('should deliver order', async () => {
-            mockVendureService.deliverOrder.mockResolvedValue({ id: 1 });
+            mockVendureService.markDelivered.mockResolvedValue({ id: 1 });
             const result = await controller.deliverOrder('test-store', '1');
             expect(result.success).toBe(true);
         });

@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 describe('RfqService', () => {
     let service: RfqService;
+    let prisma: PrismaService;
 
     const mockPrismaService = {
         $executeRawUnsafe: jest.fn(),
@@ -23,6 +24,7 @@ describe('RfqService', () => {
         }).compile();
 
         service = module.get<RfqService>(RfqService);
+        prisma = module.get<PrismaService>(PrismaService);
         jest.clearAllMocks();
     });
 
@@ -147,6 +149,7 @@ describe('RfqService', () => {
             expect(result.discount).toBe(0);
             expect(result.discountedPrice).toBe(10000);
         });
+
         it('should apply tier-based discount if quantity threshold met', async () => {
             // Mock 1: Customer not approved
             mockPrismaService.$queryRawUnsafe.mockResolvedValueOnce([]);
@@ -162,7 +165,17 @@ describe('RfqService', () => {
         });
     });
 
-    // ==================== UPDATE RFQ ====================
+    describe('applyForWholesale', () => {
+        it('should create wholesale application', async () => {
+            const mockResult = [{ id: 1 }];
+
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockResult);
+
+            const result = await service.applyForWholesale('tenant_test', 123);
+
+            expect(result.success).toBe(true);
+        });
+    });
 
     describe('updateRfq', () => {
         it('should update RFQ status and price', async () => {

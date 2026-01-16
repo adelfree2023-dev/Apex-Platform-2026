@@ -110,16 +110,19 @@ describe('AdvancedAnalyticsService', () => {
     // ==================== SALES TRENDS ====================
 
     describe('getSalesTrends', () => {
-        it('should return daily sales trends', async () => {
+        it('should return daily sales trends (reversed order - oldest first)', async () => {
+            // Mock returns DESC order, but service uses .reverse() so result is ASC
             mockPrismaService.$queryRawUnsafe.mockResolvedValue([
-                { period: '2026-01-14', order_count: BigInt(10), total_revenue: 50000 },
-                { period: '2026-01-15', order_count: BigInt(15), total_revenue: 75000 },
+                { period: '2026-01-15', orders: BigInt(15), revenue: 75000, unique_customers: BigInt(10), avg_order_value: 5000 },
+                { period: '2026-01-14', orders: BigInt(10), revenue: 50000, unique_customers: BigInt(8), avg_order_value: 6250 },
             ]);
 
             const result = await service.getSalesTrends('tenant_test_store', 'day', 30);
 
             expect(result).toHaveLength(2);
+            // After .reverse(), oldest date comes first
             expect(result[0].period).toBe('2026-01-14');
+            expect(result[1].period).toBe('2026-01-15');
         });
 
         it('should support weekly period', async () => {
@@ -127,9 +130,9 @@ describe('AdvancedAnalyticsService', () => {
 
             await service.getSalesTrends('tenant_test_store', 'week', 12);
 
+            // Query uses IYYY-IW format for week, days in INTERVAL string (no params)
             expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalledWith(
-                expect.stringContaining('week'),
-                expect.any(Number)
+                expect.stringContaining('IYYY-IW')
             );
         });
 
@@ -138,9 +141,9 @@ describe('AdvancedAnalyticsService', () => {
 
             await service.getSalesTrends('tenant_test_store', 'month', 6);
 
+            // Query uses YYYY-MM format for month
             expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalledWith(
-                expect.stringContaining('month'),
-                expect.any(Number)
+                expect.stringContaining('YYYY-MM')
             );
         });
 
@@ -149,9 +152,9 @@ describe('AdvancedAnalyticsService', () => {
 
             await service.getSalesTrends('tenant_test_store');
 
+            // Days is in INTERVAL string, not a parameter
             expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalledWith(
-                expect.any(String),
-                30
+                expect.stringContaining('30 days')
             );
         });
 

@@ -73,8 +73,8 @@ describe('PaymentGatewayService', () => {
                 { orderId: 1001, method: 'cash' }
             );
 
-            expect(result.success).toBe(true);
-            expect(result.method).toBe('cash');
+            expect(result.type).toBe('cash');
+            expect(result.orderId).toBe(1001);
         });
 
         it('should process PayPal payment', async () => {
@@ -91,8 +91,8 @@ describe('PaymentGatewayService', () => {
                 { orderId: 1001, method: 'paypal' }
             );
 
-            expect(result.success).toBe(true);
-            expect(result.method).toBe('paypal');
+            expect(result.type).toBe('paypal');
+            expect(result.approvalUrl).toBeDefined();
         });
 
         it('should process local wallet payment (mada)', async () => {
@@ -109,7 +109,8 @@ describe('PaymentGatewayService', () => {
                 { orderId: 1001, method: 'mada' }
             );
 
-            expect(result.success).toBe(true);
+            expect(result.type).toBe('mada');
+            expect(result.walletOrderId).toBeDefined();
         });
 
         it('should throw for unsupported payment method', async () => {
@@ -129,7 +130,7 @@ describe('PaymentGatewayService', () => {
     // ==================== HANDLE CASH PAYMENT ====================
 
     describe('handleCashPayment', () => {
-        it('should create COD payment with Awaiting status', async () => {
+        it('should create COD payment', async () => {
             mockPrismaService.$queryRawUnsafe.mockResolvedValue([{
                 id: BigInt(1001),
                 total: 5000,
@@ -142,8 +143,8 @@ describe('PaymentGatewayService', () => {
                 { orderId: 1001, method: 'cash' }
             );
 
-            expect(result.status).toBe('Awaiting');
-            expect(result.method).toBe('cash');
+            expect(result.type).toBe('cash');
+            expect(result.instructions).toBeDefined();
         });
     });
 

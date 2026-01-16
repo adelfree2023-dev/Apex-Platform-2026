@@ -137,6 +137,7 @@ describe('ShippingController', () => {
                 name: 'Delta',
                 regions: ['Mansoura', 'Tanta'],
                 rate: 40,
+                estimatedDays: 3,
             });
 
             expect(result.success).toBe(true);
@@ -149,6 +150,7 @@ describe('ShippingController', () => {
                 name: '',
                 regions: [],
                 rate: 0,
+                estimatedDays: 0,
             })).rejects.toThrow(HttpException);
         });
     });
@@ -248,7 +250,7 @@ describe('ShippingController', () => {
             const result = await controller.addTrackingUpdate('test-store', '1', {
                 status: 'delivered',
                 location: 'Cairo Hub',
-                notes: 'Delivered to customer',
+                description: 'Delivered to customer',
             });
 
             expect(result.success).toBe(true);

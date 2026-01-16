@@ -141,7 +141,7 @@ describe('SeoController', () => {
         it('should throw without pageType', async () => {
             await expect(controller.setMetaTags('test-store', {
                 pageType: '',
-                meta: { title: 'Test' },
+                meta: { title: 'Test', description: 'Test description' },
             })).rejects.toThrow(HttpException);
         });
 

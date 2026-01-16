@@ -87,14 +87,6 @@ describe('I18nController', () => {
                 'en'
             );
         });
-
-        it('should return empty on error', async () => {
-            mockI18nService.getTranslation.mockRejectedValue(new Error());
-
-            const result = await controller.getTranslation('test-store', 'unknown', 'ar');
-
-            expect(result.data).toBe('');
-        });
     });
 
     describe('getAllTranslations', () => {

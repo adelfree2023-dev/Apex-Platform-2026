@@ -299,12 +299,89 @@ describe('PaymentGatewayService', () => {
         });
     });
 
-    // ==================== VALIDATE WEBHOOK SIGNATURE ====================
+    // ==================== INITIALIZE PAYMENT PROVIDERS ====================
 
-    describe('validateWebhookSignature', () => {
-        it('should validate webhook signature', () => {
-            // For demo purposes, it always returns true
-            expect(service.validateWebhookSignature({}, 'fawry')).toBe(true);
+    describe('initializePaymentProviders', () => {
+        it('should create all necessary tables', async () => {
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+
+            await service.initializePaymentProviders('tenant_test');
+
+            // Should verify calls for transaction table, method table, settlement table, and default methods
+            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalledTimes(3 + 8); // 3 tables + 8 default methods
         });
     });
+
+    // ==================== HANDLE WEBBOOK ====================
+
+    describe('handleWebhook', () => {
+        const webhookPayload = {
+            provider: 'stripe',
+            referenceNumber: 'ref-123',
+            status: 'paid',
+            amount: 1000,
+            orderId: 'order-123'
+        };
+
+        it('should process valid webhook', async () => {
+            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined); // Update status
+
+            await service.handleWebhook('tenant_test', webhookPayload);
+
+            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalledWith(
+                expect.stringContaining('UPDATE'),
+                'paid',
+                expect.any(String),
+                'order-123',
+                'stripe'
+            );
+        });
+
+        it('should validate signature (future implementation)', async () => {
+            const result = service.validateWebhookSignature(webhookPayload, 'stripe');
+            expect(result).toBe(true);
+        });
+    });
+
+    // ==================== TRANSACTION HISTORY ====================
+
+    describe('getTransactionHistory', () => {
+        it('should return mapped transaction history', async () => {
+            const mockTxData = [{
+                id: BigInt(1),
+                order_id: 'order-123',
+                amount: 100,
+                currency: 'EGP',
+                status: 'paid',
+                provider: 'fawry',
+                created_at: new Date(),
+                reference_number: 'ref-123'
+            }];
+
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockTxData);
+
+            const result = await service.getTransactionHistory('tenant_test', 1);
+
+            expect(result).toHaveLength(1);
+            expect(result[0].orderId).toBe('order-123');
+            expect(result[0].amount).toBe(100);
+        });
+
+        it('should apply date filters', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
+
+            const startDate = new Date();
+            const endDate = new Date();
+
+            await service.getTransactionHistory('tenant_test', 1, startDate, endDate);
+
+            expect(mockPrismaService.$queryRawUnsafe).toHaveBeenCalledWith(
+                expect.stringContaining('AND created_at >='),
+                1,
+                startDate,
+                endDate
+            );
+        });
+    });
+
 });

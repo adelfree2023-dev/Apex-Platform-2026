@@ -66,14 +66,14 @@ describe('PromotionsController', () => {
             mockPromotionsService.createCoupon.mockResolvedValue({
                 id: 1,
                 code: 'SAVE20',
-                discountType: 'percentage',
-                discountValue: 20,
+                type: 'percentage',
+                discount: 20,
             });
 
             const result = await controller.createCoupon('test-store', {
                 code: 'SAVE20',
-                discountType: 'percentage',
-                discountValue: 20,
+                type: 'percentage',
+                discount: 20,
             });
 
             expect(result.success).toBe(true);
@@ -83,8 +83,8 @@ describe('PromotionsController', () => {
         it('should throw without code', async () => {
             await expect(controller.createCoupon('test-store', {
                 code: '',
-                discountType: 'percentage',
-                discountValue: 10,
+                type: 'percentage',
+                discount: 10,
             })).rejects.toThrow(HttpException);
         });
     });

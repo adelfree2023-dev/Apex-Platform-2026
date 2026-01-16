@@ -667,4 +667,11 @@ export class PaymentGatewayService {
             'hyperpay'    // MENA region
         ];
     }
+
+    /**
+     * Alias for getSupportedProviders (controller compatibility)
+     */
+    getSupportedMethods(): string[] {
+        return this.getSupportedProviders();
+    }
 }

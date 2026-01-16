@@ -28,14 +28,14 @@ describe('VendureController', () => {
         migrateCategories: jest.fn(),
         searchProducts: jest.fn(),
         migrateWallet: jest.fn(),
-        getWallet: jest.fn(),
+        getOrCreateWallet: jest.fn(),
         addFunds: jest.fn(),
         getTransactions: jest.fn(),
         createGiftCard: jest.fn(),
         getGiftCard: jest.fn(),
         redeemGiftCard: jest.fn(),
         migrateFulfillment: jest.fn(),
-        getOrderFulfillment: jest.fn(),
+        getFulfillment: jest.fn(),
         updateOrderStatus: jest.fn(),
         shipOrder: jest.fn(),
         deliverOrder: jest.fn(),
@@ -176,7 +176,7 @@ describe('VendureController', () => {
 
     describe('getWallet', () => {
         it('should return wallet', async () => {
-            mockVendureService.getWallet.mockResolvedValue({ balance: 0 });
+            mockVendureService.getOrCreateWallet.mockResolvedValue({ balance: 0 });
             const result = await controller.getWallet('test-store', 'cust-1');
             expect(result.success).toBe(true);
         });
@@ -194,7 +194,7 @@ describe('VendureController', () => {
 
     describe('getOrderFulfillment', () => {
         it('should return fulfillment', async () => {
-            mockVendureService.getOrderFulfillment.mockResolvedValue({ id: 1 });
+            mockVendureService.getFulfillment.mockResolvedValue({ id: 1 });
             const result = await controller.getOrderFulfillment('test-store', '1');
             expect(result.success).toBe(true);
         });

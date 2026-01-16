@@ -59,7 +59,7 @@ describe('I18nController', () => {
         });
 
         it('should handle migration errors', async () => {
-            mockI18nService.createI18nTables.mockRejectedValue(new Error('Error'));
+            mockI18nService.createTranslationTable.mockRejectedValue(new Error('Error'));
 
             await expect(controller.migrateI18n('test-store'))
                 .rejects.toThrow(HttpException);

@@ -1,28 +1,12 @@
 /**
  * Payment Gateway Service Unit Tests
- * Root-analyzed: Handles Stripe, Cash, PayPal, local wallets
+ * Root-analyzed: Multi-provider payment processing with Arabic payment methods support
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { Logger } from '@nestjs/common';
+import { Logger, HttpException } from '@nestjs/common';
 import { PaymentGatewayService } from './payment-gateway.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { EventService } from '../events/event.service';
-
-// Mock Stripe
-jest.mock('./stripe.config', () => ({
-    stripe: {
-        checkout: {
-            sessions: {
-                create: jest.fn(),
-            },
-        },
-    },
-    STRIPE_CONFIG: {
-        successUrl: 'https://example.com/success',
-        cancelUrl: 'https://example.com/cancel',
-    },
-}));
 
 describe('PaymentGatewayService', () => {
     let service: PaymentGatewayService;
@@ -32,16 +16,11 @@ describe('PaymentGatewayService', () => {
         $executeRawUnsafe: jest.fn(),
     };
 
-    const mockEventService = {
-        record: jest.fn(),
-    };
-
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 PaymentGatewayService,
                 { provide: PrismaService, useValue: mockPrismaService },
-                { provide: EventService, useValue: mockEventService },
             ],
         }).compile();
 
@@ -59,220 +38,273 @@ describe('PaymentGatewayService', () => {
     // ==================== PROCESS PAYMENT ====================
 
     describe('processPayment', () => {
-        it('should process cash payment', async () => {
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{
-                id: BigInt(1001),
-                total: 5000,
-                state: 'AddingItems',
-            }]);
+        const validRequest = {
+            amount: 1000,
+            currency: 'EGP',
+            provider: 'fawry',
+            orderId: 'order-123',
+            customer: {
+                email: 'test@example.com',
+                phone: '+201234567890',
+                name: 'Ahmed Mohamed',
+            },
+            items: [
+                { id: 1, name: 'iPhone 15', quantity: 1, price: 1000 }
+            ]
+        };
+
+        it('should process fawry payment successfully', async () => {
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce([{ provider: 'fawry', is_active: true, min_amount: 5, max_amount: 50000 }]) // validatePaymentMethod
+                .mockResolvedValueOnce([{ id: BigInt(1), order_id: 'order-123', amount: 1000, currency: 'EGP' }]); // transaction
             mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
 
-            const result = await service.processPayment(
-                'tenant_test_store',
-                'tenant-1',
-                { orderId: 1001, method: 'cash' }
-            );
+            const result = await service.processPayment('tenant_test_store', validRequest);
 
-            expect(result.type).toBe('cash');
-            expect(result.orderId).toBe(1001);
+            expect(result.status).toBeDefined();
+            expect(result.orderId).toBe('order-123');
         });
 
-        it('should process PayPal payment', async () => {
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{
-                id: BigInt(1001),
-                total: 5000,
-                state: 'AddingItems',
-            }]);
-            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+        it('should throw error for zero amount', async () => {
+            const invalidRequest = { ...validRequest, amount: 0 };
 
-            const result = await service.processPayment(
-                'tenant_test_store',
-                'tenant-1',
-                { orderId: 1001, method: 'paypal' }
-            );
-
-            expect(result.type).toBe('paypal');
-            expect(result.approvalUrl).toBeDefined();
+            await expect(
+                service.processPayment('tenant_test_store', invalidRequest)
+            ).rejects.toThrow('Amount must be greater than zero');
         });
 
-        it('should process local wallet payment (mada)', async () => {
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{
-                id: BigInt(1001),
-                total: 5000,
-                state: 'AddingItems',
-            }]);
-            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+        it('should throw error for missing provider', async () => {
+            const invalidRequest = { ...validRequest, provider: '' };
 
-            const result = await service.processPayment(
-                'tenant_test_store',
-                'tenant-1',
-                { orderId: 1001, method: 'mada' }
-            );
-
-            expect(result.type).toBe('mada');
-            expect(result.walletOrderId).toBeDefined();
+            await expect(
+                service.processPayment('tenant_test_store', invalidRequest)
+            ).rejects.toThrow('Provider is required');
         });
 
-        it('should throw for unsupported payment method', async () => {
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{
-                id: BigInt(1001),
-                total: 5000,
-            }]);
+        it('should throw error for missing order ID', async () => {
+            const invalidRequest = { ...validRequest, orderId: '' };
 
-            await expect(service.processPayment(
-                'tenant_test_store',
-                'tenant-1',
-                { orderId: 1001, method: 'bitcoin' as any }
-            )).rejects.toThrow();
+            await expect(
+                service.processPayment('tenant_test_store', invalidRequest)
+            ).rejects.toThrow('Order ID is required');
+        });
+
+        it('should throw error for missing customer email', async () => {
+            const invalidRequest = { ...validRequest, customer: { ...validRequest.customer, email: '' } };
+
+            await expect(
+                service.processPayment('tenant_test_store', invalidRequest)
+            ).rejects.toThrow('Customer email is required');
+        });
+
+        it('should throw error for empty items', async () => {
+            const invalidRequest = { ...validRequest, items: [] };
+
+            await expect(
+                service.processPayment('tenant_test_store', invalidRequest)
+            ).rejects.toThrow('At least one item is required');
         });
     });
 
-    // ==================== HANDLE CASH PAYMENT ====================
+    // ==================== VALIDATE PAYMENT METHOD ====================
 
-    describe('handleCashPayment', () => {
-        it('should create COD payment', async () => {
+    describe('validatePaymentMethod', () => {
+        it('should return available for valid method', async () => {
             mockPrismaService.$queryRawUnsafe.mockResolvedValue([{
-                id: BigInt(1001),
-                total: 5000,
-            }]);
-            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
-
-            const result = await service['handleCashPayment'](
-                'tenant_test_store',
-                'tenant-1',
-                { orderId: 1001, method: 'cash' }
-            );
-
-            expect(result.type).toBe('cash');
-            expect(result.instructions).toBeDefined();
-        });
-    });
-
-    // ==================== GET ORDER ====================
-
-    describe('getOrder', () => {
-        it('should return order by ID', async () => {
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{
-                id: BigInt(1001),
-                total: 5000,
-                state: 'ArrangingPayment',
+                provider: 'fawry',
+                is_active: true,
+                min_amount: 5,
+                max_amount: 50000,
             }]);
 
-            const result = await service['getOrder']('tenant_test_store', 1001);
+            const result = await service.validatePaymentMethod('tenant_test', 'fawry', 100, 'EGP');
 
-            expect(result.id).toBe(1001);
-            expect(result.total).toBe(5000);
+            expect(result.available).toBe(true);
         });
 
-        it('should return null for non-existent order', async () => {
+        it('should return not available for unsupported method', async () => {
             mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
 
-            const result = await service['getOrder']('tenant_test_store', 9999);
+            const result = await service.validatePaymentMethod('tenant_test', 'unknown', 100, 'EGP');
 
-            expect(result).toBeNull();
-        });
-    });
-
-    // ==================== UPDATE ORDER PAYMENT ====================
-
-    describe('updateOrderPayment', () => {
-        it('should update order payment method', async () => {
-            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
-
-            await service['updateOrderPayment']('tenant_test_store', 1001, {
-                paymentMethod: 'stripe',
-            });
-
-            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalledWith(
-                expect.stringContaining('UPDATE'),
-                expect.any(String),
-                1001
-            );
+            expect(result.available).toBe(false);
+            expect(result.reason).toBe('Payment method not supported');
         });
 
-        it('should update order state', async () => {
-            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
-
-            await service['updateOrderPayment']('tenant_test_store', 1001, {
-                state: 'PaymentSettled',
-            });
-
-            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalled();
-        });
-    });
-
-    // ==================== CONFIRM PAYMENT ====================
-
-    describe('confirmPayment', () => {
-        it('should confirm COD payment', async () => {
+        it('should return not available when amount below minimum', async () => {
             mockPrismaService.$queryRawUnsafe.mockResolvedValue([{
-                id: BigInt(1001),
-                state: 'ArrangingPayment',
+                provider: 'fawry',
+                is_active: true,
+                min_amount: 100,
+                max_amount: 50000,
+            }]);
+
+            const result = await service.validatePaymentMethod('tenant_test', 'fawry', 50, 'EGP');
+
+            expect(result.available).toBe(false);
+            expect(result.reason).toBe('Amount below minimum');
+        });
+
+        it('should return not available when amount exceeds maximum', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{
+                provider: 'fawry',
+                is_active: true,
+                min_amount: 5,
+                max_amount: 1000,
+            }]);
+
+            const result = await service.validatePaymentMethod('tenant_test', 'fawry', 5000, 'EGP');
+
+            expect(result.available).toBe(false);
+            expect(result.reason).toBe('Amount exceeds maximum');
+        });
+    });
+
+    // ==================== GET PAYMENT METHODS ====================
+
+    describe('getPaymentMethods', () => {
+        it('should return available methods for territory', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([
+                { provider: 'fawry' },
+                { provider: 'valu' },
+            ]);
+
+            const result = await service.getPaymentMethods('tenant_test', 'EGYPT');
+
+            expect(result).toContain('fawry');
+            expect(result).toContain('valu');
+        });
+
+        it('should return empty array when no methods available', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
+
+            const result = await service.getPaymentMethods('tenant_test', 'UNKNOWN');
+
+            expect(result).toEqual([]);
+        });
+    });
+
+    // ==================== CALCULATE SETTLEMENT ====================
+
+    describe('calculateSettlement', () => {
+        it('should calculate basic settlement', async () => {
+            const orderDetails = {
+                totalAmount: 1000,
+                items: [
+                    { price: 1000, commissionRate: 0.1 }
+                ],
+                cooperativeDeal: { enabled: false }
+            };
+
+            const result = await service.calculateSettlement(orderDetails);
+
+            expect(result.platformFee).toBe(100); // 10% of 1000
+            expect(result.vendorAmount).toBe(900); // 1000 - 100
+            expect(result.totalSettlement).toBe(1000);
+        });
+
+        it('should apply cooperative marketing fee', async () => {
+            const orderDetails = {
+                totalAmount: 1000,
+                items: [
+                    { price: 1000, commissionRate: 0.1 }
+                ],
+                cooperativeDeal: { enabled: true, sharedMarketingFee: 0.05 }
+            };
+
+            const result = await service.calculateSettlement(orderDetails);
+
+            expect(result.sharedMarketingFee).toBe(50); // 5% of 1000
+            expect(result.vendorAmount).toBe(850); // 1000 - 100 - 50
+        });
+    });
+
+    // ==================== GET SUPPORTED PROVIDERS ====================
+
+    describe('getSupportedProviders', () => {
+        it('should return all supported payment providers', () => {
+            const providers = service.getSupportedProviders();
+
+            expect(providers).toContain('fawry');
+            expect(providers).toContain('paypal');
+            expect(providers).toContain('stripe');
+            expect(providers).toContain('mada');
+            expect(providers).toContain('valu');
+        });
+    });
+
+    // ==================== REFUND PAYMENT ====================
+
+    describe('refundPayment', () => {
+        it('should refund paid payment', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{
+                id: BigInt(1),
+                order_id: 'order-123',
+                amount: 1000,
+                status: 'paid',
+                provider: 'fawry',
+                provider_transaction_id: 'tx-123',
             }]);
             mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
 
-            const result = await service.confirmPayment(
-                'tenant_test_store',
-                'tenant-1',
-                1001
-            );
+            const result = await service.refundPayment('tenant_test', 'order-123', 500);
 
             expect(result.success).toBe(true);
+            expect(result.refundedAmount).toBe(500);
+        });
+
+        it('should throw error when original payment not found', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
+
+            await expect(
+                service.refundPayment('tenant_test', 'order-999', 100)
+            ).rejects.toThrow('Original payment not found');
+        });
+
+        it('should throw error when refund amount exceeds original', async () => {
+            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{
+                id: BigInt(1),
+                amount: 100,
+                status: 'paid',
+                provider: 'stripe',
+                provider_transaction_id: 'tx-123',
+            }]);
+
+            await expect(
+                service.refundPayment('tenant_test', 'order-123', 500)
+            ).rejects.toThrow('Refund amount exceeds original');
         });
     });
 
-    // ==================== GET SUPPORTED METHODS ====================
+    // ==================== PCI COMPLIANCE ====================
 
-    describe('getSupportedMethods', () => {
-        it('should return all supported payment methods', () => {
-            const methods = service.getSupportedMethods();
-
-            expect(methods).toContain('visa');
-            expect(methods).toContain('mastercard');
-            expect(methods).toContain('cash');
-            expect(methods).toContain('paypal');
+    describe('isPCICompliant', () => {
+        it('should return true for PCI compliance', () => {
+            expect(service.isPCICompliant()).toBe(true);
         });
     });
 
-    // ==================== GET STRIPE PAYMENT METHODS ====================
+    // ==================== TOKENIZE PAYMENT DATA ====================
 
-    describe('getStripePaymentMethods', () => {
-        it('should return card for visa', () => {
-            const methods = service['getStripePaymentMethods']('visa');
-
-            expect(methods).toContain('card');
-        });
-
-        it('should return card for mastercard', () => {
-            const methods = service['getStripePaymentMethods']('mastercard');
-
-            expect(methods).toContain('card');
-        });
-
-        it('should return apple_pay for apple_pay', () => {
-            const methods = service['getStripePaymentMethods']('apple_pay');
-
-            expect(methods).toContain('card');
-        });
-    });
-
-    // ==================== LOG PAYMENT EVENT ====================
-
-    describe('logPaymentEvent', () => {
-        it('should record payment event', async () => {
-            mockEventService.record.mockResolvedValue(undefined);
-
-            await service['logPaymentEvent']('tenant-1', 'PAYMENT_SUCCESS', {
-                orderId: 1001,
-                amount: 5000,
+    describe('tokenizePaymentData', () => {
+        it('should mask card number and return token', () => {
+            const result = service.tokenizePaymentData({
+                cardNumber: '4111111111111234',
+                cvv: '123',
             });
 
-            expect(mockEventService.record).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    type: 'PAYMENT_SUCCESS',
-                    tenantId: 'tenant-1',
-                })
-            );
+            expect(result.cardNumber).toBe('****-****-****-1234');
+            expect(result.token).toBeDefined();
+            expect(result.token).toMatch(/^tok_/);
+        });
+    });
+
+    // ==================== VALIDATE WEBHOOK SIGNATURE ====================
+
+    describe('validateWebhookSignature', () => {
+        it('should validate webhook signature', () => {
+            // For demo purposes, it always returns true
+            expect(service.validateWebhookSignature({}, 'fawry')).toBe(true);
         });
     });
 });

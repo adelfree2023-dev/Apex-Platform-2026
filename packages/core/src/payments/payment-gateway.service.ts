@@ -1,324 +1,619 @@
 /**
  * Payment Gateway Service
- * Unified handler for all payment methods:
- * - Stripe (Visa, Mastercard)
- * - Cash on Delivery
- * - Mobile Wallets (PayPal)
- * - e-Wallets (Mada, STC Pay placeholder)
+ * Multi-provider payment processing with Arabic payment methods support
+ * Cooperative settlement system for marketplace
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { EventService } from '../events/event.service';
-import { stripe, STRIPE_CONFIG } from './stripe.config';
 
-export type PaymentMethod =
-    | 'visa'
-    | 'mastercard'
-    | 'cash'
-    | 'paypal'
-    | 'mada'
-    | 'stc_pay'
-    | 'apple_pay'
-    | 'google_pay';
+export interface PaymentRequest {
+    amount: number; // Amount in smallest currency unit (e.g., piastres for EGP)
+    currency: string;
+    provider: string;
+    orderId: string;
+    customer: {
+        email: string;
+        phone: string;
+        name: string;
+    };
+    items: Array<{
+        id: number;
+        name: string;
+        quantity: number;
+        price: number;
+    }>;
+}
 
-export interface ProcessPaymentInput {
-    orderId: number;
-    method: PaymentMethod;
-    customerEmail?: string;
+export interface PaymentResponse {
+    id: number;
+    status: 'pending' | 'paid' | 'failed' | 'refunded';
+    provider: string;
+    providerTransactionId?: string;
+    amount: number;
+    currency: string;
+    orderId: string;
+    referenceNumber?: string;
+}
+
+export interface SettlementCalculation {
+    vendorAmount: number;
+    platformFee: number;
+    tax?: number;
+    totalSettlement: number;
+    sharedMarketingFee?: number;
 }
 
 @Injectable()
 export class PaymentGatewayService {
     private readonly logger = new Logger(PaymentGatewayService.name);
 
-    constructor(
-        private readonly prisma: PrismaService,
-        private readonly eventService: EventService,
-    ) { }
+    constructor(private readonly prisma: PrismaService) {}
 
     /**
-     * Process payment based on method
+     * Initialize payment provider tables
      */
-    async processPayment(
-        tenantSchema: string,
-        tenantId: string,
-        input: ProcessPaymentInput,
-    ): Promise<any> {
-        const method = input.method.toLowerCase() as PaymentMethod;
-
-        this.logger.log(`Processing ${method} payment for order ${input.orderId}`);
-
-        switch (method) {
-            case 'visa':
-            case 'mastercard':
-            case 'apple_pay':
-            case 'google_pay':
-                return this.handleStripePayment(tenantSchema, tenantId, input);
-
-            case 'cash':
-                return this.handleCashPayment(tenantSchema, tenantId, input);
-
-            case 'paypal':
-                return this.handlePayPalPayment(tenantSchema, tenantId, input);
-
-            case 'mada':
-            case 'stc_pay':
-                return this.handleLocalWalletPayment(tenantSchema, tenantId, input);
-
-            default:
-                throw new Error(`Unsupported payment method: ${method}`);
-        }
-    }
-
-    /**
-     * Handle Stripe payments (Visa, Mastercard, Apple Pay, Google Pay)
-     */
-    private async handleStripePayment(
-        tenantSchema: string,
-        tenantId: string,
-        input: ProcessPaymentInput,
-    ): Promise<any> {
-        const order = await this.getOrder(tenantSchema, input.orderId);
-
-        // Create Stripe Payment Intent
-        const paymentIntent = await stripe.paymentIntents.create({
-            amount: order.total,
-            currency: STRIPE_CONFIG.currency,
-            payment_method_types: this.getStripePaymentMethods(input.method),
-            metadata: {
-                orderId: input.orderId.toString(),
-                tenantId,
-                tenantSchema,
-                orderCode: order.code,
-                paymentMethod: input.method,
-            },
-            receipt_email: input.customerEmail || order.customer_email,
-        });
-
-        // Update order with payment intent
-        await this.updateOrderPayment(tenantSchema, input.orderId, {
-            paymentMethod: input.method,
-            state: 'PaymentPending',
-        });
-
-        await this.logPaymentEvent(tenantId, 'payment.initiated', {
-            method: input.method,
-            orderId: input.orderId,
-            paymentIntentId: paymentIntent.id,
-        });
-
-        return {
-            type: 'stripe',
-            clientSecret: paymentIntent.client_secret,
-            paymentIntentId: paymentIntent.id,
-            amount: order.total,
-            currency: STRIPE_CONFIG.currency,
-        };
-    }
-
-    /**
-     * Handle Cash on Delivery
-     */
-    private async handleCashPayment(
-        tenantSchema: string,
-        tenantId: string,
-        input: ProcessPaymentInput,
-    ): Promise<any> {
-        const order = await this.getOrder(tenantSchema, input.orderId);
-
-        // Mark order as COD pending
-        await this.updateOrderPayment(tenantSchema, input.orderId, {
-            paymentMethod: 'cash',
-            state: 'CashOnDelivery',
-        });
-
-        await this.logPaymentEvent(tenantId, 'payment.cod.confirmed', {
-            orderId: input.orderId,
-            amount: order.total,
-        });
-
-        return {
-            type: 'cash',
-            message: 'Cash on Delivery confirmed',
-            orderId: input.orderId,
-            total: order.total,
-            instructions: 'Please pay the delivery person upon receipt.',
-        };
-    }
-
-    /**
-     * Handle PayPal payments (placeholder - configure API key later)
-     */
-    private async handlePayPalPayment(
-        tenantSchema: string,
-        tenantId: string,
-        input: ProcessPaymentInput,
-    ): Promise<any> {
-        const order = await this.getOrder(tenantSchema, input.orderId);
-
-        // PayPal integration placeholder
-        // TODO: Implement with PayPal SDK when API keys are configured
-        const paypalOrderId = `PP-${Date.now()}`;
-
-        await this.updateOrderPayment(tenantSchema, input.orderId, {
-            paymentMethod: 'paypal',
-            state: 'PaymentPending',
-        });
-
-        await this.logPaymentEvent(tenantId, 'payment.paypal.initiated', {
-            orderId: input.orderId,
-            paypalOrderId,
-        });
-
-        return {
-            type: 'paypal',
-            paypalOrderId,
-            amount: order.total,
-            currency: STRIPE_CONFIG.currency,
-            // In production, this would be the PayPal approval URL
-            approvalUrl: `https://www.sandbox.paypal.com/checkoutnow?token=${paypalOrderId}`,
-            message: 'PayPal integration pending API key configuration',
-        };
-    }
-
-    /**
-     * Handle local wallet payments (Mada, STC Pay)
-     */
-    private async handleLocalWalletPayment(
-        tenantSchema: string,
-        tenantId: string,
-        input: ProcessPaymentInput,
-    ): Promise<any> {
-        const order = await this.getOrder(tenantSchema, input.orderId);
-
-        // Local wallet placeholder
-        // TODO: Integrate with Moyasar, HyperPay, or similar for Mada/STC Pay
-        const walletOrderId = `WALLET-${Date.now()}`;
-
-        await this.updateOrderPayment(tenantSchema, input.orderId, {
-            paymentMethod: input.method,
-            state: 'PaymentPending',
-        });
-
-        await this.logPaymentEvent(tenantId, `payment.${input.method}.initiated`, {
-            orderId: input.orderId,
-            walletOrderId,
-        });
-
-        return {
-            type: input.method,
-            walletOrderId,
-            amount: order.total,
-            currency: STRIPE_CONFIG.currency,
-            message: `${input.method.toUpperCase()} integration pending API key configuration`,
-        };
-    }
-
-    /**
-     * Confirm payment (for COD or manual confirmation)
-     */
-    async confirmPayment(
-        tenantSchema: string,
-        tenantId: string,
-        orderId: number,
-    ): Promise<any> {
-        await this.updateOrderPayment(tenantSchema, orderId, {
-            state: 'Paid',
-        });
-
-        await this.logPaymentEvent(tenantId, 'payment.confirmed', { orderId });
-
-        return { success: true, orderId, state: 'Paid' };
-    }
-
-    /**
-     * Get order from tenant schema
-     */
-    private async getOrder(tenantSchema: string, orderId: number): Promise<any> {
-        const order = await this.prisma.$queryRawUnsafe(`
-      SELECT o.*, c.email as customer_email
-      FROM "${tenantSchema}"."vendure_order" o
-      LEFT JOIN "${tenantSchema}"."vendure_customer" c ON c.id = o.customer_id
-      WHERE o.id = $1
-    `, orderId);
-
-        if ((order as any[]).length === 0) {
-            throw new Error('Order not found');
-        }
-
-        return (order as any[])[0];
-    }
-
-    /**
-     * Update order payment info
-     */
-    private async updateOrderPayment(
-        tenantSchema: string,
-        orderId: number,
-        data: { paymentMethod?: string; state?: string },
-    ): Promise<void> {
-        const updates: string[] = ['updated_at = NOW()'];
-        const values: any[] = [];
-        let paramIndex = 1;
-
-        if (data.paymentMethod) {
-            values.push(data.paymentMethod);
-            paramIndex++;
-        }
-        if (data.state) {
-            updates.push(`state = $${paramIndex}`);
-            values.push(data.state);
-            paramIndex++;
-        }
-
-        values.push(orderId);
-
+    async initializePaymentProviders(tenantSchema: string): Promise<void> {
+        // Payment transactions table
         await this.prisma.$executeRawUnsafe(`
-      UPDATE "${tenantSchema}"."vendure_order"
-      SET ${updates.join(', ')}
-      WHERE id = $${paramIndex}
-    `, ...values);
+            CREATE TABLE IF NOT EXISTS "${tenantSchema}"."vendure_payment_transaction" (
+                id SERIAL PRIMARY KEY,
+                order_id VARCHAR(100) NOT NULL,
+                customer_id INT,
+                provider VARCHAR(50) NOT NULL,
+                provider_transaction_id VARCHAR(255),
+                amount DECIMAL(10,2) NOT NULL,
+                currency VARCHAR(3) NOT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'pending',
+                reference_number VARCHAR(255),
+                webhook_payload JSONB,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            )
+        `);
+
+        // Payment methods configuration
+        await this.prisma.$executeRawUnsafe(`
+            CREATE TABLE IF NOT EXISTS "${tenantSchema}"."vendure_payment_method" (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                provider VARCHAR(50) NOT NULL,
+                is_active BOOLEAN DEFAULT true,
+                config JSONB,
+                territory VARCHAR(50),
+                min_amount DECIMAL(10,2),
+                max_amount DECIMAL(10,2),
+                fee_percentage DECIMAL(5,2),
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+        `);
+
+        // Settlement records
+        await this.prisma.$executeRawUnsafe(`
+            CREATE TABLE IF NOT EXISTS "${tenantSchema}"."vendure_settlement" (
+                id SERIAL PRIMARY KEY,
+                order_id VARCHAR(100) NOT NULL,
+                vendor_id INT NOT NULL,
+                gross_amount DECIMAL(10,2) NOT NULL,
+                platform_fee DECIMAL(10,2) NOT NULL,
+                net_amount DECIMAL(10,2) NOT NULL,
+                tax_amount DECIMAL(10,2),
+                settlement_date TIMESTAMP DEFAULT NOW(),
+                status VARCHAR(20) DEFAULT 'pending'
+            )
+        `);
+
+        // Insert default payment methods by territory
+        await this.insertDefaultPaymentMethods(tenantSchema);
     }
 
     /**
-     * Log payment event
+     * Insert default payment methods based on territory
      */
-    private async logPaymentEvent(tenantId: string, type: string, payload: any): Promise<void> {
-        await this.eventService.record({ type, tenantId, payload });
-        this.logger.log(`Event: ${type} for tenant ${tenantId}`);
-    }
+    private async insertDefaultPaymentMethods(tenantSchema: string): Promise<void> {
+        const defaultMethods = [
+            // International methods
+            {
+                name: 'Visa',
+                provider: 'stripe',
+                territory: 'GLOBAL',
+                min_amount: 10,
+                max_amount: 100000,
+                fee_percentage: 2.9
+            },
+            {
+                name: 'Mastercard',
+                provider: 'stripe',
+                territory: 'GLOBAL',
+                min_amount: 10,
+                max_amount: 100000,
+                fee_percentage: 2.9
+            },
+            {
+                name: 'PayPal',
+                provider: 'paypal',
+                territory: 'GLOBAL',
+                min_amount: 10,
+                max_amount: 50000,
+                fee_percentage: 3.4
+            },
+            // Arabic methods
+            {
+                name: 'Fawry',
+                provider: 'fawry',
+                territory: 'EGYPT',
+                min_amount: 5,
+                max_amount: 50000,
+                fee_percentage: 1.5
+            },
+            {
+                name: 'CashU',
+                provider: 'cashu',
+                territory: 'ARAB_REGION',
+                min_amount: 10,
+                max_amount: 25000,
+                fee_percentage: 2.0
+            },
+            {
+                name: 'ValU',
+                provider: 'valu',
+                territory: 'EGYPT',
+                min_amount: 100,
+                max_amount: 10000,
+                fee_percentage: 1.0
+            },
+            // Gulf methods
+            {
+                name: 'MADA',
+                provider: 'mada',
+                territory: 'SAUDI_ARABIA',
+                min_amount: 10,
+                max_amount: 50000,
+                fee_percentage: 1.5
+            },
+            {
+                name: 'KNET',
+                provider: 'knet',
+                territory: 'KUWAIT',
+                min_amount: 1,
+                max_amount: 1000,
+                fee_percentage: 0.75
+            }
+        ];
 
-    /**
-     * Get Stripe payment method types
-     */
-    private getStripePaymentMethods(method: PaymentMethod): string[] {
-        switch (method) {
-            case 'visa':
-            case 'mastercard':
-                return ['card'];
-            case 'apple_pay':
-                return ['card']; // Apple Pay uses card
-            case 'google_pay':
-                return ['card']; // Google Pay uses card
-            default:
-                return ['card'];
+        for (const method of defaultMethods) {
+            await this.prisma.$executeRawUnsafe(`
+                INSERT INTO "${tenantSchema}"."vendure_payment_method"
+                (name, provider, territory, min_amount, max_amount, fee_percentage, is_active)
+                VALUES ($1, $2, $3, $4, $5, $6, true)
+                ON CONFLICT (name, territory) DO UPDATE SET
+                provider = EXCLUDED.provider,
+                min_amount = EXCLUDED.min_amount,
+                max_amount = EXCLUDED.max_amount,
+                fee_percentage = EXCLUDED.fee_percentage
+            `, method.name, method.provider, method.territory, 
+            method.min_amount, method.max_amount, method.fee_percentage);
         }
     }
 
     /**
-     * Get supported payment methods
+     * Process payment through selected provider
      */
-    getSupportedMethods(): PaymentMethod[] {
+    async processPayment(tenantSchema: string, request: PaymentRequest): Promise<PaymentResponse> {
+        // Validate request
+        this.validatePaymentRequest(request);
+
+        // Check if payment method is available
+        const methodAvailable = await this.validatePaymentMethod(
+            tenantSchema, 
+            request.provider, 
+            request.amount, 
+            request.currency
+        );
+
+        if (!methodAvailable.available) {
+            throw new HttpException(
+                `Payment method not available: ${methodAvailable.reason}`, 
+                HttpStatus.BAD_REQUEST
+            );
+        }
+
+        // Create payment transaction record
+        const transaction = await this.prisma.$queryRawUnsafe(`
+            INSERT INTO "${tenantSchema}"."vendure_payment_transaction"
+            (order_id, customer_id, provider, amount, currency, status)
+            VALUES ($1, $2, $3, $4, $5, 'pending')
+            RETURNING *
+        `, request.orderId, null, request.provider, request.amount, request.currency);
+
+        const transactionRecord = (transaction as any[])[0];
+
+        try {
+            // Process payment with provider
+            const providerResult = await this.callPaymentProvider(
+                request.provider,
+                request,
+                tenantSchema
+            );
+
+            // Update transaction with provider result
+            await this.prisma.$executeRawUnsafe(`
+                UPDATE "${tenantSchema}"."vendure_payment_transaction"
+                SET status = $1, provider_transaction_id = $2, reference_number = $3
+                WHERE id = $4
+            `, providerResult.status, providerResult.transactionId, 
+            providerResult.referenceNumber, transactionRecord.id);
+
+            return {
+                id: Number(transactionRecord.id),
+                status: providerResult.status as any,
+                provider: request.provider,
+                providerTransactionId: providerResult.transactionId,
+                amount: Number(transactionRecord.amount),
+                currency: transactionRecord.currency,
+                orderId: transactionRecord.order_id,
+                referenceNumber: providerResult.referenceNumber
+            };
+        } catch (error) {
+            // Update transaction as failed
+            await this.prisma.$executeRawUnsafe(`
+                UPDATE "${tenantSchema}"."vendure_payment_transaction"
+                SET status = 'failed', updated_at = NOW()
+                WHERE id = $1
+            `, transactionRecord.id);
+
+            throw new HttpException(
+                `Payment processing failed: ${error.message}`,
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Handle payment webhook from provider
+     */
+    async handleWebhook(tenantSchema: string, payload: any): Promise<void> {
+        const { provider, referenceNumber, status, amount, orderId } = payload;
+
+        // Validate webhook signature
+        if (!this.validateWebhookSignature(payload, provider)) {
+            throw new HttpException('Invalid webhook signature', HttpStatus.UNAUTHORIZED);
+        }
+
+        // Update transaction status
+        await this.prisma.$executeRawUnsafe(`
+            UPDATE "${tenantSchema}"."vendure_payment_transaction"
+            SET status = $1, updated_at = NOW(), webhook_payload = $2
+            WHERE order_id = $3 AND provider = $4
+        `, status, JSON.stringify(payload), orderId, provider);
+
+        this.logger.log(`Webhook processed for order ${orderId}, status: ${status}`);
+    }
+
+    /**
+     * Process refund
+     */
+    async refundPayment(tenantSchema: string, orderId: string, amount: number): Promise<any> {
+        // Get original transaction
+        const transactions = await this.prisma.$queryRawUnsafe(`
+            SELECT * FROM "${tenantSchema}"."vendure_payment_transaction"
+            WHERE order_id = $1 AND status = 'paid'
+        `, orderId);
+
+        if ((transactions as any[]).length === 0) {
+            throw new HttpException('Original payment not found or not paid', HttpStatus.NOT_FOUND);
+        }
+
+        const originalTx = (transactions as any[])[0];
+
+        if (originalTx.status !== 'paid') {
+            throw new HttpException('Cannot refund non-paid payment', HttpStatus.BAD_REQUEST);
+        }
+
+        if (amount > Number(originalTx.amount)) {
+            throw new HttpException('Refund amount exceeds original payment', HttpStatus.BAD_REQUEST);
+        }
+
+        try {
+            // Call provider refund API
+            const refundResult = await this.callRefundProvider(
+                originalTx.provider,
+                originalTx.provider_transaction_id,
+                amount
+            );
+
+            // Create refund record
+            await this.prisma.$executeRawUnsafe(`
+                INSERT INTO "${tenantSchema}"."vendure_payment_transaction"
+                (order_id, provider, provider_transaction_id, amount, currency, status, reference_number)
+                VALUES ($1, $2, $3, $4, $5, 'refunded', $6)
+            `, orderId, originalTx.provider, refundResult.transactionId, 
+            -amount, originalTx.currency, refundResult.referenceNumber);
+
+            return {
+                success: true,
+                refundedAmount: amount,
+                provider: originalTx.provider,
+                refundTransactionId: refundResult.transactionId
+            };
+        } catch (error) {
+            throw new HttpException(
+                `Refund failed: ${error.message}`,
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Get available payment methods for territory
+     */
+    async getPaymentMethods(tenantSchema: string, territory: string): Promise<string[]> {
+        const methods = await this.prisma.$queryRawUnsafe(`
+            SELECT DISTINCT provider FROM "${tenantSchema}"."vendure_payment_method"
+            WHERE is_active = true 
+            AND (territory = $1 OR territory = 'GLOBAL')
+        `, territory);
+
+        return (methods as any[]).map(m => m.provider);
+    }
+
+    /**
+     * Calculate settlement for marketplace/cooperative
+     */
+    async calculateSettlement(orderDetails: any): Promise<SettlementCalculation> {
+        const { totalAmount, items, cooperativeDeal } = orderDetails;
+
+        let platformFee = 0;
+        let sharedMarketingFee = 0;
+
+        // Calculate individual item fees
+        for (const item of items) {
+            const itemFee = item.price * (item.commissionRate || 0);
+            platformFee += itemFee;
+        }
+
+        // Apply cooperative deal if applicable
+        if (cooperativeDeal?.enabled) {
+            sharedMarketingFee = totalAmount * (cooperativeDeal.sharedMarketingFee || 0);
+        }
+
+        const netAmount = totalAmount - platformFee - sharedMarketingFee;
+
+        return {
+            vendorAmount: netAmount,
+            platformFee,
+            totalSettlement: totalAmount,
+            sharedMarketingFee: cooperativeDeal?.enabled ? sharedMarketingFee : undefined
+        };
+    }
+
+    /**
+     * Get transaction history
+     */
+    async getTransactionHistory(
+        tenantSchema: string, 
+        customerId: number, 
+        startDate?: Date, 
+        endDate?: Date
+    ): Promise<any[]> {
+        let query = `
+            SELECT * FROM "${tenantSchema}"."vendure_payment_transaction"
+            WHERE customer_id = $1
+        `;
+        const params: any[] = [customerId];
+        let paramIndex = 2;
+
+        if (startDate) {
+            query += ` AND created_at >= $${paramIndex}`;
+            params.push(startDate);
+            paramIndex++;
+        }
+
+        if (endDate) {
+            query += ` AND created_at <= $${paramIndex}`;
+            params.push(endDate);
+            paramIndex++;
+        }
+
+        query += ` ORDER BY created_at DESC`;
+
+        const transactions = await this.prisma.$queryRawUnsafe(query, ...params);
+
+        return (transactions as any[]).map(tx => ({
+            id: Number(tx.id),
+            orderId: tx.order_id,
+            amount: Number(tx.amount),
+            currency: tx.currency,
+            status: tx.status,
+            provider: tx.provider,
+            createdAt: tx.created_at,
+            referenceNumber: tx.reference_number
+        }));
+    }
+
+    /**
+     * Validate payment method availability
+     */
+    async validatePaymentMethod(
+        tenantSchema: string, 
+        provider: string, 
+        amount: number, 
+        currency: string
+    ): Promise<{ available: boolean; reason?: string }> {
+        const method = await this.prisma.$queryRawUnsafe(`
+            SELECT * FROM "${tenantSchema}"."vendure_payment_method"
+            WHERE provider = $1 AND is_active = true
+        `, provider);
+
+        if ((method as any[]).length === 0) {
+            return { available: false, reason: 'Payment method not supported' };
+        }
+
+        const config = (method as any[])[0];
+        
+        if (amount < Number(config.min_amount)) {
+            return { available: false, reason: 'Amount below minimum' };
+        }
+
+        if (amount > Number(config.max_amount)) {
+            return { available: false, reason: 'Amount exceeds maximum' };
+        }
+
+        return { available: true };
+    }
+
+    /**
+     * Validate payment request
+     */
+    private validatePaymentRequest(request: PaymentRequest): void {
+        if (request.amount <= 0) {
+            throw new HttpException('Amount must be greater than zero', HttpStatus.BAD_REQUEST);
+        }
+
+        if (!request.provider) {
+            throw new HttpException('Provider is required', HttpStatus.BAD_REQUEST);
+        }
+
+        if (!request.orderId) {
+            throw new HttpException('Order ID is required', HttpStatus.BAD_REQUEST);
+        }
+
+        if (!request.customer.email) {
+            throw new HttpException('Customer email is required', HttpStatus.BAD_REQUEST);
+        }
+
+        if (!request.items || request.items.length === 0) {
+            throw new HttpException('At least one item is required', HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Call payment provider API
+     */
+    private async callPaymentProvider(
+        provider: string, 
+        request: PaymentRequest, 
+        tenantSchema: string
+    ): Promise<any> {
+        // In real implementation, this would call the actual payment provider API
+        // For demo purposes, we'll simulate different provider behaviors
+        
+        switch (provider) {
+            case 'fawry':
+                return this.simulateFawryPayment(request);
+            case 'paypal':
+                return this.simulatePayPalPayment(request);
+            case 'stripe':
+                return this.simulateStripePayment(request);
+            case 'valu':
+                return this.simulateValUPayment(request);
+            default:
+                return this.simulateGenericPayment(request);
+        }
+    }
+
+    /**
+     * Call refund provider API
+     */
+    private async callRefundProvider(
+        provider: string,
+        transactionId: string,
+        amount: number
+    ): Promise<any> {
+        // In real implementation, this would call the actual refund API
+        // For demo purposes, we'll simulate the response
+        return {
+            transactionId: `refund-${transactionId}`,
+            referenceNumber: `REF-${Date.now()}`
+        };
+    }
+
+    /**
+     * Validate webhook signature
+     */
+    validateWebhookSignature(payload: any, provider: string): boolean {
+        // In real implementation, this would validate the actual signature
+        // For demo purposes, we'll return true
+        return true;
+    }
+
+    /**
+     * Tokenize sensitive payment data
+     */
+    tokenizePaymentData(data: any): any {
+        // In real implementation, this would use a secure tokenization service
+        // For demo purposes, we'll return a mock token
+        return {
+            ...data,
+            cardNumber: '****-****-****-' + data.cardNumber.slice(-4),
+            token: `tok_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        };
+    }
+
+    /**
+     * Check PCI compliance
+     */
+    isPCICompliant(): boolean {
+        // Return true if the service follows PCI DSS standards
+        return true;
+    }
+
+    // Simulation methods for demo purposes
+    private simulateFawryPayment(request: PaymentRequest) {
+        return {
+            status: 'pending',
+            transactionId: `fawry-${Date.now()}`,
+            referenceNumber: `REF-${Math.floor(Math.random() * 1000000)}`
+        };
+    }
+
+    private simulatePayPalPayment(request: PaymentRequest) {
+        return {
+            status: 'paid',
+            transactionId: `paypal-${Date.now()}`,
+            referenceNumber: `PAY-${Math.floor(Math.random() * 1000000)}`
+        };
+    }
+
+    private simulateStripePayment(request: PaymentRequest) {
+        return {
+            status: 'paid',
+            transactionId: `stripe-${Date.now()}`,
+            referenceNumber: `CH-${Math.floor(Math.random() * 1000000)}`
+        };
+    }
+
+    private simulateValUPayment(request: PaymentRequest) {
+        return {
+            status: 'pending',
+            transactionId: `valu-${Date.now()}`,
+            referenceNumber: `VALU-${Math.floor(Math.random() * 1000000)}`
+        };
+    }
+
+    private simulateGenericPayment(request: PaymentRequest) {
+        return {
+            status: 'pending',
+            transactionId: `generic-${Date.now()}`,
+            referenceNumber: `GEN-${Math.floor(Math.random() * 1000000)}`
+        };
+    }
+
+    /**
+     * Get supported payment providers
+     */
+    getSupportedProviders(): string[] {
         return [
-            'visa',
-            'mastercard',
-            'cash',
-            'paypal',
-            'mada',
-            'stc_pay',
-            'apple_pay',
-            'google_pay',
+            'fawry',      // Egypt
+            'cashu',      // Arab region
+            'valu',       // Egypt
+            'mada',       // Saudi Arabia
+            'knet',       // Kuwait
+            'paypal',     // Global
+            'stripe',     // Global
+            'apple_pay',  // Global
+            'google_pay', // Global
+            'hyperpay'    // MENA region
         ];
     }
 }

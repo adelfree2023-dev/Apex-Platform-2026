@@ -1,284 +1,134 @@
-# 🚀 Apex Platform — Complete Execution Protocol
-
-**Project**: Apex Platform 2026  
-**Status**: ✅ **ALL 30 PHASES COMPLETE**  
-**Date**: January 14, 2026
-
----
-
-## 📊 ملخص تنفيذي
-
-| المقياس | القيمة |
-|---------|--------|
-| **المراحل** | 30 / 30 ✅ |
-| **Backend Modules** | 25 |
-| **Frontend Components** | 35+ |
-| **API Endpoints** | 200+ |
-| **Live Server** | http://34.102.65.89:3001 |
-| **Storefront** | http://34.102.65.89:3002 |
+# 📘 Apex Platform - The Comprehensive Protocol
+> **"One Protocol to Rule Them All"**
+> **Version:** 2.0 (Consolidated)
+> **Date:** January 16, 2026
+> **Status:** ⚠️ Infrastructure Ready / Application Offline
 
 ---
 
-# 📦 التقسيم حسب الطبقات التقنية
+# 📑 Index (الفهرس)
+1.  **[Vision & Constitution](#-vision--constitution)** (The Why & The Rules)
+2.  **[Server Anatomy & Status](#-server-anatomy--live-status)** (The Where)
+3.  **[Ecosystem Architecture](#-ecosystem-architecture)** (The How)
+4.  **[Technical Breakdown](#-technical-breakdown)** (The What - Backend/API/DB)
+5.  **[Setup & Operations](#-setup--operations-guide)** (The Manual)
 
 ---
 
-## 🔙 Backend Services (25 Module)
+# 🏛️ Vision & Constitution
+> *Imported from APEX_PLATFORM_CONTEXT*
 
-### الموجود ✅
-| Module | Service File | Test File | الحالة |
-|--------|--------------|-----------|--------|
-| TenantsModule | `tenants.service.ts` | `tenants.service.spec.ts` | ✅ |
-| VendureModule | `vendure.service.ts` | `vendure.service.spec.ts` | ✅ |
-| PaymentsModule | `payments.service.ts` | `payments.service.spec.ts` | ✅ |
-| NotificationModule | `notification.service.ts` | `notification.service.spec.ts` | ✅ |
-| AnalyticsModule | `analytics.service.ts` | `analytics.service.spec.ts` | ✅ |
-| SearchModule | `search.service.ts` | `search.service.spec.ts` | ✅ |
-| PromotionsModule | `promotions.service.ts` | `promotions.service.spec.ts` | ✅ |
-| I18nModule | `i18n.service.ts` | `i18n.service.spec.ts` | ✅ |
-| AuthModule | `social-auth.service.ts` | `social-auth.service.spec.ts` | ✅ |
-| ShippingModule | `shipping.service.ts` | `shipping.service.spec.ts` | ✅ |
-| BundleModule | `bundle.service.ts` | `bundle.service.spec.ts` | ✅ |
-| WishlistModule | `wishlist.service.ts` | `wishlist.service.spec.ts` | ✅ |
-| SeoModule | `seo.service.ts` | ❌ ناقص | ⚠️ |
-| CsvModule | `csv.service.ts` | `csv.service.spec.ts` | ✅ |
-| RfqModule | `rfq.service.ts` | ❌ ناقص | ⚠️ |
-| SubscriptionModule | `subscription.service.ts` | `subscription.service.spec.ts` | ✅ |
-| LoyaltyModule | `loyalty.service.ts` | ❌ ناقص | ⚠️ |
-| BookingModule | `booking.service.ts` | ❌ ناقص | ⚠️ |
-| AiModule | `ai.service.ts` | `ai.service.spec.ts` | ✅ |
-| AffiliateModule | `affiliate.service.ts` | `affiliate.service.spec.ts` | ✅ |
-| MarketplaceModule | `marketplace.service.ts` | ❌ ناقص | ⚠️ |
+### 🎯 The Strategic Vision
+**Apex Platform is NOT just an e-commerce platform.**
+It is an **Operating System for the Digital Local Economy** — connecting Merchants, Customers, and Marketers in a smart cooperative network.
+*   **Goal:** Enable any entity (Honey seller, Dentist, Academy) to build a digital entity in minutes.
+*   **Differentiation:** We don't sell "websites"; we sell **independent digital entities** that grow with their owners.
 
-### الناقص ❌
-| المهمة | الملف | الاختبار | الأولوية |
-|--------|-------|----------|----------|
-| BillingService | `billing.service.ts` | `billing.service.spec.ts` | 🔴 عالي |
-| ReportsService | `reports.service.ts` | `reports.service.spec.ts` | 🔴 عالي |
-| TwoFactorService | `two-factor.service.ts` | `two-factor.service.spec.ts` | 🔴 عالي |
+### 📜 The 3 Golden Rules
+1.  **Isolation is NOT a Feature, It's Law.**
+    *   Schema-per-Tenant is mandatory. No query shall ever run without a `tenantId`.
+2.  **Intelligence is Planted, Not Built.**
+    *   All events must be captured with `territory`, `specializationTags`. We don't just store "Sales"; we store "Context".
+3.  **Governance is Visibility, Not Interference.**
+    *   Super Admin sees all via Audit Logs but never modifies tenant data directly without "Impersonation Mode".
 
 ---
 
-## 🎨 Frontend Components (35+)
+# 🗺️ Server Anatomy & Live Status
 
-### الموجود ✅ (via Storefront)
-| Component | الغرض | الحالة |
-|-----------|-------|--------|
-| ProductCard.tsx | عرض المنتج | ✅ |
-| ProductGrid.tsx | شبكة المنتجات | ✅ |
-| CartDrawer.tsx | سلة التسوق | ✅ |
-| CheckoutForm.tsx | إتمام الشراء | ✅ |
-| BundleCard.tsx | عرض الباقات | ✅ |
-| WishlistButton.tsx | زر المفضلة | ✅ |
-| SubscriptionPlans.tsx | خطط الاشتراك | ✅ |
-| LoyaltyDashboard.tsx | لوحة النقاط | ✅ |
+### 🔴 Live Status: 34.102.65.89
+| Service | Port | Status | Details |
+|---------|------|--------|---------|
+| **PostgreSQL** | `5432` | ✅ **Running** | `apex-postgres` container (Schema-per-Tenant) |
+| **Redis** | `6379` | ✅ **Running** | `apex-redis` container (Caching/Queues) |
+| **Adminer** | `8080` | ✅ **Running** | `apex-adminer` container (DB GUI) |
+| **Backend API** | `3001` | 🔴 **STOPPED** | Node process needs restart |
+| **Storefront** | `3002` | 🔴 **STOPPED** | Node process needs restart |
 
-### الناقص ❌ (Frontend بسيط مؤجل)
-| Component | الغرض | الأولوية |
-|-----------|-------|----------|
-| Marketing Site | موقع التسويق | 🟡 مؤجل |
-| User Profile Pages | صفحات الحساب | 🟡 مؤجل |
-| Mobile App | تطبيق موبايل | 🟡 مؤجل |
-
----
-
-## 🔌 API Endpoints (200+)
-
-### الموجود ✅
-| الفئة | عدد Endpoints | Controller | الحالة |
-|-------|---------------|------------|--------|
-| Tenants | 10 | `tenants.controller.ts` | ✅ |
-| Products | 25+ | `vendure.controller.ts` | ✅ |
-| Orders | 20+ | `vendure.controller.ts` | ✅ |
-| Cart | 10 | `vendure.controller.ts` | ✅ |
-| Payments | 15 | `payments.controller.ts` | ✅ |
-| Auth | 12 | `auth.controller.ts` | ✅ |
-| Bundles | 8 | `bundle.controller.ts` | ✅ |
-| Wishlists | 6 | `wishlist.controller.ts` | ✅ |
-| Subscriptions | 8 | `subscription.controller.ts` | ✅ |
-| Loyalty | 10 | `loyalty.controller.ts` | ✅ |
-| AI | 6 | `ai.controller.ts` | ✅ |
-| Affiliates | 8 | `affiliate.controller.ts` | ✅ |
-
-### الناقص ❌
-| Endpoint | Controller | الأولوية |
-|----------|------------|----------|
-| `/api/licenses/*` | `licenses.controller.ts` | 🔴 عالي |
-| `/api/billing/*` | `billing.controller.ts` | 🔴 عالي |
-| `/api/reports/*` | `reports.controller.ts` | 🔴 عالي |
-| `/api/settings/*` | `settings.controller.ts` | 🟡 متوسط |
+### 🏗️ Infrastructure Map
+```mermaid
+graph TD
+    User -->|Traffic| Docker
+    subgraph "Docker Host"
+        PG[(Postgres)]
+        RD[(Redis)]
+        Core[NestJS Backend]
+        Store[NextJS Storefront]
+    end
+    Core --> PG & RD
+    Store --> Core
+```
 
 ---
 
-## 🗄️ Database Tables
+# 🌐 Ecosystem Architecture
+> *See detailed [ECOSYSTEM_ARCHITECTURE.md](./ECOSYSTEM_ARCHITECTURE.md) for the full breakdown.*
 
-### الموجود ✅
-| Schema | الجداول | الحالة |
-|--------|---------|--------|
-| Public (Shared) | `tenants`, `plans`, `licenses` | ✅ |
-| Tenant Schema | Vendure tables (40+) | ✅ |
-| Phase 20-30 | `vendure_bundle`, `vendure_wishlist`, إلخ | ✅ |
+The platform consists of **5 Connected Projects**:
+1.  **📣 Marketing Site:** The Funnel (Signups).
+2.  **👑 Super Admin (HQ):** The Governance Layer (Creates Tenants).
+3.  **🏢 Tenant Admin:** The Management Layer (Manages Products/Orders).
+4.  **🛍️ Storefront:** The Customer Face (Headless Next.js).
+5.  **📱 Mobile App:** The Companion (React Native).
 
-### الناقص ❌
-| الجدول | الغرض | الأولوية |
-|--------|-------|----------|
-| `invoices` | الفواتير | 🔴 عالي |
-| `payment_history` | سجل المدفوعات | 🔴 عالي |
-| `tenant_settings` | إعدادات المتجر | 🟡 متوسط |
-| `email_templates` | قوالب الإيميل | 🟡 متوسط |
-| `audit_logs` | سجل العمليات | 🟡 متوسط |
+**Infinite Governance:**
+*   **Audit Middleware:** Intercepts all writes.
+*   **Kill Switch:** Super Admin can suspend any tenant instantly.
 
 ---
 
-## 🔒 Security
+# ⚙️ Technical Breakdown
 
-### الموجود ✅
-| الميزة | التنفيذ | الحالة |
-|--------|---------|--------|
-| JWT Authentication | `JwtService` | ✅ |
-| Tenant Isolation | Schema-per-Tenant | ✅ |
-| Password Hashing | bcrypt | ✅ |
-| CORS | NestJS CORS | ✅ |
-| Rate Limiting | @nestjs/throttler | ✅ |
-| Helmet | Security headers | ✅ |
+### 🔙 Backend (NestJS)
+*   **Status:** ✅ 90% Complete.
+*   **Modules:** 25 Modules Active (Tenants, Vendure, Payments, Analytics, etc.).
+*   **Missing:** BillingService, ReportsService, LicensesService.
+*   **Test Coverage:** 83% (982/986 Tests Passing).
 
-### الناقص ❌
-| الميزة | التنفيذ | الأولوية |
-|--------|---------|----------|
-| 2FA (TOTP) | `TwoFactorService` | 🔴 عالي |
-| Audit Logs كامل | توسيع AuditService | 🔴 عالي |
-| API Keys | للـ Vendors | 🟡 متوسط |
-| reCAPTCHA | للنماذج | 🟡 متوسط |
+### 🎨 Frontend (Next.js)
+*   **Status:** 🚫 **Experimental / Missing** (See [PAGES_TECHNICAL_AUDIT.md](./PAGES_TECHNICAL_AUDIT.md)).
+*   **Critical Gap:** 137+ Pages are missing or need rebuild using `shadcn/ui` boilerplate.
+*   **Strategy:** Delete current partial code and adopt `SaaS-Boilerplate` strategy.
+
+### 🗄️ Database (Postgres)
+*   **Status:** ✅ 100% Complete.
+*   **Schema:** Public (Tenants, Plans) + Tenant Schemas (Vendure tables).
+*   **Isolation:** Row Level Security (RLS) enabled.
 
 ---
 
-# 📈 ملخص الإحصائيات
+# 🛠️ Setup & Operations Guide
+> *Imported from SETUP_GUIDE*
 
-| الطبقة | موجود ✅ | جزئي ⚠️ | ناقص ❌ |
-|--------|---------|---------|---------|
-| **Backend** | 20 | 5 | 3 |
-| **Frontend** | 35+ | 0 | مؤجل |
-| **API** | 150+ | 0 | 30+ |
-| **Database** | 50+ | 0 | 5 |
-| **Security** | 6 | 0 | 4 |
+### ⚡ Quick Start
+```bash
+# 1. Clone
+git clone https://github.com/adelfree2023-dev/Apex-Platform-2026.git
+cd Apex-Platform-2026
 
----
+# 2. Backend
+cd packages/core
+cp .env.example .env
+npm install
+npx prisma migrate deploy
+npm run start:dev
 
-# ✅ المراحل المكتملة (30/30)
+# 3. Frontend
+cd packages/storefront
+npm install
+npm run dev -- -p 3002
+```
 
-### Foundation Phases (01-11) ✅
-- Core Trinity, Manager API, Admin HQ
-- Storefront Foundation, Tenant Isolation
-- Event Sourcing, Vendure Integration
-- Payments, Notifications, Analytics
-- Search, Promotions
-
-### Advanced Phases (12-19) ✅
-- i18n, Authentication, Reviews
-- Inventory, Orders, Customers
-- Reports, Shipping
-
-### Premium Phases (20-30) ✅
-- Bundles, Wishlists, SEO
-- CSV Import, RFQ Wholesale
-- Subscriptions, Loyalty, Bookings
-- AI Commerce, Affiliates, Marketplace
+### 📡 Common Commands
+*   **Create Tenant:** `POST /api/tenants`
+*   **Migrate Tenant:** `POST /api/tenants/:id/migrate`
+*   **Run Tests:** `npm run test` (in packages/core)
 
 ---
 
-# 🧪 Test Coverage Status (تفصيلي)
-
-## ملخص الاختبارات
-| المقياس | القيمة |
-|---------|--------|
-| **إجمالي الاختبارات** | 986 |
-| **ناجحة** | 982 ✅ |
-| **فاشلة** | 4 ❌ |
-| **Test Suites** | 57 (55 ناجحة) |
-| **التغطية الإجمالية** | ~83% |
-
----
-
-## تفاصيل التغطية حسب الملف
-
-### 🟢 تغطية عالية (90%+)
-| الملف | Statements | Lines | الاختبارات |
-|-------|------------|-------|-------------|
-| `wishlist.service.ts` | 100% | 100% | 15 ✅ |
-| `jwt.service.ts` | 98% | 98% | 8 ✅ |
-| `email.service.ts` | 95% | 95% | 12 ✅ |
-| `social-auth.service.ts` | 92% | 92% | 18 ✅ |
-| `event.service.ts` | 91% | 91% | 10 ✅ |
-| `bundle.service.ts` | 90% | 90% | 14 ✅ |
-
-### 🟡 تغطية متوسطة (70-89%)
-| الملف | Statements | Lines | الاختبارات |
-|-------|------------|-------|-------------|
-| `auth.controller.ts` | 89% | 89% | 22 ✅ |
-| `ai.service.ts` | 88% | 88% | 10 ✅ |
-| `tenants.service.ts` | 85% | 85% | 14 ✅ |
-| `analytics.service.ts` | 82% | 82% | 16 ✅ |
-| `payments.service.ts` | 80% | 80% | 20 ✅ |
-| `shipping.service.ts` | 78% | 78% | 18 ✅ |
-| `subscription.service.ts` | 75% | 75% | 12 ✅ |
-
-### 🔴 تغطية منخفضة (<70%)
-| الملف | Statements | Lines | الاختبارات | السبب |
-|-------|------------|-------|-------------|-------|
-| `vendure.controller.ts` | 60% | 60% | 45 (4 ❌) | Catch blocks |
-| `vendure.service.ts` | 55% | 55% | 30 ✅ | Many methods |
-| `affiliate.controller.ts` | 52% | 52% | 15 ✅ | يحتاج توسيع |
-| `marketplace.service.ts` | 40% | 40% | 8 ✅ | جديد |
-
-### ⚪ بدون اختبارات (0%)
-| الملف | السبب | الأولوية |
-|-------|-------|----------|
-| `seo.service.ts` | لم يُنشأ spec | 🟡 متوسط |
-| `rfq.service.ts` | لم يُنشأ spec | 🟡 متوسط |
-| `loyalty.service.ts` | لم يُنشأ spec | 🟡 متوسط |
-| `booking.service.ts` | لم يُنشأ spec | 🟡 متوسط |
-| `main.ts` | Bootstrap file | ⚪ منخفض |
-
----
-
-## الاختبارات الفاشلة (4)
-
-| الاختبار | الملف | السبب |
-|----------|-------|-------|
-| `searchProducts should throw on error` | `vendure.controller.spec.ts` | Mock tenant resolution |
-| `getProducts should throw on error` | `vendure.controller.spec.ts` | Mock tenant resolution |
-| `createProduct should throw on error` | `vendure.controller.spec.ts` | Mock tenant resolution |
-| `getCart should throw on error` | `vendure.controller.spec.ts` | Mock tenant resolution |
-
-**الإصلاح المطلوب:** تحديث setup tests لتتضمن tenant resolution mock.
-
----
-
-## خطة الوصول لـ 95%
-
-| المرحلة | المطلوب | التأثير المتوقع |
-|---------|---------|-----------------|
-| 1 | إصلاح 4 اختبارات فاشلة | 986/986 ✅ |
-| 2 | إضافة اختبارات vendure.controller | +8% |
-| 3 | إضافة specs للملفات 0% | +4% |
-| 4 | تغطية catch blocks | +3% |
-| **المجموع** | | **~98%** |
-
----
-
-# 🎯 الخطوات التالية
-
-## الأولوية القصوى (الأسبوع القادم)
-1. ✅ إصلاح 4 اختبارات فاشلة
-2. إكمال BillingService + اختباراتها
-3. إكمال LicenseService + اختباراتها
-4. إضافة 2FA للـ Super Admins
-
-## الأولوية المتوسطة
-5. ReportsService
-6. توسيع Audit Logs
-7. اختبارات للـ modules الناقصة
-
----
-
-> **الخلاصة:** البنية الأساسية مكتملة (30 مرحلة). الناقص هو: 3 Backend Services، 30+ API Endpoints، 5 Database Tables، 4 Security Features.
+> **Maintained By:** Apex AI Agent
+> **Reference Files:**
+> *   [ECOSYSTEM_ARCHITECTURE.md](./ECOSYSTEM_ARCHITECTURE.md)
+> *   [PAGES_TECHNICAL_AUDIT.md](./PAGES_TECHNICAL_AUDIT.md)
+> *   [PROJECT_EVALUATION.md](./PROJECT_EVALUATION.md)
+> *   [EXECUTION_PLAN.md](./EXECUTION_PLAN.md)

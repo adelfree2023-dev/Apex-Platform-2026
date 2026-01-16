@@ -403,8 +403,9 @@ describe('VendureController', () => {
         });
 
         it('searchProducts should throw on service error', async () => {
+            const reqWithQuery = { tenantSchema: 'test_schema', query: { q: 'test' } };
             mockVendureService.searchProducts.mockRejectedValue(new Error('fail'));
-            await expect(controller.searchProducts('test-store', mockRequest as any))
+            await expect(controller.searchProducts('test-store', reqWithQuery as any))
                 .rejects.toThrow(HttpException);
         });
 

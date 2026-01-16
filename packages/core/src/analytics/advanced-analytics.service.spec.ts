@@ -172,15 +172,16 @@ describe('AdvancedAnalyticsService', () => {
     describe('getProductPerformance', () => {
         it('should return product performance metrics', async () => {
             mockPrismaService.$queryRawUnsafe.mockResolvedValue([
-                { product_id: BigInt(1), name: 'iPhone 15', sku: 'IP15-256', total_sold: BigInt(100), total_revenue: 500000, avg_rating: 4.5 },
-                { product_id: BigInt(2), name: 'MacBook Pro', sku: 'MBP-M3', total_sold: BigInt(50), total_revenue: 400000, avg_rating: 4.8 },
+                { id: BigInt(1), name: 'iPhone 15', sku: 'IP15-256', price: 5000, stock_on_hand: 50, order_count: BigInt(100), units_sold: BigInt(150), total_revenue: 500000, review_count: BigInt(20), avg_rating: 4.5 },
+                { id: BigInt(2), name: 'MacBook Pro', sku: 'MBP-M3', price: 8000, stock_on_hand: 20, order_count: BigInt(50), units_sold: BigInt(50), total_revenue: 400000, review_count: BigInt(10), avg_rating: 4.8 },
             ]);
 
             const result = await service.getProductPerformance('tenant_test_store');
 
             expect(result).toHaveLength(2);
-            expect(result[0]).toHaveProperty('productId');
+            expect(result[0]).toHaveProperty('id');
             expect(result[0]).toHaveProperty('name');
+            expect(result[0]).toHaveProperty('totalRevenue');
         });
 
         it('should return empty on error', async () => {
@@ -197,14 +198,16 @@ describe('AdvancedAnalyticsService', () => {
     describe('getCohortAnalysis', () => {
         it('should return customer cohort analysis', async () => {
             mockPrismaService.$queryRawUnsafe.mockResolvedValue([
-                { cohort_month: '2026-01', customer_count: BigInt(100), returning_count: BigInt(45), total_revenue: 150000 },
-                { cohort_month: '2025-12', customer_count: BigInt(80), returning_count: BigInt(32), total_revenue: 120000 },
+                { cohort_month: '2026-01', months_since_signup: 0, customer_count: BigInt(100) },
+                { cohort_month: '2025-12', months_since_signup: 1, customer_count: BigInt(45) },
             ]);
 
             const result = await service.getCohortAnalysis('tenant_test_store');
 
             expect(result).toHaveLength(2);
             expect(result[0]).toHaveProperty('cohortMonth');
+            expect(result[0]).toHaveProperty('monthsSinceSignup');
+            expect(result[0]).toHaveProperty('customerCount');
         });
 
         it('should return empty on error', async () => {
@@ -220,16 +223,21 @@ describe('AdvancedAnalyticsService', () => {
 
     describe('getRevenueMetrics', () => {
         it('should return comprehensive revenue metrics', async () => {
-            // Mock multiple queries for different metrics
+            // Mock 4 queries: today, thisWeek, thisMonth, lastMonth
             mockPrismaService.$queryRawUnsafe
-                .mockResolvedValueOnce([{ total: 1000000, avg: 2500, count: BigInt(400) }]) // revenue summary
-                .mockResolvedValueOnce([{ total: 800000 }]) // previous period
-                .mockResolvedValueOnce([{ avg_customer_value: 5000 }]); // CLV
+                .mockResolvedValueOnce([{ revenue: 5000, orders: BigInt(10) }]) // today
+                .mockResolvedValueOnce([{ revenue: 25000, orders: BigInt(50) }]) // thisWeek
+                .mockResolvedValueOnce([{ revenue: 100000, orders: BigInt(200) }]) // thisMonth
+                .mockResolvedValueOnce([{ revenue: 80000, orders: BigInt(160) }]); // lastMonth
 
             const result = await service.getRevenueMetrics('tenant_test_store');
 
-            expect(result).toHaveProperty('totalRevenue');
-            expect(result).toHaveProperty('averageOrderValue');
+            expect(result).toHaveProperty('today');
+            expect(result).toHaveProperty('thisWeek');
+            expect(result).toHaveProperty('thisMonth');
+            expect(result).toHaveProperty('lastMonth');
+            expect(result).toHaveProperty('monthOverMonthGrowth');
+            expect(result.today.revenue).toBe(5000);
         });
 
         it('should handle missing data gracefully', async () => {
@@ -237,15 +245,16 @@ describe('AdvancedAnalyticsService', () => {
 
             const result = await service.getRevenueMetrics('tenant_test_store');
 
-            expect(result).toHaveProperty('totalRevenue');
+            expect(result).toHaveProperty('today');
         });
 
-        it('should return empty object on error', async () => {
+        it('should return default object on error', async () => {
             mockPrismaService.$queryRawUnsafe.mockRejectedValue(new Error('Error'));
 
             const result = await service.getRevenueMetrics('tenant_test_store');
 
-            expect(result).toEqual({});
+            expect(result.today.revenue).toBe(0);
+            expect(result.monthOverMonthGrowth).toBe(0);
         });
     });
 
@@ -253,37 +262,39 @@ describe('AdvancedAnalyticsService', () => {
 
     describe('getAbandonmentMetrics', () => {
         it('should return cart abandonment metrics', async () => {
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{
-                total_carts: BigInt(500),
-                abandoned_carts: BigInt(150),
-                abandoned_value: 75000,
-            }]);
+            // 3 queries: abandonedCarts, totalCarts, completedOrders
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce([{ count: BigInt(150) }]) // abandoned
+                .mockResolvedValueOnce([{ count: BigInt(500) }]) // total
+                .mockResolvedValueOnce([{ count: BigInt(300) }]); // completed
 
             const result = await service.getAbandonmentMetrics('tenant_test_store');
 
             expect(result).toHaveProperty('totalCarts');
             expect(result).toHaveProperty('abandonedCarts');
             expect(result).toHaveProperty('abandonmentRate');
+            expect(result).toHaveProperty('completedOrders');
+            expect(result).toHaveProperty('conversionRate');
         });
 
         it('should handle zero carts', async () => {
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{
-                total_carts: BigInt(0),
-                abandoned_carts: BigInt(0),
-                abandoned_value: 0,
-            }]);
+            mockPrismaService.$queryRawUnsafe
+                .mockResolvedValueOnce([{ count: BigInt(0) }])
+                .mockResolvedValueOnce([{ count: BigInt(0) }])
+                .mockResolvedValueOnce([{ count: BigInt(0) }]);
 
             const result = await service.getAbandonmentMetrics('tenant_test_store');
 
             expect(result.abandonmentRate).toBe(0);
         });
 
-        it('should return empty object on error', async () => {
+        it('should return default object on error', async () => {
             mockPrismaService.$queryRawUnsafe.mockRejectedValue(new Error('Error'));
 
             const result = await service.getAbandonmentMetrics('tenant_test_store');
 
-            expect(result).toEqual({});
+            expect(result.abandonmentRate).toBe(0);
+            expect(result.totalCarts).toBe(0);
         });
     });
 });

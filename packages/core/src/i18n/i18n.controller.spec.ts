@@ -17,7 +17,7 @@ describe('I18nController', () => {
         getTranslation: jest.fn(),
         getAllTranslations: jest.fn(),
         setTranslation: jest.fn(),
-        getProductTranslation: jest.fn(),
+        translateProduct: jest.fn(),
         setProductTranslation: jest.fn(),
     };
 
@@ -83,8 +83,8 @@ describe('I18nController', () => {
 
             expect(mockI18nService.getTranslation).toHaveBeenCalledWith(
                 'tenant_test_store',
-                'greeting',
-                'en'
+                'en',
+                'greeting'
             );
         });
     });
@@ -146,7 +146,7 @@ describe('I18nController', () => {
 
     describe('getProductTranslation', () => {
         it('should return product translation', async () => {
-            mockI18nService.getProductTranslation.mockResolvedValue({
+            mockI18nService.translateProduct.mockResolvedValue({
                 name: 'آيفون 15',
                 description: 'أحدث هاتف من أبل',
             });
@@ -158,7 +158,7 @@ describe('I18nController', () => {
         });
 
         it('should return empty on error', async () => {
-            mockI18nService.getProductTranslation.mockRejectedValue(new Error());
+            mockI18nService.translateProduct.mockRejectedValue(new Error());
 
             const result = await controller.getProductTranslation('test-store', '100', 'ar');
 

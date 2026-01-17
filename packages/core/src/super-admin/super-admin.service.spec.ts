@@ -5,11 +5,11 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { Logger, NotFoundException } from '@nestjs/common';
-import { AdminService } from './admin.service';
+import { SuperAdminService } from './super-admin.service';
 import { PrismaService } from '../prisma/prisma.service';
 
-describe('AdminService', () => {
-    let service: AdminService;
+describe('SuperAdminService', () => {
+    let service: SuperAdminService;
 
     const mockPrismaService = {
         tenant: {
@@ -24,12 +24,12 @@ describe('AdminService', () => {
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
-                AdminService,
+                SuperAdminService,
                 { provide: PrismaService, useValue: mockPrismaService },
             ],
         }).compile();
 
-        service = module.get<AdminService>(AdminService);
+        service = module.get<SuperAdminService>(SuperAdminService);
         jest.clearAllMocks();
         // Silence logger for tests
         jest.spyOn(Logger.prototype, 'warn').mockImplementation();

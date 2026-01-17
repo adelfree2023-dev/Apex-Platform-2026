@@ -21,6 +21,19 @@ export class AffiliateService {
     constructor(private readonly prisma: PrismaService) { }
 
     /**
+     * Validate tenant exists
+     */
+    private async validateTenant(tenantId: string): Promise<void> {
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+        });
+
+        if (!tenant) {
+            throw new NotFoundException(`Tenant not found: ${tenantId}`);
+        }
+    }
+
+    /**
      * Create affiliate tables
      */
     async createAffiliateTables(tenantSchema: string): Promise<void> {
@@ -38,7 +51,8 @@ export class AffiliateService {
         total_earnings INT DEFAULT 0,
         total_referrals INT DEFAULT 0,
         approved_at TIMESTAMP,
-        created_at TIMESTAMP DEFAULT NOW()
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
       )
     `);
 
@@ -47,12 +61,14 @@ export class AffiliateService {
       CREATE TABLE IF NOT EXISTS "${tenantSchema}"."vendure_affiliate_referral" (
         id SERIAL PRIMARY KEY,
         affiliate_id INT REFERENCES "${tenantSchema}"."vendure_affiliate"(id),
-        order_id INT,
-        order_total INT NOT NULL,
-        commission INT NOT NULL,
+        order_id VARCHAR(255),
+        order_total INT NOT NULL DEFAULT 0,
+        commission INT NOT NULL DEFAULT 0,
+        commission_rate INT NOT NULL DEFAULT 10,
         status VARCHAR(50) DEFAULT 'pending',
         paid_at TIMESTAMP,
-        created_at TIMESTAMP DEFAULT NOW()
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
       )
     `);
 
@@ -66,7 +82,8 @@ export class AffiliateService {
         reference VARCHAR(255),
         status VARCHAR(50) DEFAULT 'processing',
         processed_at TIMESTAMP,
-        created_at TIMESTAMP DEFAULT NOW()
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
       )
     `);
     }
@@ -79,25 +96,45 @@ export class AffiliateService {
     }
 
     /**
-     * Apply to become affiliate
+     * Register a new affiliate for a tenant
      */
-    async applyAffiliate(tenantSchema: string, data: AffiliateData): Promise<any> {
+    async applyAffiliate(tenantId: string, data: AffiliateData): Promise<any> {
+        await this.validateTenant(tenantId);
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
         const referralCode = this.generateReferralCode();
 
-        const affiliate = await this.prisma.$queryRawUnsafe(`
-      INSERT INTO "${tenantSchema}"."vendure_affiliate" 
-      (user_id, name, email, phone, referral_code, commission_rate, status)
-      VALUES ($1, $2, $3, $4, $5, $6, 'pending')
-      RETURNING *
-    `, data.userId || null, data.name, data.email, data.phone || null, referralCode, data.commissionRate || 10);
+        try {
+            // Check if affiliate already exists
+            const existing = await this.prisma.$queryRawUnsafe(`
+        SELECT 1 FROM "${tenantSchema}"."vendure_affiliate" WHERE email = $1
+      `, data.email);
 
-        return this.serializeAffiliate((affiliate as any[])[0]);
+            if ((existing as any[]).length > 0) {
+                throw new Error('Affiliate with this email already exists');
+            }
+
+            // Insert new affiliate
+            const result = await this.prisma.$queryRawUnsafe(`
+        INSERT INTO "${tenantSchema}"."vendure_affiliate" 
+        (user_id, name, email, phone, referral_code, commission_rate, status, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW(), NOW())
+        RETURNING *
+      `, data.userId || null, data.name, data.email, data.phone || null, referralCode, data.commissionRate || 10);
+
+            return this.serializeAffiliate((result as any[])[0]);
+        } catch (error) {
+            this.logger.error(`Failed to register affiliate for tenant ${tenantId}: ${error.message}`);
+            throw error;
+        }
     }
 
     /**
      * Get affiliate by ID
      */
-    async getAffiliate(tenantSchema: string, affiliateId: number): Promise<any | null> {
+    async getAffiliate(tenantId: string, affiliateId: number): Promise<any | null> {
+        await this.validateTenant(tenantId);
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
         try {
             const affiliate = await this.prisma.$queryRawUnsafe(`
         SELECT * FROM "${tenantSchema}"."vendure_affiliate"
@@ -114,7 +151,10 @@ export class AffiliateService {
     /**
      * Get affiliate by referral code
      */
-    async getAffiliateByCode(tenantSchema: string, code: string): Promise<any | null> {
+    async getAffiliateByCode(tenantId: string, code: string): Promise<any | null> {
+        await this.validateTenant(tenantId);
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
         try {
             const affiliate = await this.prisma.$queryRawUnsafe(`
         SELECT * FROM "${tenantSchema}"."vendure_affiliate"
@@ -129,22 +169,33 @@ export class AffiliateService {
     }
 
     /**
-     * Approve affiliate
+     * Approve an affiliate
      */
-    async approveAffiliate(tenantSchema: string, affiliateId: number): Promise<any> {
-        await this.prisma.$executeRawUnsafe(`
+    async approveAffiliate(tenantId: string, affiliateId: number): Promise<any> {
+        await this.validateTenant(tenantId);
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        const result = await this.prisma.$queryRawUnsafe(`
       UPDATE "${tenantSchema}"."vendure_affiliate"
-      SET status = 'approved', approved_at = NOW()
-      WHERE id = $1
+      SET status = 'approved', approved_at = NOW(), updated_at = NOW()
+      WHERE id = $1 AND status = 'pending'
+      RETURNING *
     `, affiliateId);
 
-        return this.getAffiliate(tenantSchema, affiliateId);
+        if ((result as any[]).length === 0) {
+            throw new NotFoundException('Affiliate not found or already approved');
+        }
+
+        return this.serializeAffiliate((result as any[])[0]);
     }
 
     /**
-     * Get all affiliates
+     * Get all affiliates for a tenant
      */
-    async getAffiliates(tenantSchema: string, status?: string): Promise<any[]> {
+    async getAffiliates(tenantId: string, status?: string): Promise<any[]> {
+        await this.validateTenant(tenantId);
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
         try {
             let whereClause = '1=1';
             if (status) whereClause += ` AND status = '${status}'`;
@@ -164,22 +215,25 @@ export class AffiliateService {
     /**
      * Track referral from order
      */
-    async trackReferral(tenantSchema: string, affiliateCode: string, orderId: number, orderTotal: number): Promise<any> {
-        const affiliate = await this.getAffiliateByCode(tenantSchema, affiliateCode);
+    async trackReferral(tenantId: string, affiliateCode: string, orderId: string, orderTotal: number): Promise<any> {
+        await this.validateTenant(tenantId);
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        const affiliate = await this.getAffiliateByCode(tenantId, affiliateCode);
         if (!affiliate) throw new Error('Invalid referral code');
 
         const commission = Math.floor(orderTotal * affiliate.commissionRate / 100);
 
         await this.prisma.$executeRawUnsafe(`
       INSERT INTO "${tenantSchema}"."vendure_affiliate_referral" 
-      (affiliate_id, order_id, order_total, commission, status)
-      VALUES ($1, $2, $3, $4, 'pending')
-    `, affiliate.id, orderId, orderTotal, commission);
+      (affiliate_id, order_id, order_total, commission, commission_rate, status, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, 'pending', NOW(), NOW())
+    `, affiliate.id, orderId, orderTotal, commission, affiliate.commissionRate);
 
         // Update affiliate totals
         await this.prisma.$executeRawUnsafe(`
       UPDATE "${tenantSchema}"."vendure_affiliate"
-      SET total_referrals = total_referrals + 1, total_earnings = total_earnings + $1
+      SET total_referrals = total_referrals + 1, total_earnings = total_earnings + $1, updated_at = NOW()
       WHERE id = $2
     `, commission, affiliate.id);
 
@@ -187,9 +241,12 @@ export class AffiliateService {
     }
 
     /**
-     * Get affiliate referrals
+     * Get referrals for an affiliate
      */
-    async getReferrals(tenantSchema: string, affiliateId: number): Promise<any[]> {
+    async getReferrals(tenantId: string, affiliateId: number): Promise<any[]> {
+        await this.validateTenant(tenantId);
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
         try {
             const referrals = await this.prisma.$queryRawUnsafe(`
         SELECT * FROM "${tenantSchema}"."vendure_affiliate_referral"
@@ -199,7 +256,7 @@ export class AffiliateService {
 
             return (referrals as any[]).map(r => ({
                 id: Number(r.id),
-                orderId: Number(r.order_id),
+                orderId: r.order_id,
                 orderTotal: Number(r.order_total),
                 commission: Number(r.commission),
                 status: r.status,
@@ -214,9 +271,12 @@ export class AffiliateService {
     /**
      * Get affiliate dashboard stats
      */
-    async getAffiliateStats(tenantSchema: string, affiliateId: number): Promise<any> {
+    async getAffiliateStats(tenantId: string, affiliateId: number): Promise<any> {
+        await this.validateTenant(tenantId);
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
         try {
-            const affiliate = await this.getAffiliate(tenantSchema, affiliateId);
+            const affiliate = await this.getAffiliate(tenantId, affiliateId);
             if (!affiliate) return null;
 
             const pendingCommission = await this.prisma.$queryRawUnsafe(`
@@ -243,10 +303,13 @@ export class AffiliateService {
     }
 
     /**
-     * Request payout
+     * Process payout for an affiliate
      */
-    async requestPayout(tenantSchema: string, affiliateId: number, amount: number, method: string): Promise<any> {
-        const affiliate = await this.getAffiliate(tenantSchema, affiliateId);
+    async requestPayout(tenantId: string, affiliateId: number, amount: number, method: string): Promise<any> {
+        await this.validateTenant(tenantId);
+        const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
+
+        const affiliate = await this.getAffiliate(tenantId, affiliateId);
         if (!affiliate) throw new Error('Affiliate not found');
 
         // Check pending balance
@@ -263,8 +326,8 @@ export class AffiliateService {
 
         const payout = await this.prisma.$queryRawUnsafe(`
       INSERT INTO "${tenantSchema}"."vendure_affiliate_payout" 
-      (affiliate_id, amount, method, status)
-      VALUES ($1, $2, $3, 'processing')
+      (affiliate_id, amount, method, status, created_at, updated_at)
+      VALUES ($1, $2, $3, 'processing', NOW(), NOW())
       RETURNING *
     `, affiliateId, amount, method);
 
@@ -290,6 +353,7 @@ export class AffiliateService {
             totalReferrals: Number(a.total_referrals),
             approvedAt: a.approved_at,
             createdAt: a.created_at,
+            updatedAt: a.updated_at,
         };
     }
 }

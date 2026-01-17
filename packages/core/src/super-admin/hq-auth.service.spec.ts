@@ -9,6 +9,8 @@ describe('HQAuthService', () => {
     let prisma: PrismaService;
 
     const mockPrismaService = {
+        $executeRaw: jest.fn(),
+        $queryRaw: jest.fn(),
         $executeRawUnsafe: jest.fn(),
         $queryRawUnsafe: jest.fn(),
     };
@@ -32,8 +34,8 @@ describe('HQAuthService', () => {
 
     describe('seedDefaultAdmin', () => {
         it('should create default admin if not exists', async () => {
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
-            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+            mockPrismaService.$queryRaw.mockResolvedValue([]);
+            mockPrismaService.$executeRaw.mockResolvedValue(undefined);
 
             await service.seedDefaultAdmin();
 
@@ -43,7 +45,7 @@ describe('HQAuthService', () => {
         });
 
         it('should skip seeding if admin exists', async () => {
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue([{ id: 1, email: 'admin@apex.com' }]);
+            mockPrismaService.$queryRaw.mockResolvedValue([{ id: 1, email: 'admin@apex.com' }]);
 
             await service.seedDefaultAdmin();
 
@@ -64,14 +66,16 @@ describe('HQAuthService', () => {
                 createdAt: new Date(),
             };
 
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue([mockUser]);
-            mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
+            mockPrismaService.$queryRaw.mockResolvedValue([mockUser]);
+            mockPrismaService.$executeRaw.mockResolvedValue(undefined);
 
             const result = await service.login('test@apex.com', 'password123');
 
             expect(result).not.toBeNull();
-            expect(result.accessToken).toBeDefined();
-            expect(result.user.email).toBe('test@apex.com');
+            if (result) {
+                expect(result.accessToken).toBeDefined();
+                expect(result.user.email).toBe('test@apex.com');
+            }
         });
 
         it('should return null with invalid credentials', async () => {

@@ -58,11 +58,11 @@ export class HQAuthService implements OnModuleInit {
         const existingAdmin = await this.findByEmail('admin@apex.com');
         if (!existingAdmin) {
             const passwordHash = await bcrypt.hash('ApexAdmin2026!', 10);
-            await this.prisma.$executeRawUnsafe(`
+            await this.prisma.$executeRaw`
                 INSERT INTO public.hq_users (email, password_hash, name, role, status)
-                VALUES ('admin@apex.com', '${passwordHash}', 'Super Admin', 'super_admin', 'active')
+                VALUES ('admin@apex.com', ${passwordHash}, 'Super Admin', 'super_admin', 'active')
                 ON CONFLICT (email) DO NOTHING
-            `);
+            `;
             console.log('✅ Default Super Admin created: admin@apex.com');
         }
     }
@@ -78,9 +78,9 @@ export class HQAuthService implements OnModuleInit {
         if (!isValid) return null;
 
         // Update last login
-        await this.prisma.$executeRawUnsafe(`
-            UPDATE public.hq_users SET last_login_at = NOW() WHERE id = ${user.id}
-        `);
+        await this.prisma.$executeRaw`
+            UPDATE public.hq_users SET last_login_at = NOW() WHERE id = ${user.id} 
+        `;
 
         // Generate JWT
         const accessToken = jwt.sign(
@@ -107,11 +107,11 @@ export class HQAuthService implements OnModuleInit {
      * Find user by email
      */
     async findByEmail(email: string): Promise<any | null> {
-        const result = await this.prisma.$queryRawUnsafe(`
+        const result = await this.prisma.$queryRaw`
             SELECT id, email, password_hash as "passwordHash", name, role, status, 
                    created_at as "createdAt", last_login_at as "lastLoginAt"
-            FROM public.hq_users WHERE email = '${email}' LIMIT 1
-        `) as any[];
+            FROM public.hq_users WHERE email = ${email} LIMIT 1
+        ` as any[];
         return result.length > 0 ? result[0] : null;
     }
 
@@ -119,11 +119,11 @@ export class HQAuthService implements OnModuleInit {
      * Get all HQ users
      */
     async getAllUsers(): Promise<HQUser[]> {
-        return await this.prisma.$queryRawUnsafe(`
+        return await this.prisma.$queryRaw`
             SELECT id, email, name, role, status, 
                    created_at as "createdAt", last_login_at as "lastLoginAt"
             FROM public.hq_users ORDER BY created_at DESC
-        `) as HQUser[];
+        ` as HQUser[];
     }
 
     /**
@@ -131,10 +131,10 @@ export class HQAuthService implements OnModuleInit {
      */
     async createUser(data: { email: string; password: string; name: string; role: string }): Promise<HQUser> {
         const passwordHash = await bcrypt.hash(data.password, 10);
-        await this.prisma.$executeRawUnsafe(`
+        await this.prisma.$executeRaw`
             INSERT INTO public.hq_users (email, password_hash, name, role, status)
-            VALUES ('${data.email}', '${passwordHash}', '${data.name}', '${data.role}', 'active')
-        `);
+            VALUES (${data.email}, ${passwordHash}, ${data.name}, ${data.role}, 'active')
+        `;
         return (await this.findByEmail(data.email)) as HQUser;
     }
 

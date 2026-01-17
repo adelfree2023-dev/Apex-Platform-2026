@@ -4,7 +4,7 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { Logger } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -81,12 +81,11 @@ describe('AdminService', () => {
             });
         });
 
-        it('should return null for non-existent tenant', async () => {
+        it('should throw NotFoundException for non-existent tenant', async () => {
             mockPrismaService.tenant.findUnique.mockResolvedValue(null);
 
-            const result = await service.getTenant('non-existent');
-
-            expect(result).toBeNull();
+            await expect(service.getTenant('non-existent'))
+                .rejects.toThrow(NotFoundException);
         });
     });
 
@@ -94,6 +93,7 @@ describe('AdminService', () => {
 
     describe('getTenantStats', () => {
         it('should return tenant statistics', async () => {
+            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'test-store' });
             mockPrismaService.$queryRawUnsafe
                 .mockResolvedValueOnce([{ count: '50' }]) // products
                 .mockResolvedValueOnce([{ order_count: '100', total_revenue: '150000' }]) // orders
@@ -110,6 +110,7 @@ describe('AdminService', () => {
         });
 
         it('should handle empty stats', async () => {
+            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'test-store' });
             mockPrismaService.$queryRawUnsafe
                 .mockResolvedValueOnce([{ count: '0' }])
                 .mockResolvedValueOnce([{ order_count: '0', total_revenue: '0' }])
@@ -122,6 +123,7 @@ describe('AdminService', () => {
         });
 
         it('should handle null values gracefully', async () => {
+            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'test-store' });
             mockPrismaService.$queryRawUnsafe
                 .mockResolvedValueOnce([{}])
                 .mockResolvedValueOnce([{}])
@@ -135,7 +137,15 @@ describe('AdminService', () => {
             expect(result.customers).toBe(0);
         });
 
-        it('should return zeros on error', async () => {
+        it('should throw NotFoundException if tenant does not exist', async () => {
+            mockPrismaService.tenant.findUnique.mockResolvedValue(null);
+
+            await expect(service.getTenantStats('non-existent'))
+                .rejects.toThrow(NotFoundException);
+        });
+
+        it('should return zeros on database query error (but after validation)', async () => {
+            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'test-store' });
             mockPrismaService.$queryRawUnsafe.mockRejectedValue(new Error('Query failed'));
 
             const result = await service.getTenantStats('test-store');
@@ -149,13 +159,16 @@ describe('AdminService', () => {
         });
 
         it('should format tenantId correctly (replace dashes with underscores)', async () => {
+            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'test-my-store' });
             mockPrismaService.$queryRawUnsafe.mockResolvedValue([{ count: '0' }]);
 
             await service.getTenantStats('test-my-store');
 
-            // First call should have tenant_test_my_store in the query
-            expect(mockPrismaService.$queryRawUnsafe.mock.calls[0][0])
-                .toContain('tenant_test_my_store');
+            // Find call that contains the schema name
+            const schemaQueryCall = mockPrismaService.$queryRawUnsafe.mock.calls.find(call =>
+                call[0].includes('tenant_test_my_store')
+            );
+            expect(schemaQueryCall).toBeDefined();
         });
     });
 
@@ -163,6 +176,7 @@ describe('AdminService', () => {
 
     describe('getRecentOrders', () => {
         it('should return recent orders with customer email', async () => {
+            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'test-store' });
             const mockOrders = [
                 { id: 1001, total: 500, customer_email: 'ahmed@example.com' },
                 { id: 1002, total: 750, customer_email: 'mohamed@example.com' },
@@ -179,6 +193,7 @@ describe('AdminService', () => {
         });
 
         it('should use default limit of 10', async () => {
+            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'test-store' });
             mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
 
             await service.getRecentOrders('test-store');
@@ -189,12 +204,11 @@ describe('AdminService', () => {
             );
         });
 
-        it('should return empty array on error', async () => {
-            mockPrismaService.$queryRawUnsafe.mockRejectedValue(new Error('Error'));
+        it('should throw NotFoundException if tenant missing', async () => {
+            mockPrismaService.tenant.findUnique.mockResolvedValue(null);
 
-            const result = await service.getRecentOrders('test-store');
-
-            expect(result).toEqual([]);
+            await expect(service.getRecentOrders('test-store'))
+                .rejects.toThrow(NotFoundException);
         });
     });
 
@@ -202,6 +216,7 @@ describe('AdminService', () => {
 
     describe('getTopProducts', () => {
         it('should return top products by order count', async () => {
+            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'test-store' });
             const mockProducts = [
                 { id: 1, name: 'iPhone', price: 5000, order_count: 100 },
                 { id: 2, name: 'MacBook', price: 8000, order_count: 50 },
@@ -218,6 +233,7 @@ describe('AdminService', () => {
         });
 
         it('should use default limit of 10', async () => {
+            mockPrismaService.tenant.findUnique.mockResolvedValue({ id: 'test-store' });
             mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
 
             await service.getTopProducts('test-store');
@@ -228,12 +244,11 @@ describe('AdminService', () => {
             );
         });
 
-        it('should return empty array on error', async () => {
-            mockPrismaService.$queryRawUnsafe.mockRejectedValue(new Error('Error'));
+        it('should throw NotFoundException if tenant missing', async () => {
+            mockPrismaService.tenant.findUnique.mockResolvedValue(null);
 
-            const result = await service.getTopProducts('test-store');
-
-            expect(result).toEqual([]);
+            await expect(service.getTopProducts('test-store'))
+                .rejects.toThrow(NotFoundException);
         });
     });
 
@@ -311,6 +326,14 @@ describe('AdminService', () => {
                 { id: 'tenant-1' },
                 { id: 'tenant-2' },
             ]);
+
+            // Mock validation and stats for each tenant
+            // We need 2 findUnique calls per tenant (one for validation, one for the internal getTenantStats call)
+            mockPrismaService.tenant.findUnique
+                .mockResolvedValueOnce({ id: 'tenant-1' }) // validate
+                .mockResolvedValueOnce({ id: 'tenant-1' }) // getTenantStats internal validate
+                .mockResolvedValueOnce({ id: 'tenant-2' }) // validate
+                .mockResolvedValueOnce({ id: 'tenant-2' }); // getTenantStats internal validate
 
             // Mock stats for each tenant
             mockPrismaService.$queryRawUnsafe

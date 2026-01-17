@@ -3,7 +3,7 @@
  * Provides admin-level operations for tenant management and analytics
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -23,12 +23,30 @@ export class AdminService {
     }
 
     /**
+     * Validate tenant exists
+     */
+    private async validateTenant(tenantId: string): Promise<void> {
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+        });
+
+        if (!tenant) {
+            throw new NotFoundException(`Tenant not found: ${tenantId}`);
+        }
+    }
+
+    /**
      * Get tenant by ID
      */
     async getTenant(id: string): Promise<any> {
         const tenant = await this.prisma.tenant.findUnique({
             where: { id },
         });
+
+        if (!tenant) {
+            throw new NotFoundException(`Tenant not found: ${id}`);
+        }
+
         return tenant;
     }
 
@@ -36,6 +54,7 @@ export class AdminService {
      * Get tenant stats (orders, products, revenue)
      */
     async getTenantStats(tenantId: string): Promise<any> {
+        await this.validateTenant(tenantId);
         const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
 
         try {
@@ -78,6 +97,7 @@ export class AdminService {
      * Get recent orders for tenant
      */
     async getRecentOrders(tenantId: string, limit: number = 10): Promise<any[]> {
+        await this.validateTenant(tenantId);
         const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
 
         try {
@@ -99,6 +119,7 @@ export class AdminService {
      * Get top products for tenant
      */
     async getTopProducts(tenantId: string, limit: number = 10): Promise<any[]> {
+        await this.validateTenant(tenantId);
         const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
 
         try {

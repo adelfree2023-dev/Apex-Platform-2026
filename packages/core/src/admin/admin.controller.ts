@@ -3,10 +3,12 @@
  * Admin API endpoints for tenant management and analytics
  */
 
-import { Controller, Get, Post, Put, Param, Body, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Param, Body, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
+import { SuperAdminGuard } from '../auth/guards/super-admin.guard';
 
 @Controller('api/admin')
+@UseGuards(SuperAdminGuard)
 export class AdminController {
     constructor(private readonly adminService: AdminService) { }
 

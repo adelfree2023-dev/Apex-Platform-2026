@@ -15,3 +15,4 @@ import { PrismaModule } from '../prisma/prisma.module';
     exports: [EmailService, SocialAuthService],
 })
 export class AuthModule { }
+

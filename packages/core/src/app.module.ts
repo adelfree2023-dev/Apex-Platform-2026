@@ -8,7 +8,7 @@ import { TenantsModule } from './tenants/tenants.module';
 import { EventsModule } from './events/events.module';
 import { VendureModule } from './vendors/vendure.module';
 import { PaymentsModule } from './payments/payments.module';
-import { AdminModule } from './admin/admin.module';
+import { SuperAdminModule } from './super-admin/super-admin.module';
 import { NotificationModule } from './notifications/notification.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { SearchModule } from './search/search.module';
@@ -55,7 +55,7 @@ import { TenantMiddleware } from './middleware/tenant.middleware';
         EventsModule,
         VendureModule,
         PaymentsModule,
-        AdminModule,
+        SuperAdminModule,
         NotificationModule,
         AnalyticsModule,
         SearchModule,

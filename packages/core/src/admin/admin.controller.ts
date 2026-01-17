@@ -5,7 +5,7 @@
 
 import { Controller, Get, Post, Put, Param, Body, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { SuperAdminGuard } from '../auth/guards/super-admin.guard';
+import { SuperAdminGuard } from './guards/super-admin.guard';
 
 @Controller('api/admin')
 @UseGuards(SuperAdminGuard)

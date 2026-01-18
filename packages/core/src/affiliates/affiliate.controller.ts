@@ -141,7 +141,7 @@ export class AffiliateController {
     @Post(':tenantId/affiliates/track')
     async trackReferral(
         @Param('tenantId') tenantId: string,
-        @Body() body: { affiliateCode: string; orderId: number; orderTotal: number },
+        @Body() body: { affiliateCode: string; orderId: string; orderTotal: number },
     ) {
         const tenantSchema = `tenant_${tenantId.replace(/-/g, '_')}`;
 

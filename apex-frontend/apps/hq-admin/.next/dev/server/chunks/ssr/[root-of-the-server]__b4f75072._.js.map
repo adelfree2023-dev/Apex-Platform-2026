@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 18, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Dell/Desktop/Apex-Platform-2026/apex-frontend/apps/hq-admin/src/app/page.tsx"],"sourcesContent":["import { redirect } from 'next/navigation';\n\n// Redirect root to login (not dashboard) - require auth first\nexport default function Home() {\n  redirect('/login');\n}\n"],"names":[],"mappings":";;;;AAAA;AAAA;;AAGe,SAAS;IACtB,IAAA,mRAAQ,EAAC;AACX"}}]
+}

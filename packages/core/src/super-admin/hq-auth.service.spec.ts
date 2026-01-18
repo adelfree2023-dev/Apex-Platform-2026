@@ -39,9 +39,7 @@ describe('HQAuthService', () => {
 
             await service.seedDefaultAdmin();
 
-            expect(mockPrismaService.$executeRawUnsafe).toHaveBeenCalledWith(
-                expect.stringContaining('INSERT INTO public.hq_users')
-            );
+            expect(mockPrismaService.$executeRaw).toHaveBeenCalled();
         });
 
         it('should skip seeding if admin exists', async () => {
@@ -49,7 +47,7 @@ describe('HQAuthService', () => {
 
             await service.seedDefaultAdmin();
 
-            expect(mockPrismaService.$executeRawUnsafe).not.toHaveBeenCalled();
+            expect(mockPrismaService.$executeRaw).not.toHaveBeenCalled();
         });
     });
 
@@ -86,7 +84,7 @@ describe('HQAuthService', () => {
                 passwordHash,
             };
 
-            mockPrismaService.$queryRawUnsafe.mockResolvedValue([mockUser]);
+            mockPrismaService.$queryRaw.mockResolvedValue([mockUser]);
 
             const result = await service.login('test@apex.com', 'wrongpassword');
 

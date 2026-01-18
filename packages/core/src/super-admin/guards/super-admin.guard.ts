@@ -1,5 +1,5 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { HQAuthService } from '../../auth/hq-auth.service';
+import { HQAuthService } from '../hq-auth.service';
 
 @Injectable()
 export class SuperAdminGuard implements CanActivate {

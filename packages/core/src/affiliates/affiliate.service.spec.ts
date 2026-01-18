@@ -155,7 +155,7 @@ describe('AffiliateService', () => {
             mockPrismaService.$queryRawUnsafe.mockResolvedValue(mockAffiliate);
             mockPrismaService.$executeRawUnsafe.mockResolvedValue(undefined);
 
-            const result = await service.trackReferral('tenant_test', 'REF-ABC', 100, 50000);
+            const result = await service.trackReferral('tenant_test', 'REF-ABC', 'ORD-100', 50000);
 
             expect(result.affiliateId).toBe(1);
             expect(result.commission).toBe(5000); // 10% of 50000
@@ -164,7 +164,7 @@ describe('AffiliateService', () => {
         it('should fail with invalid referral code', async () => {
             mockPrismaService.$queryRawUnsafe.mockResolvedValue([]);
 
-            await expect(service.trackReferral('tenant_test', 'INVALID', 100, 50000))
+            await expect(service.trackReferral('tenant_test', 'INVALID', 'ORD-100', 50000))
                 .rejects.toThrow('Invalid referral code');
         });
     });

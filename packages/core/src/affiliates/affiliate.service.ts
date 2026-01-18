@@ -295,7 +295,7 @@ export class AffiliateService {
                 affiliate,
                 pendingCommission: Number((pendingCommission as any[])[0]?.total || 0),
                 paidCommission: Number((paidCommission as any[])[0]?.total || 0),
-                referralLink: `https://store.example.com/?ref=${affiliate.referralCode}`,
+                referralLink:`https://store.example.com/?ref=${affiliate.referralCode}`,
             };
         } catch (error) {
             return null;

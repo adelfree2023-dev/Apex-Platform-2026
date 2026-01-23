@@ -45,7 +45,135 @@ model SystemConfig {
   lastMigration DateTime?
   version     String   @default("1.0.0")
   securitySettings Json?
+  key       String?   @unique 
+  value     String?
 }
 
-// Tenant isolation schema - tables will be managed via raw SQL in dynamic schemas
-// (Tenant-specific models like Product/Order are created at runtime)
+model Product {
+  id          String    @id @default(uuid())
+  tenantId    String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+  name        String    @db.VarChar(255)
+  description String?   @db.Text
+  price       Float
+  salePrice   Float?
+  currency    String    @default("USD") @db.VarChar(3)
+  images      Json?     @db.Json
+  category    String    @db.VarChar(100)
+  subcategory String?   @db.VarChar(100)
+  tags        String[]  @db.Text[]
+  sku         String    @unique @db.VarChar(100)
+  stock       Int       @default(0)
+  rating      Float     @default(0)
+  reviewsCount Int      @default(0)
+  status      String    @default("ACTIVE") @db.VarChar(20)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  items       OrderItem[]
+  
+  @@index([tenantId])
+  @@index([category])
+  @@index([status])
+}
+
+model Order {
+  id             String       @id @default(uuid())
+  tenantId       String
+  tenant         Tenant       @relation(fields: [tenantId], references: [id])
+  orderNumber    String       @unique @db.VarChar(50)
+  status         String       @default("PENDING") @db.VarChar(20)
+  items          OrderItem[]
+  totalAmount    Float
+  currency       String       @default("USD") @db.VarChar(3)
+  customerInfo   String       @db.Text // Encrypted
+  shippingAddress String     @db.Text // Encrypted
+  paymentMethod  String       @db.VarChar(50)
+  paymentDetails Json?        @db.Json
+  ipAddress      String       @db.VarChar(45)
+  metadata       Json?        @db.Json
+  paidAt         DateTime?
+  refundedAt     DateTime?
+  refundDetails  Json?        @db.Json
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  payment        Payment?
+  refunds        Refund[]
+  customer       Customer?    @relation(fields: [customerId], references: [id])
+  customerId     String?
+
+  @@index([tenantId])
+  @@index([orderNumber])
+  @@index([status])
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+  currency  String   @default("USD") @db.VarChar(3)
+  name      String   @db.VarChar(255)
+  
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Payment {
+  id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  orderId     String   @unique
+  order       Order    @relation(fields: [orderId], references: [id])
+  paymentId   String   @unique // ID from payment gateway
+  amount      Float
+  currency    String   @default("USD") @db.VarChar(3)
+  status      String   @default("CREATED") @db.VarChar(20) // CREATED, SUCCEEDED, FAILED, REFUNDED, CANCELLED
+  paymentMethod String @db.VarChar(50) // CARD, WALLET, CASH_ON_DELIVERY
+  ipAddress   String?  @db.VarChar(45)
+  metadata    Json?    @db.Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([tenantId])
+  @@index([orderId])
+  @@index([status])
+}
+
+model Customer {
+  id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  email       String   @unique
+  name        String?
+  phone       String?
+  address     Json?
+  orders      Order[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([tenantId])
+  @@index([email])
+}
+
+model Refund {
+  id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id])
+  refundId    String   @unique // ID from payment gateway
+  amount      Float
+  reason      String?
+  status      String   @default("PENDING") @db.VarChar(20) // PENDING, SUCCEEDED, FAILED
+  metadata    Json?    @db.Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([tenantId])
+  @@index([orderId])
+  @@index([status])
+}

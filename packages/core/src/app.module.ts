@@ -25,6 +25,7 @@ import { ThrottlerGuard } from './common/guards/throttler.guard';
 import { AuditLoggerInterceptor } from './common/interceptors/audit-logger.interceptor';
 import { CSPInterceptor } from './common/interceptors/csp.interceptor';
 import { SystemHealthModule } from './common/health/system-health.module';
+import { StorefrontModule } from './modules/storefront/storefront.module';
 
 /**
 * 🏰 Digital Fortress: Root AppModule
@@ -47,6 +48,7 @@ import { SystemHealthModule } from './common/health/system-health.module';
     AuthModule,
     EventsModule,
     AuditModule,
+    StorefrontModule,
     // SystemHealthModule, // Assuming this exists or will be created, commenting out if not to avoid break
   ],
   controllers: [AppController],

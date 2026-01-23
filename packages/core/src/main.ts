@@ -12,6 +12,15 @@ import { SystemInitializationService } from './common/core/system-initialization
 import { AuditService } from './common/monitoring/audit/audit.service';
 import rateLimit from 'express-rate-limit';
 
+// ✅ S8: تحسين معالجة الأخطاء النهائية
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 /*** 🏰 Apex Core: ASMP Bootstrap - Final Enhanced Version
 * - S1: Environment Validation
 * - S8: Unified Content Security Policy (CSP)

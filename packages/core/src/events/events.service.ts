@@ -30,16 +30,31 @@ export class EventsService {
     async emit(tenantId: string, data: any) {
         const validated = await this.inputValidator.secureValidate(EmitEventSchema, data, 'events.emit');
         const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
-        if (!tenant || tenant.status !== 'active') throw new ForbiddenException('المستأجر غير نشط');
+        if (!tenant || tenant.status !== 'active') {
+            await this.securityContext.logSecurityEvent('UNAUTHORIZED_EVENT_EMIT_ATTEMPT', { tenantId });
+            throw new ForbiddenException('المستأجر غير نشط');
+        }
 
         const schemaName = await this.tenantContext.getTenantSchema(tenantId);
+        const eventId = uuidv4();
         try {
             await this.prisma.$executeRawUnsafe(`
                 INSERT INTO "${schemaName}"."vendure_event" (id, type, tenant_id, territory, business_type, payload, status, created_at)
                 VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW())
-            `, uuidv4(), validated.type, tenantId, validated.territory, validated.businessType, JSON.stringify(validated.payload));
-            return { id: uuidv4(), status: 'queued' };
+            `, eventId, validated.type, tenantId, validated.territory, validated.businessType, JSON.stringify(validated.payload));
+
+            // 🛡️ S4: تسجيل نجاح إرسال الحدث
+            await this.securityContext.logSecurityEvent('EVENT_EMITTED', {
+                tenantId,
+                eventId,
+                type: validated.type
+            });
+
+            return { id: eventId, status: 'queued' };
         } catch (error) {
+            // 🛡️ S3: تسجيل شذوذ في حال فشل النظام
+            this.anomalyDetection.inspectFailedEvent(tenantId, validated.type, error);
+
             throw new InternalServerErrorException('فشل إرسال الحدث');
         }
     }

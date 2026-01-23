@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 import { AuditService } from './common/monitoring/audit/audit.service';
 import { SecurityContext } from './common/security/security.context';
 import { HttpStatus, INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;

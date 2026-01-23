@@ -3,7 +3,7 @@ import { EventsController } from './events.controller';
 import { EventsService } from './events.service';
 import { Request } from 'express';
 import { HttpStatus } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { INestApplication } from '@nestjs/common';
 
 describe('EventsController (e2e)', () => {

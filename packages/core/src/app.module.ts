@@ -19,12 +19,6 @@ import { AuditService } from './common/monitoring/audit/audit.service';
 import { EncryptedFieldService } from './common/security/encryption/encrypted-field.service';
 import { AnomalyDetectionService } from './common/access-control/services/anomaly-detection.service';
 import { RateLimiterService } from './common/access-control/services/rate-limiter.service';
-import { CSPConfig } from './common/presentation/security-headers/csp.config';
-import { SystemHealthGuard } from './common/guards/system-health.guard';
-import { ThrottlerGuard } from './common/guards/throttler.guard';
-import { AuditLoggerInterceptor } from './common/interceptors/audit-logger.interceptor';
-import { CSPInterceptor } from './common/interceptors/csp.interceptor';
-import { SystemHealthModule } from './common/health/system-health.module';
 import { StorefrontModule } from './modules/storefront/storefront.module';
 
 /**

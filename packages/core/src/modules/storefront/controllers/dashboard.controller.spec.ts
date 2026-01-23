@@ -2,21 +2,37 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DashboardController } from './dashboard.controller';
 import { DashboardService } from '../services/dashboard.service';
 import { AuditService } from '../../../common/monitoring/audit/audit.service';
+import { InputValidatorService } from '../../../common/security/validation/input-validator.service';
 import { DateRangeDto } from '../dto/date-range.dto';
-import { HttpStatus } from '@nestjs/common';
-import * as request from 'supertest';
-import { INestApplication } from '@nestjs/common';
+import { HttpStatus, INestApplication } from '@nestjs/common';
+import request from 'supertest';
 
 describe('DashboardController (e2e)', () => {
   let app: INestApplication;
   const mockDashboard = {
-    getOverview: jest.fn().mockResolvedValue({ sales: {} }),
+    getOverview: jest.fn().mockResolvedValue({
+      sales: { totalSales: 1000, orderCount: 10 },
+      inventory: { lowStockProducts: [] },
+      orders: { orderStatuses: [] },
+      products: { topProducts: [] },
+      customers: { newCustomers: 5 }
+    }),
     getSalesReport: jest.fn().mockResolvedValue({ report: 'sales' }),
     getProductsReport: jest.fn().mockResolvedValue({ report: 'products' }),
     getCustomersReport: jest.fn().mockResolvedValue({ report: 'customers' }),
-    getDashboardAlerts: jest.fn().mockResolvedValue([]),
+    getDashboardAlerts: jest.fn().mockResolvedValue([
+      {
+        type: 'WARNING',
+        title: 'Low Stock',
+        message: '3 products have low stock',
+        severity: 'MEDIUM'
+      }
+    ]),
   };
   const mockAudit = { logActivity: jest.fn() };
+  const mockValidator = {
+    secureValidate: jest.fn((schema, data) => Promise.resolve(data)),
+  };
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -24,6 +40,7 @@ describe('DashboardController (e2e)', () => {
       providers: [
         { provide: DashboardService, useValue: mockDashboard },
         { provide: AuditService, useValue: mockAudit },
+        { provide: InputValidatorService, useValue: mockValidator },
       ],
     }).compile();
 
@@ -36,58 +53,79 @@ describe('DashboardController (e2e)', () => {
   });
 
   const tenantSub = 'demo';
-  const tenantHeader = { tenant: { id: 't-uuid', name: 'Demo' } };
+  const tenantHeader = { tenant: { id: 't-uuid', name: 'Demo Store', currency: 'USD' } };
 
-  it('GET overview – success', async () => {
-    await request(app.getHttpServer())
-      .get(`/api/shop/${tenantSub}/dashboard/overview?startDate=2024-01-01&endDate=2024-01-31`)
-      .set('x-tenant-id', tenantHeader.tenant.id)
-      .expect(HttpStatus.OK)
-      .expect(expect.objectContaining({ sales: {} }));
+  describe('GET /overview', () => {
+    it('should return dashboard overview successfully', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/api/shop/${tenantSub}/dashboard/overview?startDate=2024-01-01&endDate=2024-01-31`)
+        .set('x-tenant-id', tenantHeader.tenant.id)
+        .expect(HttpStatus.OK);
 
-    expect(mockDashboard.getOverview).toHaveBeenCalledWith(
-      tenantHeader.tenant.id,
-      '2024-01-01',
-      '2024-01-31',
-    );
-    expect(mockAudit.logActivity).toHaveBeenCalled();
+      expect(response.body).toMatchObject({
+        sales: expect.objectContaining({ totalSales: 1000 }),
+      });
+      expect(mockDashboard.getOverview).toHaveBeenCalled();
+      expect(mockAudit.logActivity).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'DASHBOARD_ACCESSED'
+        })
+      );
+    });
+
+    it('should handle errors gracefully', async () => {
+      mockDashboard.getOverview.mockRejectedValueOnce(new Error('Database error'));
+
+      await request(app.getHttpServer())
+        .get(`/api/shop/${tenantSub}/dashboard/overview`)
+        .set('x-tenant-id', tenantHeader.tenant.id)
+        .expect(HttpStatus.INTERNAL_SERVER_ERROR);
+    });
   });
 
-  it('GET sales – validates query, returns placeholder', async () => {
-    await request(app.getHttpServer())
-      .get(`/api/shop/${tenantSub}/dashboard/sales?period=MONTH`)
-      .set('x-tenant-id', tenantHeader.tenant.id)
-      .expect(HttpStatus.OK)
-      .expect({ report: 'sales' });
+  describe('GET /sales', () => {
+    it('should return sales report', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/api/shop/${tenantSub}/dashboard/sales?period=MONTH`)
+        .set('x-tenant-id', tenantHeader.tenant.id)
+        .expect(HttpStatus.OK);
 
-    expect(mockDashboard.getSalesReport).toHaveBeenCalled();
+      expect(response.body).toEqual({ report: 'sales' });
+    });
   });
 
-  it('GET products – validates sortBy/limit, returns placeholder', async () => {
-    await request(app.getHttpServer())
-      .get(`/api/shop/${tenantSub}/dashboard/products?sortBy=SALES&limit=5`)
-      .set('x-tenant-id', tenantHeader.tenant.id)
-      .expect(HttpStatus.OK)
-      .expect({ report: 'products' });
+  describe('GET /products', () => {
+    it('should return products report', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/api/shop/${tenantSub}/dashboard/products?sortBy=SALES&limit=5`)
+        .set('x-tenant-id', tenantHeader.tenant.id)
+        .expect(HttpStatus.OK);
 
-    expect(mockDashboard.getProductsReport).toHaveBeenCalled();
+      expect(response.body).toEqual({ report: 'products' });
+    });
   });
 
-  it('GET customers – validates segment, returns placeholder', async () => {
-    await request(app.getHttpServer())
-      .get(`/api/shop/${tenantSub}/dashboard/customers?segment=ACTIVE`)
-      .set('x-tenant-id', tenantHeader.tenant.id)
-      .expect(HttpStatus.OK)
-      .expect({ report: 'customers' });
+  describe('GET /customers', () => {
+    it('should return customers report', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/api/shop/${tenantSub}/dashboard/customers?segment=ACTIVE`)
+        .set('x-tenant-id', tenantHeader.tenant.id)
+        .expect(HttpStatus.OK);
 
-    expect(mockDashboard.getCustomersReport).toHaveBeenCalled();
+      expect(response.body).toEqual({ report: 'customers' });
+    });
   });
 
-  it('GET alerts – returns empty array', async () => {
-    await request(app.getHttpServer())
-      .get(`/api/shop/${tenantSub}/dashboard/alerts`)
-      .set('x-tenant-id', tenantHeader.tenant.id)
-      .expect(HttpStatus.OK)
-      .expect([]);
+  describe('GET /alerts', () => {
+    it('should return dashboard alerts', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/api/shop/${tenantSub}/dashboard/alerts`)
+        .set('x-tenant-id', tenantHeader.tenant.id)
+        .expect(HttpStatus.OK);
+
+      expect(response.body).toEqual([
+        expect.objectContaining({ type: 'WARNING', title: 'Low Stock' })
+      ]);
+    });
   });
 });

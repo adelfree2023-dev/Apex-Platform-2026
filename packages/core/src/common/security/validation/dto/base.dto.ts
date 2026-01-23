@@ -41,8 +41,29 @@ export const BaseSchema = {
     .regex(/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/, 'صيغة رقم الهاتف غير صالحة')
     .min(10, 'رقم الهاتف قصير جداً')
     .max(20, 'رقم الهاتف طويل جداً')
-    .transform(phone => phone.replace(/\D/g, ''))
+    .transform(phone => phone.replace(/\D/g, '')),
+
+  // ✅ S3: اسم آمن
+  name: z.string()
+    .min(2, 'الاسم قصير جداً')
+    .max(100, 'الاسم طويل جداً')
+    .trim(),
+
+  // ✅ S3: رقم آمن
+  number: z.number().or(z.string().transform(val => Number(val)))
 };
+
+// ✅ S3: المخططات المصدرة للتوافق مع DTOs الأخرى
+export const SafeTextRawSchema = BaseSchema.safeText;
+export const SafeTextSchema = BaseSchema.safeText;
+export const EmailRawSchema = BaseSchema.emailAddress;
+export const EmailSchema = BaseSchema.emailAddress;
+export const NameRawSchema = BaseSchema.name;
+export const NameSchema = BaseSchema.name;
+export const SafeNumberRawSchema = BaseSchema.number;
+export const SafeNumberSchema = BaseSchema.number;
+export const ExternalIdRawSchema = z.string().uuid().or(z.string().min(1));
+export const ExternalIdSchema = ExternalIdRawSchema;
 
 // ✅ S3: مخطط التحقق الأساسي لجميع المدخلات
 export const BaseInputSchema = z.object({

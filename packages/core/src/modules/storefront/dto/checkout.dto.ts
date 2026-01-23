@@ -31,13 +31,15 @@ export const CheckoutSchema = z.object({
     paymentMethod: z.enum(['CASH_ON_DELIVERY', 'CREDIT_CARD', 'WALLET'], {
         required_error: 'طريقة الدفع مطلوبة',
     }),
+    tenantId: BaseSchema.tenantId,
 });
 
 export class CheckoutDto {
     static schema = CheckoutSchema;
 
-    items: CartItemSchema[];
-    customerInfo: CustomerInfoSchema;
-    shippingAddress: ShippingAddressSchema;
+    items: z.infer<typeof CartItemSchema>[];
+    customerInfo: z.infer<typeof CustomerInfoSchema>;
+    shippingAddress: z.infer<typeof ShippingAddressSchema>;
     paymentMethod: 'CASH_ON_DELIVERY' | 'CREDIT_CARD' | 'WALLET';
+    tenantId: string;
 }

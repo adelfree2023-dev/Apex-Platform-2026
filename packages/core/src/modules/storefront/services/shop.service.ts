@@ -45,8 +45,7 @@ export class ShopService implements OnModuleInit {
         });
 
         if (!rateLimit.allowed) {
-            this.auditService.logSecurityEvent({
-                eventType: 'RATE_LIMIT_EXCEEDED',
+            await this.auditService.logSecurityEvent('RATE_LIMIT_EXCEEDED', {
                 severity: 'HIGH',
                 sourceIp: ip,
                 details: {
@@ -106,8 +105,7 @@ export class ShopService implements OnModuleInit {
             });
 
             if (!product) {
-                this.auditService.logSecurityEvent({
-                    eventType: 'PRODUCT_UNAVAILABLE',
+                await this.auditService.logSecurityEvent('PRODUCT_UNAVAILABLE', {
                     severity: 'MEDIUM',
                     details: {
                         tenantId,
@@ -137,8 +135,7 @@ export class ShopService implements OnModuleInit {
 
         // ✅ S7: التحقق من الحد الأقصى للمبلغ
         if (totalAmount > 100000) {
-            this.auditService.logSecurityEvent({
-                eventType: 'HIGH_VALUE_ORDER_ATTEMPT',
+            await this.auditService.logSecurityEvent('HIGH_VALUE_ORDER_ATTEMPT', {
                 severity: 'HIGH',
                 details: { tenantId, totalAmount },
             });
@@ -248,8 +245,7 @@ export class ShopService implements OnModuleInit {
             this.logger.error('Order creation failed:', error);
 
             // ✅ S4: تسجيل الفشل في التدقيق
-            await this.auditService.logSecurityEvent({
-                eventType: 'ORDER_CREATION_FAILED',
+            await this.auditService.logSecurityEvent('ORDER_CREATION_FAILED', {
                 severity: 'CRITICAL',
                 details: {
                     tenantId,
@@ -306,7 +302,7 @@ export class ShopService implements OnModuleInit {
                 tenantId: tenant.id,
             });
 
-            this.auditService.logActivity({
+            await this.auditService.logActivity({
                 tenantId: tenant.id,
                 action: 'ORDER_CONFIRMATION_SENT',
                 details: { orderId: order.id, email: customerEmail },

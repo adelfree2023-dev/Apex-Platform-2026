@@ -18,7 +18,8 @@ import { ProcessWebhookDto } from '../dto/process-webhook.dto';
 import { CheckoutDto } from '../dto/checkout.dto';
 import { OrderResponseDto } from '../dto/order-response.dto';
 import { AuditService } from '../../../common/monitoring/audit/audit.service';
-import { secureValidate } from '../../../common/security/validation/input-validator.service';
+import { InputValidatorService } from '../../../common/security/validation/input-validator.service';
+import { z } from 'zod';
 
 @ApiTags('Storefront - Payment API')
 @Controller('api/shop')
@@ -28,6 +29,7 @@ export class PaymentController {
     constructor(
         private readonly paymentService: PaymentService,
         private readonly auditService: AuditService,
+        private readonly inputValidator: InputValidatorService,
     ) { }
 
     @Public()
@@ -41,7 +43,7 @@ export class PaymentController {
     ): Promise<{ clientSecret: string; paymentId: string }> {
         try {
             // ✅ S3: التحقق من صحة البيانات
-            secureValidate(CreatePaymentIntentDto.schema, createPaymentIntentDto);
+            await this.inputValidator.secureValidate(CreatePaymentIntentDto.schema, createPaymentIntentDto, 'payment.create-intent');
 
             // ✅ S6: التحقق من حدود الطلبات
             await this.paymentService.checkRateLimit(
@@ -56,7 +58,7 @@ export class PaymentController {
             );
 
             // ✅ S4: تسجيل التدقيق
-            this.auditService.logActivity({
+            await this.auditService.logActivity({
                 tenantId: createPaymentIntentDto.tenantId,
                 userId: 'anonymous',
                 action: 'PAYMENT_INTENT_CREATED',
@@ -90,9 +92,9 @@ export class PaymentController {
     @ApiResponse({ status: 200, description: 'تم معالجة الحدث بنجاح' })
     @ApiResponse({ status: 400, description: 'توقيع غير صالح أو بيانات غير صالحة' })
     async processWebhook(
+        @Req() request: any,
         @Body() processWebhookDto: ProcessWebhookDto,
         @Headers('stripe-signature') signature?: string,
-        @Req() request: any,
     ): Promise<{ received: boolean }> {
         try {
             // ✅ S7: التحقق من التوقيع
@@ -109,13 +111,10 @@ export class PaymentController {
             );
 
             // ✅ S4: تسجيل التدقيق
-            this.auditService.logSecurityEvent({
-                eventType: 'PAYMENT_WEBHOOK_PROCESSED',
+            await this.auditService.logSecurityEvent('PAYMENT_WEBHOOK_PROCESSED', {
                 severity: 'INFO',
-                details: {
-                    eventType: processWebhookDto.type,
-                    paymentId: processWebhookDto.data.object.id,
-                },
+                webhookType: processWebhookDto.type,
+                paymentId: processWebhookDto.data.object.id,
             });
 
             return { received: true };
@@ -123,15 +122,12 @@ export class PaymentController {
             this.logger.error('Webhook processing failed:', error);
 
             // ✅ S4: تسجيل محاولات الاختراق
-            this.auditService.logSecurityEvent({
-                eventType: 'INVALID_WEBHOOK_ATTEMPT',
+            await this.auditService.logSecurityEvent('INVALID_WEBHOOK_ATTEMPT', {
                 severity: 'HIGH',
                 sourceIp: request.ip,
-                details: {
-                    error: error.message,
-                    signature,
-                    eventType: processWebhookDto.type,
-                },
+                error: error.message,
+                signature,
+                webhookType: processWebhookDto.type,
             });
 
             throw new HttpException(
@@ -152,7 +148,7 @@ export class PaymentController {
     ): Promise<OrderResponseDto> {
         try {
             // ✅ S3: التحقق من صحة البيانات
-            secureValidate(CheckoutDto.schema, checkoutDto);
+            await this.inputValidator.secureValidate(CheckoutDto.schema, checkoutDto, 'payment.confirm');
 
             // ✅ S7: تأكيد الدفع
             const order = await this.paymentService.confirmPayment(
@@ -161,8 +157,8 @@ export class PaymentController {
             );
 
             // ✅ S4: تسجيل التدقيق
-            this.auditService.logActivity({
-                tenantId: checkoutDto.tenantId,
+            await this.auditService.logActivity({
+                tenantId: request.tenant.id,
                 userId: 'anonymous',
                 action: 'PAYMENT_CONFIRMED',
                 details: {
@@ -188,13 +184,10 @@ export class PaymentController {
             this.logger.error('Payment confirmation failed:', error);
 
             // ✅ S4: تسجيل الفشل
-            this.auditService.logSecurityEvent({
-                eventType: 'PAYMENT_CONFIRMATION_FAILED',
+            await this.auditService.logSecurityEvent('PAYMENT_CONFIRMATION_FAILED', {
                 severity: 'MEDIUM',
-                details: {
-                    error: error.message,
-                    paymentMethod: checkoutDto.paymentMethod,
-                },
+                error: error.message,
+                paymentMethod: checkoutDto.paymentMethod,
             });
 
             throw error;
@@ -212,13 +205,14 @@ export class PaymentController {
     ): Promise<{ success: boolean; refundId: string }> {
         try {
             // ✅ S3: التحقق من صحة البيانات
-            secureValidate(
+            await this.inputValidator.secureValidate(
                 z.object({
                     orderId: z.string().uuid(),
                     amount: z.number().positive(),
                     reason: z.string().optional(),
                 }),
                 refundDto,
+                'payment.refund'
             );
 
             // ✅ S7: إعادة المبلغ
@@ -230,7 +224,7 @@ export class PaymentController {
             );
 
             // ✅ S4: تسجيل التدقيق
-            this.auditService.logActivity({
+            await this.auditService.logActivity({
                 tenantId: refund.tenantId,
                 userId: 'system',
                 action: 'PAYMENT_REFUNDED',
@@ -249,13 +243,10 @@ export class PaymentController {
             this.logger.error('Payment refund failed:', error);
 
             // ✅ S4: تسجيل الفشل
-            this.auditService.logSecurityEvent({
-                eventType: 'PAYMENT_REFUND_ATTEMPT',
+            await this.auditService.logSecurityEvent('PAYMENT_REFUND_ATTEMPT_FAILED', {
                 severity: 'MEDIUM',
-                details: {
-                    error: error.message,
-                    orderId: refundDto.orderId,
-                },
+                error: error.message,
+                orderId: refundDto.orderId,
             });
 
             throw error;

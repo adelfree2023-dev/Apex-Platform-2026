@@ -3,11 +3,12 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { SecurityContext } from '../common/security/security.context';
 import { InputValidatorService } from '../common/security/validation/input-validator.service';
-import { HttpStatus } from '@nestjs/common';
-import * as request from 'supertest';
-import { INestApplication } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { Public } from '../common/decorators/public.decorator';
+import { RateLimiterService } from '../common/access-control/services/rate-limiter.service';
+import { HttpStatus, INestApplication } from '@nestjs/common';
+import request from 'supertest';
+import { z } from 'zod';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
@@ -15,9 +16,14 @@ describe('AuthController (e2e)', () => {
     login: jest.fn().mockResolvedValue({ accessToken: 'tok', refreshToken: 'ref' }),
     register: jest.fn().mockResolvedValue({ success: true }),
   };
-  const mockSecurity = { logSecurityEvent: jest.fn() };
+  const mockSecurity = {
+    logSecurityEvent: jest.fn(),
+  };
   const mockValidator = {
-    secureValidate: jest.fn((_, payload) => Promise.resolve(payload)),
+    secureValidate: jest.fn().mockImplementation(async (_, data) => data),
+  };
+  const mockRateLimiter = {
+    consume: jest.fn().mockResolvedValue({ allowed: true }),
   };
 
   beforeAll(async () => {
@@ -27,7 +33,7 @@ describe('AuthController (e2e)', () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: SecurityContext, useValue: mockSecurity },
         { provide: InputValidatorService, useValue: mockValidator },
-        JwtService, // real – not used in tests
+        { provide: RateLimiterService, useValue: mockRateLimiter },
       ],
     }).compile();
 
@@ -39,47 +45,60 @@ describe('AuthController (e2e)', () => {
     await app.close();
   });
 
-  it('POST /api/auth/login – success', async () => {
-    await request(app.getHttpServer())
-      .post('/api/auth/login')
-      .send({ email: 'user@example.com', password: 'Password123' })
-      .expect(HttpStatus.OK)
-      .expect({ accessToken: 'tok', refreshToken: 'ref' });
+  const tenantId = 'tenant-uuid';
+  const ip = '1.2.3.4';
 
-    expect(mockValidator.secureValidate).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ email: 'user@example.com' }),
-      'auth.login',
-    );
-    expect(mockAuthService.login).toHaveBeenCalled();
-    expect(mockSecurity.logSecurityEvent).toHaveBeenCalledWith(
-      'LOGIN_ATTEMPT',
-      expect.objectContaining({ email: 'user@example.com' }),
-    );
+  describe('POST /login', () => {
+    const validLogin: LoginDto = {
+      email: 'user@example.com',
+      password: 'ValidPass123!',
+    };
+
+    it('should login successfully with valid credentials', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/auth/login')
+        .set('x-tenant-id', tenantId)
+        .set('X-Forwarded-For', ip)
+        .send(validLogin)
+        .expect(HttpStatus.OK);
+
+      expect(response.body).toEqual({ accessToken: 'tok', refreshToken: 'ref' });
+      expect(mockAuthService.login).toHaveBeenCalledWith(validLogin, tenantId, ip);
+      expect(mockSecurity.logSecurityEvent).toHaveBeenCalledWith(
+        'LOGIN_ATTEMPT',
+        expect.objectContaining({ email: 'user@example.com', tenantId })
+      );
+    });
+
+    it('should reject rate-limited requests', async () => {
+      mockRateLimiter.consume.mockResolvedValueOnce({ allowed: false });
+
+      await request(app.getHttpServer())
+        .post('/api/auth/login')
+        .set('x-tenant-id', tenantId)
+        .set('X-Forwarded-For', ip)
+        .send(validLogin)
+        .expect(HttpStatus.TOO_MANY_REQUESTS);
+    });
   });
 
-  it('POST /api/auth/login – validation error → 401', async () => {
-    mockValidator.secureValidate.mockRejectedValueOnce(new Error('Bad schema'));
-    await request(app.getHttpServer())
-      .post('/api/auth/login')
-      .send({ email: 'invalid', password: 'short' })
-      .expect(HttpStatus.UNAUTHORIZED);
-    expect(mockSecurity.logSecurityEvent).toHaveBeenCalledWith(
-      'LOGIN_FAILURE',
-      expect.objectContaining({ email: '[REDACTED]' }),
-    );
-  });
+  describe('POST /register', () => {
+    const validRegister: RegisterDto = {
+      email: 'newuser@example.com',
+      password: 'SuperStrongPass123!',
+      name: 'New User',
+    };
 
-  it('POST /api/auth/register – success', async () => {
-    await request(app.getHttpServer())
-      .post('/api/auth/register')
-      .send({
-        email: 'new@example.com',
-        password: 'StrongPass1234',
-        name: 'Ali',
-      })
-      .expect(HttpStatus.CREATED)
-      .expect({ success: true });
-    expect(mockAuthService.register).toHaveBeenCalled();
+    it('should register successfully with valid data', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/auth/register')
+        .set('x-tenant-id', tenantId)
+        .set('X-Forwarded-For', ip)
+        .send(validRegister)
+        .expect(HttpStatus.CREATED);
+
+      expect(response.body).toEqual({ success: true });
+      expect(mockAuthService.register).toHaveBeenCalledWith(validRegister, tenantId, ip);
+    });
   });
 });

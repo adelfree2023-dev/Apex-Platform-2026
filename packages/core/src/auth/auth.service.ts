@@ -34,21 +34,50 @@ export class AuthService {
     async login(data: LoginDto, tenantId: string, ip: string) {
         const validated = await this.inputValidator.secureValidate<z.infer<typeof LoginSchema>>(LoginSchema, data, 'auth.login');
         const rateLimited = await this.rateLimiter.consume(`auth:${validated.email}:${tenantId}`);
-        if (!rateLimited) throw new ForbiddenException('طلبات كثيرة جداً');
+        if (!rateLimited) {
+            await this.auditService.logSecurityEvent('AUTH_RATE_LIMIT_EXCEEDED', {
+                severity: 'HIGH',
+                details: { email: validated.email, tenantId, ip }
+            });
+            throw new ForbiddenException('طلبات كثيرة جداً');
+        }
 
         try {
             const schema = await this.tenantContext.getTenantSchema(tenantId);
-            const users = await this.prisma.$queryRawUnsafe<any[]>(`
+            const users = (await this.prisma.$queryRawUnsafe(`
                 SELECT id, email, password_hash, role FROM "${schema}"."vendure_user" 
                 WHERE email = $1 AND status = 'active' LIMIT 1
-            `, validated.email.toLowerCase());
+            `, validated.email.toLowerCase())) as any[];
 
             if (!users || users.length === 0 || !(await verifySecureHash(validated.password, users[0].password_hash))) {
+                // 🛡️ S3: تسجيل محاولة فاشلة في كاش كشف الشذوذ
+                this.anomalyService.inspectFailedLogin(tenantId, validated.email, ip);
+
+                // 🛡️ S4: تسجيل محاولة فاشلة في سجلات الأمان
+                await this.auditService.logSecurityEvent('LOGIN_FAILED', {
+                    severity: 'MEDIUM',
+                    details: { email: validated.email, tenantId, ip }
+                });
+
                 throw new UnauthorizedException('بيانات الاعتماد غير صالحة');
             }
+
+            // 🛡️ S4: تسجيل نجاح الدخول
+            await this.auditService.logActivity({
+                tenantId,
+                userId: users[0].id.toString(),
+                action: 'USER_LOGIN_SUCCESS',
+                details: { email: validated.email, ip }
+            });
+
             return this.generateTokens(users[0].id, tenantId, users[0].role);
         } catch (error) {
             if (error instanceof UnauthorizedException || error instanceof ForbiddenException) throw error;
+
+            await this.auditService.logSecurityEvent('AUTH_SYSTEM_ERROR', {
+                severity: 'CRITICAL',
+                details: { error: error.message, tenantId, context: 'login' }
+            });
             throw new InternalServerErrorException('فشل عملية تسجيل الدخول');
         }
     }
@@ -70,8 +99,21 @@ export class AuthService {
                 INSERT INTO "${schema}"."vendure_user" (email, password_hash, name, role, status, created_at)
                 VALUES ($1, $2, $3, 'customer', 'active', NOW())
             `, validated.email.toLowerCase(), passwordHash, validated.name);
+
+            // 🛡️ S4: تسجيل نجاح التسجيل
+            await this.auditService.logActivity({
+                tenantId,
+                userId: 'anonymous', // سيبدأ الاستخدام بعد التفعيل
+                action: 'USER_REGISTERED',
+                details: { email: validated.email, ip }
+            });
+
             return { success: true };
         } catch (error) {
+            await this.auditService.logSecurityEvent('USER_REGISTRATION_FAILED', {
+                severity: 'HIGH',
+                details: { error: error.message, email: validated.email, tenantId }
+            });
             throw new InternalServerErrorException('فشل عملية التسجيل');
         }
     }

@@ -7,6 +7,8 @@ import { CreateTenantDto } from './dto/create-tenant.dto';
 import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcryptjs';
 
+import { AuditService } from '../../common/monitoring/audit/audit.service';
+
 @Injectable()
 export class TenantsService {
     private readonly RESERVED_SUBDOMAINS = [
@@ -17,7 +19,8 @@ export class TenantsService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly tenantContext: TenantContextService,
-        private readonly encryptionService: EncryptedFieldService
+        private readonly encryptionService: EncryptedFieldService,
+        private readonly auditService: AuditService,
     ) { }
 
     async createTenantWithStore(data: CreateTenantDto) {
@@ -65,6 +68,18 @@ export class TenantsService {
                 }
             });
 
+            // 🛡️ S4: تسجيل نجاح إنشاء المتجر
+            await this.auditService.logActivity({
+                tenantId: tenant.id,
+                userId: 'system',
+                action: 'TENANT_STORE_CREATED',
+                details: {
+                    subdomain: tenant.subdomain,
+                    businessType: data.businessType,
+                    ownerEmail: data.email
+                }
+            });
+
             return {
                 id: tenant.id,
                 subdomain: tenant.subdomain,
@@ -72,8 +87,19 @@ export class TenantsService {
                 storeUrl: `https://${tenant.subdomain}.apex-platform.localhost`,
                 dashboardUrl: `https://admin.${tenant.subdomain}.apex-platform.localhost`
             };
-        }).catch((error: any) => {
+        }).catch(async (error: any) => {
             console.error('Tenant creation failed:', error);
+
+            // 🛡️ S4: تسجيل فشل إنشاء المتجر
+            await this.auditService.logSecurityEvent('TENANT_CREATION_FAILED', {
+                severity: 'HIGH',
+                details: {
+                    error: error.message,
+                    subdomain: data.subdomain,
+                    email: data.email
+                }
+            });
+
             if (error.code === 'P2002') {
                 throw new ConflictException(`Subdomain "${data.subdomain}" is already taken`);
             }
@@ -83,6 +109,10 @@ export class TenantsService {
 
     private async validateTenantCreation(data: CreateTenantDto) {
         if (this.RESERVED_SUBDOMAINS.includes(data.subdomain.toLowerCase())) {
+            await this.auditService.logSecurityEvent('RESERVED_SUBDOMAIN_ATTEMPT', {
+                severity: 'MEDIUM',
+                details: { subdomain: data.subdomain, email: data.email }
+            });
             throw new BadRequestException(`Subdomain "${data.subdomain}" is reserved`);
         }
         const subdomainRegex = /^[a-z][a-z0-9-]*[a-z0-9]$/;
@@ -101,6 +131,15 @@ export class TenantsService {
         const schemaName = `tenant_${tenantId.replace(/-/g, '_')}`;
         await tx.$executeRawUnsafe(`CREATE SCHEMA IF NOT EXISTS "${schemaName}";`);
         return schemaName;
+    }
+
+    async getTenantBySubdomain(subdomain: string) {
+        return this.prisma.tenant.findFirst({
+            where: {
+                subdomain: subdomain.toLowerCase(),
+                status: 'active'
+            }
+        });
     }
 
     private async initializeTenantDatabase(tx: Prisma.TransactionClient, schemaName: string): Promise<void> {

@@ -8,8 +8,8 @@ import {
   Logger
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { TenantContextService } from '../../../security/tenant-context/tenant-context.service';
-import { PrismaService } from '../../../../prisma/prisma.service';
+import { TenantContextService } from '../../security/tenant-context/tenant-context.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { IS_PUBLIC_KEY } from '../../decorators/public.decorator';
 import { AuditService } from '../../monitoring/audit/audit.service';
 
@@ -63,7 +63,7 @@ export class TenantScopedGuard implements CanActivate {
       }
 
       // ✅ S2: تعيين سياق المستأجر (S7: تطبيق التشفير على البيانات الحساسة إذا لزم الأمر في الطبقات التالية)
-      this.tenantContextService.setTenant(tenant);
+      this.tenantContextService.setTenantId(tenantId);
       request.tenant = {
         id: tenant.id,
         name: tenant.name,
@@ -121,17 +121,14 @@ export class TenantScopedGuard implements CanActivate {
       const ip = request.ip || request.connection?.remoteAddress || 'unknown';
       const userAgent = request.headers['user-agent'] || 'unknown';
 
-      await this.auditService.logSecurityEvent({
-        eventType: 'UNAUTHORIZED_TENANT_ACCESS',
+      await this.auditService.logSecurityEvent('UNAUTHORIZED_TENANT_ACCESS', {
         severity: 'HIGH',
         sourceIp: ip,
         userAgent,
-        details: {
-          reason,
-          path: request.url,
-          method: request.method,
-          headers: this.sanitizeHeaders(request.headers)
-        }
+        reason,
+        path: request.url,
+        method: request.method,
+        headers: this.sanitizeHeaders(request.headers)
       });
     }
   }

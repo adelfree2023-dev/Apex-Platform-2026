@@ -5,7 +5,6 @@ import {
     Param,
     Query,
     Body,
-    UseGuards,
     Req,
     HttpException,
     HttpStatus,
@@ -16,13 +15,14 @@ import { TenantContextService } from '../../../common/security/tenant-context/te
 import { AuditService } from '../../../common/monitoring/audit/audit.service';
 import { Public } from '../../../common/decorators/public.decorator';
 import { BaseInputSchema } from '../../../common/security/validation/dto/base.dto';
-import { secureValidate } from '../../../common/security/validation/input-validator.service';
+import { InputValidatorService } from '../../../common/security/validation/input-validator.service';
 import { ShopService } from '../services/shop.service';
 import { ProductListDto } from '../dto/product-list.dto';
 import { CheckoutDto } from '../dto/checkout.dto';
 import { OrderResponseDto } from '../dto/order-response.dto';
 import { ProductService } from '../../products/services/product.service';
 import { CategoryService } from '../../categories/services/category.service';
+import { TenantsService } from '../../tenants/tenants.service';
 
 @ApiTags('Storefront - Shop API')
 @Controller('api/shop')
@@ -30,11 +30,12 @@ export class ShopController {
     private readonly logger = new Logger(ShopController.name);
 
     constructor(
-        private readonly tenantContextService: TenantContextService,
+        private readonly tenantsService: TenantsService,
         private readonly shopService: ShopService,
         private readonly productService: ProductService,
         private readonly categoryService: CategoryService,
         private readonly auditService: AuditService,
+        private readonly inputValidator: InputValidatorService,
     ) { }
 
     @Public()
@@ -56,22 +57,21 @@ export class ShopController {
     ): Promise<ProductListDto> {
         try {
             // ✅ S2: التحقق من وجود المستأجر
-            const tenant = await this.tenantContextService.getTenantBySubdomain(tenantSubdomain);
+            const tenant = await this.tenantsService.getTenantBySubdomain(tenantSubdomain);
             if (!tenant) {
-                this.auditService.logSecurityEvent({
-                    eventType: 'SHOP_ACCESS_ATTEMPT',
+                await this.auditService.logSecurityEvent('SHOP_ACCESS_ATTEMPT', {
                     severity: 'MEDIUM',
-                    details: { tenantSubdomain, action: 'PRODUCTS_ACCESS' },
+                    tenantSubdomain,
+                    action: 'PRODUCTS_ACCESS'
                 });
                 throw new HttpException('المتجر غير موجود', HttpStatus.NOT_FOUND);
             }
 
             // ✅ S3: التحقق من صحة المدخلات
-            secureValidate(BaseInputSchema, {
+            await this.inputValidator.secureValidate(BaseInputSchema, {
                 tenantId: tenant.id,
                 timestamp: Date.now(),
-                requestId: require('crypto').randomBytes(16).toString('hex'),
-            });
+            }, 'shop.products');
 
             const pageNumber = parseInt(page);
             const limitNumber = parseInt(limit);
@@ -93,7 +93,7 @@ export class ShopController {
                 category,
             );
 
-            this.auditService.logActivity({
+            await this.auditService.logActivity({
                 tenantId: tenant.id,
                 userId: 'anonymous',
                 action: 'VIEW_PRODUCTS',
@@ -125,29 +125,29 @@ export class ShopController {
         @Param('productId') productId: string,
     ): Promise<any> {
         try {
-            const tenant = await this.tenantContextService.getTenantBySubdomain(tenantSubdomain);
+            const tenant = await this.tenantsService.getTenantBySubdomain(tenantSubdomain);
             if (!tenant) {
                 throw new HttpException('المتجر غير موجود', HttpStatus.NOT_FOUND);
             }
 
-            secureValidate(BaseInputSchema, {
+            await this.inputValidator.secureValidate(BaseInputSchema, {
                 tenantId: tenant.id,
                 timestamp: Date.now(),
-                requestId: require('crypto').randomBytes(16).toString('hex'),
-            });
+            }, 'shop.product.detail');
 
             const product = await this.productService.findOneByTenant(tenant.id, productId);
 
             if (!product) {
-                this.auditService.logSecurityEvent({
-                    eventType: 'PRODUCT_ACCESS_ATTEMPT',
+                await this.auditService.logSecurityEvent('PRODUCT_ACCESS_ATTEMPT', {
                     severity: 'LOW',
-                    details: { tenantId: tenant.id, productId, action: 'VIEW_ATTEMPT' },
+                    tenantId: tenant.id,
+                    productId,
+                    action: 'VIEW_ATTEMPT'
                 });
                 throw new HttpException('المنتج غير موجود', HttpStatus.NOT_FOUND);
             }
 
-            this.auditService.logActivity({
+            await this.auditService.logActivity({
                 tenantId: tenant.id,
                 userId: 'anonymous',
                 action: 'VIEW_PRODUCT',
@@ -170,20 +170,19 @@ export class ShopController {
         @Param('tenantSubdomain') tenantSubdomain: string,
     ): Promise<any[]> {
         try {
-            const tenant = await this.tenantContextService.getTenantBySubdomain(tenantSubdomain);
+            const tenant = await this.tenantsService.getTenantBySubdomain(tenantSubdomain);
             if (!tenant) {
                 throw new HttpException('المتجر غير موجود', HttpStatus.NOT_FOUND);
             }
 
-            secureValidate(BaseInputSchema, {
+            await this.inputValidator.secureValidate(BaseInputSchema, {
                 tenantId: tenant.id,
                 timestamp: Date.now(),
-                requestId: require('crypto').randomBytes(16).toString('hex'),
-            });
+            }, 'shop.categories');
 
             const categories = await this.categoryService.findCategoriesByTenant(tenant.id);
 
-            this.auditService.logActivity({
+            await this.auditService.logActivity({
                 tenantId: tenant.id,
                 userId: 'anonymous',
                 action: 'VIEW_CATEGORIES',
@@ -209,13 +208,13 @@ export class ShopController {
         @Req() request: any,
     ): Promise<OrderResponseDto> {
         try {
-            const tenant = await this.tenantContextService.getTenantBySubdomain(tenantSubdomain);
+            const tenant = await this.tenantsService.getTenantBySubdomain(tenantSubdomain);
             if (!tenant) {
                 throw new HttpException('المتجر غير موجود', HttpStatus.NOT_FOUND);
             }
 
             // ✅ S3: التحقق من صحة بيانات الطلب
-            secureValidate(CheckoutDto.schema, checkoutDto);
+            await this.inputValidator.secureValidate(CheckoutDto.schema, checkoutDto, 'shop.checkout');
 
             // ✅ S6: التحقق من حدود الطلبات
             await this.shopService.checkRateLimit(tenant.id, request.ip);
@@ -237,7 +236,7 @@ export class ShopController {
             );
 
             // ✅ S4: تسجيل التدقيق
-            this.auditService.logActivity({
+            await this.auditService.logActivity({
                 tenantId: tenant.id,
                 userId: 'anonymous',
                 action: 'ORDER_CREATED',
@@ -288,16 +287,15 @@ export class ShopController {
         @Param('orderId') orderId: string,
     ): Promise<OrderResponseDto> {
         try {
-            const tenant = await this.tenantContextService.getTenantBySubdomain(tenantSubdomain);
+            const tenant = await this.tenantsService.getTenantBySubdomain(tenantSubdomain);
             if (!tenant) {
                 throw new HttpException('المتجر غير موجود', HttpStatus.NOT_FOUND);
             }
 
-            secureValidate(BaseInputSchema, {
+            await this.inputValidator.secureValidate(BaseInputSchema, {
                 tenantId: tenant.id,
                 timestamp: Date.now(),
-                requestId: require('crypto').randomBytes(16).toString('hex'),
-            });
+            }, 'shop.order.detail');
 
             const order = await this.shopService.getOrderById(tenant.id, orderId);
 
@@ -305,7 +303,7 @@ export class ShopController {
                 throw new HttpException('الطلب غير موجود', HttpStatus.NOT_FOUND);
             }
 
-            this.auditService.logActivity({
+            await this.auditService.logActivity({
                 tenantId: tenant.id,
                 userId: 'anonymous',
                 action: 'VIEW_ORDER',

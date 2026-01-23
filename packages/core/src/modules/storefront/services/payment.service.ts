@@ -55,8 +55,7 @@ export class PaymentService {
         });
 
         if (!rateLimit.allowed) {
-            this.auditService.logSecurityEvent({
-                eventType: 'PAYMENT_RATE_LIMIT_EXCEEDED',
+            await this.auditService.logSecurityEvent('PAYMENT_RATE_LIMIT_EXCEEDED', {
                 severity: 'HIGH',
                 sourceIp: ip,
                 details: {
@@ -128,8 +127,7 @@ export class PaymentService {
             this.logger.error('Stripe payment intent creation failed:', error);
 
             // ✅ S4: تسجيل الفشل
-            this.auditService.logSecurityEvent({
-                eventType: 'PAYMENT_INTENT_CREATION_FAILED',
+            await this.auditService.logSecurityEvent('PAYMENT_INTENT_CREATION_FAILED', {
                 severity: 'HIGH',
                 details: {
                     error: error.message,
@@ -185,8 +183,7 @@ export class PaymentService {
             this.logger.error('Webhook signature verification failed:', error);
 
             // ✅ S4: تسجيل محاولات الاختراق
-            this.auditService.logSecurityEvent({
-                eventType: 'INVALID_WEBHOOK_SIGNATURE',
+            await this.auditService.logSecurityEvent('INVALID_WEBHOOK_SIGNATURE', {
                 severity: 'CRITICAL',
                 details: {
                     error: error.message,
@@ -266,7 +263,7 @@ export class PaymentService {
         });
 
         // ✅ S4: تسجيل النجاح
-        this.auditService.logActivity({
+        await this.auditService.logActivity({
             tenantId: payment.tenantId,
             action: 'PAYMENT_SUCCEEDED',
             details: {
@@ -373,7 +370,7 @@ export class PaymentService {
                 tenantId,
             });
 
-            this.auditService.logActivity({
+            await this.auditService.logActivity({
                 tenantId,
                 action: 'PAYMENT_CONFIRMATION_SENT',
                 details: { orderId: order.id, email: customerEmail },
@@ -440,7 +437,7 @@ export class PaymentService {
             });
 
             // ✅ S4: تسجيل التدقيق
-            this.auditService.logActivity({
+            await this.auditService.logActivity({
                 tenantId: order.tenantId,
                 action: 'PAYMENT_REFUNDED',
                 details: {
@@ -463,8 +460,7 @@ export class PaymentService {
             this.logger.error('Stripe refund failed:', error);
 
             // ✅ S4: تسجيل الفشل
-            this.auditService.logSecurityEvent({
-                eventType: 'REFUND_FAILED',
+            await this.auditService.logSecurityEvent('REFUND_FAILED', {
                 severity: 'MEDIUM',
                 details: {
                     error: error.message,

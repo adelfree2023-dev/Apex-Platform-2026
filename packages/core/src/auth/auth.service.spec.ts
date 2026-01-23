@@ -11,11 +11,11 @@ import { SecurityContext } from '../common/security/security.context';
 import { InputValidatorService } from '../common/security/validation/input-validator.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UnauthorizedException, ForbiddenException, InternalServerErrorException } from '@nestjs/common';
 import { generateSecureHash, verifySecureHash } from '../common/utils/crypto.utils';
-import * as bcrypt from 'bcryptjs';
 
 jest.mock('../common/utils/crypto.utils', () => ({
-  generateSecureHash: jest.fn().mockResolvedValue('hashed-pwd'),
+  generateSecureHash: jest.fn().mockResolvedValue('hashed-password'),
   verifySecureHash: jest.fn().mockResolvedValue(true),
 }));
 
@@ -24,16 +24,31 @@ describe('AuthService', () => {
   const mockPrisma = {
     $queryRawUnsafe: jest.fn(),
     $executeRawUnsafe: jest.fn(),
+    tenant: {
+      findUnique: jest.fn(),
+    },
   };
-  const mockJwt = { sign: jest.fn().mockReturnValue('jwt-token') };
-  const mockTenantContext = { getTenantSchema: jest.fn().mockResolvedValue('public') };
-  const mockEncryption = { encrypt: jest.fn() };
-  const mockAnomaly = { detect: jest.fn() };
-  const mockRateLimiter = { consume: jest.fn().mockResolvedValue(true) };
-  const mockAudit = { logOperation: jest.fn() };
-  const mockSecurity = { logSecurityEvent: jest.fn() };
+  const mockJwt = {
+    sign: jest.fn().mockReturnValue('jwt-token'),
+  };
+  const mockTenantContext = {
+    getTenantSchema: jest.fn().mockResolvedValue('tenant_schema'),
+  };
+  const mockEncryption = {};
+  const mockAnomaly = {
+    detect: jest.fn(),
+  };
+  const mockRateLimiter = {
+    consume: jest.fn().mockResolvedValue({ allowed: true }),
+  };
+  const mockAudit = {
+    logOperation: jest.fn(),
+  };
+  const mockSecurity = {
+    logSecurityEvent: jest.fn(),
+  };
   const mockInputValidator = {
-    secureValidate: jest.fn((_, payload) => Promise.resolve(payload)),
+    secureValidate: jest.fn().mockImplementation(async (_, data) => data),
   };
 
   beforeEach(async () => {
@@ -56,73 +71,84 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    const loginDto: LoginDto = {
+    const validLoginDto: LoginDto = {
       email: 'user@example.com',
-      password: 'Password123',
+      password: 'ValidPass123!',
     };
     const tenantId = 'tenant-uuid';
     const ip = '1.2.3.4';
 
-    it('should succeed with correct credentials', async () => {
+    it('should authenticate user successfully', async () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValueOnce([
         {
           id: 42,
           email: 'user@example.com',
-          password_hash: 'hashed-pwd',
+          password_hash: 'hashed-password',
           role: 'customer',
         },
       ]);
 
-      const result = await service.login(loginDto, tenantId, ip);
+      const result = await service.login(validLoginDto, tenantId, ip);
+
       expect(result).toEqual({
         accessToken: 'jwt-token',
         refreshToken: 'jwt-token',
       });
-      expect(mockJwt.sign).toHaveBeenCalled();
-      expect(mockRateLimiter.consume).toHaveBeenCalled();
-      expect(mockAudit.logOperation).toHaveBeenCalled();
+      expect(mockJwt.sign).toHaveBeenCalledTimes(2);
+      expect(mockAudit.logOperation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tenantId,
+          action: 'USER_LOGIN',
+        })
+      );
     });
 
-    it('throws UnauthorizedException on bad password', async () => {
-      // make verifySecureHash return false
-      (verifySecureHash as jest.Mock).mockResolvedValueOnce(false);
+    it('should reject invalid credentials', async () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValueOnce([
         {
           id: 42,
           email: 'user@example.com',
-          password_hash: 'hashed-pwd',
-          role: 'customer',
+          password_hash: 'hashed-password',
         },
       ]);
+      (verifySecureHash as jest.Mock).mockResolvedValueOnce(false);
 
-      await expect(service.login(loginDto, tenantId, ip)).rejects.toThrow(
-        'UnauthorizedException',
+      await expect(service.login(validLoginDto, tenantId, ip)).rejects.toThrow(UnauthorizedException);
+      expect(mockSecurity.logSecurityEvent).toHaveBeenCalledWith(
+        'LOGIN_FAILURE',
+        expect.objectContaining({ email: 'user@example.com', tenantId })
       );
     });
 
-    it('throws ForbiddenException when rate‑limit is exceeded', async () => {
-      mockRateLimiter.consume.mockResolvedValueOnce(false);
-      await expect(service.login(loginDto, tenantId, ip)).rejects.toThrow(
-        'ForbiddenException',
-      );
+    it('should reject rate-limited requests', async () => {
+      mockRateLimiter.consume.mockResolvedValueOnce({ allowed: false });
+
+      await expect(service.login(validLoginDto, tenantId, ip)).rejects.toThrow(ForbiddenException);
     });
   });
 
   describe('register', () => {
-    const registerDto: RegisterDto = {
-      email: 'new@example.com',
-      password: 'StrongPass1234',
-      name: 'Ali',
+    const validRegisterDto: RegisterDto = {
+      email: 'newuser@example.com',
+      password: 'SuperStrongPass123!',
+      name: 'New User',
     };
     const tenantId = 'tenant-uuid';
-    const ip = '5.6.7.8';
+    const ip = '1.2.3.4';
 
-    it('creates a new user and returns success flag', async () => {
+    it('should register new user successfully', async () => {
       mockPrisma.$executeRawUnsafe.mockResolvedValueOnce(undefined);
-      const result = await service.register(registerDto, tenantId, ip);
+
+      const result = await service.register(validRegisterDto, tenantId, ip);
+
       expect(result).toEqual({ success: true });
-      expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalled();
-      expect(generateSecureHash).toHaveBeenCalledWith(registerDto.password);
+      expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO'),
+        expect.anything(),
+        validRegisterDto.email.toLowerCase(),
+        'hashed-password',
+        validRegisterDto.name,
+      );
     });
   });
 });

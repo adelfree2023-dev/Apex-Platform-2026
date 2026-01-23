@@ -159,6 +159,35 @@ export class AuditService {
         });
     }
 
+    /**
+     * 🛡️ ASMP: Generic Activity Logging
+     */
+    async logActivity(dataOrAction: string | { action: string; details?: any; tenantId?: string; userId?: string }, details?: any): Promise<void> {
+        let action: string;
+        let finalDetails: any;
+        let tenantId: string;
+        let userId: string;
+
+        if (typeof dataOrAction === 'object') {
+            action = dataOrAction.action;
+            finalDetails = dataOrAction.details;
+            tenantId = dataOrAction.tenantId || this.tenantContext.getTenantId() || 'SYSTEM';
+            userId = dataOrAction.userId || 'anonymous';
+        } else {
+            action = dataOrAction;
+            finalDetails = details;
+            tenantId = this.tenantContext.getTenantId() || 'SYSTEM';
+            userId = 'anonymous';
+        }
+
+        return this.log(tenantId, {
+            action,
+            userId,
+            severity: 'info',
+            details: finalDetails
+        });
+    }
+
     async getAuditLogs(tenantId: string, filters: any): Promise<any[]> {
         try {
             const schemaName = await this.tenantContext.getTenantSchema(tenantId);

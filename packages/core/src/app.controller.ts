@@ -9,6 +9,8 @@ import {
   Query,
   Optional,
   UseFilters,
+  UseGuards,
+  Param,
   BadRequestException,
   InternalServerErrorException,
   Logger
@@ -21,6 +23,7 @@ import { z } from 'zod';
 import { SecurityContext } from './common/security/security.context';
 import { Public } from './common/decorators/public.decorator';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { TenantScopedGuard } from './common/access-control/guards/tenant-scoped.guard';
 
 // 🔒 مخطط التحقق من صحة معلمات الصحة
 const healthCheckSchema = z.object({
@@ -75,14 +78,14 @@ export class AppController {
         throw new BadRequestException('معلمات طلب التحقق من الصحة غير صالحة');
       }
 
-      const result = await this.appService.getHealthStatus(
-        validationResult.data.service as string
+      const result = await this.appService.getHealth(
+        validationResult.data.includeDetails
       );
 
       // ✅ S5: تسجيل التدقيق
-      await this.auditService.logAction({
+      await this.auditService.logOperation({
         action: 'HEALTH_CHECK',
-        actor: 'system',
+        userId: 'system',
         tenantId: 'system',
         details: { service: validationResult.data.service }
       });
@@ -100,96 +103,6 @@ export class AppController {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new InternalServerErrorException('حدث خطأ أثناء التحقق من حالة النظام');
-    }
-  }
-import { ApiTags, ApiOperation, ApiResponse, ApiSecurity } from '@nestjs/swagger';
-import { AppService } from './app.service';
-import { AuditService } from './common/monitoring/audit/audit.service';
-import { Request, Response } from 'express';
-import { z } from 'zod';
-import { TenantScopedGuard } from './common/access-control/guards/tenant-scoped.guard';
-import { SecurityContext } from './common/security/security.context';
-import { Logger } from '@nestjs/common';
-import { Public } from './common/decorators/public.decorator';
-
-// 🔒 مخطط التحقق من صحة معلمات الصحة
-const healthCheckSchema = z.object({
-  includeDetails: z.boolean().optional(),
-  tenantId: z.string().uuid().optional(),
-});
-
-@ApiTags('health')
-@Controller()
-export class AppController {
-  private readonly logger = new Logger(AppController.name);
-
-  constructor(
-    private readonly appService: AppService,
-    private readonly auditService: AuditService,
-    @Optional() private readonly securityContext?: SecurityContext
-  ) { }
-
-  /**
-   * 🔒 فحص صحة الجذر - محدود بالحدود وآمن
-   */
-  @Public()
-  @Get('health')
-  @ApiSecurity('X-Request-ID')
-  @ApiOperation({
-    summary: 'فحص صحة النظام',
-    description: 'إرجاع حالة صحة النظام الكاملة مع رؤوس أمان',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'النظام سليم',
-  })
-  async healthCheck(
-    @Req() request: Request,
-    @Res() response: Response,
-    @Ip() ip: string,
-    @Headers() headers: Record<string, string>,
-    @Query('includeDetails') includeDetails?: string,
-  ) {
-    try {
-      const validatedParams = healthCheckSchema.parse({
-        includeDetails: includeDetails === 'true',
-        tenantId: headers['x-tenant-id'] || (request as any).params?.tenantId,
-      });
-
-      await this.auditService.logOperation({
-        tenantId: 'system',
-        userId: 'anonymous',
-        action: 'health_check',
-        target: 'platform',
-        details: {
-          ip: ip,
-          userAgent: headers['user-agent'] || 'unknown',
-          includeDetails: validatedParams.includeDetails
-        },
-        ip: ip
-      });
-
-      const healthData = await this.appService.getHealth(validatedParams.includeDetails);
-
-      response.header('X-Content-Type-Options', 'nosniff');
-      response.header('X-Frame-Options', 'DENY');
-      response.header('X-XSS-Protection', '1; mode=block');
-      response.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-
-      return response.status(HttpStatus.OK).json(healthData);
-    } catch (error) {
-      this.securityContext?.logSecurityEvent?.('HEALTH_CHECK_ERROR', {
-        error: error.message,
-        ip: ip,
-        timestamp: new Date().toISOString(),
-      });
-
-      return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        status: 'error',
-        message: 'فشل فحص الصحة',
-        timestamp: new Date().toISOString(),
-      });
     }
   }
 

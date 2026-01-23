@@ -46,12 +46,12 @@ export class AuditService {
     private async checkInitialHealth() {
         try {
             // محاولة التحقق من وجود جداول النظام
-            const tableExists = await (this.prisma as any).$queryRaw<any[]>`
+            const tableExists = (await (this.prisma as any).$queryRaw`
         SELECT EXISTS (
           SELECT 1 FROM information_schema.tables 
           WHERE table_schema = 'public' AND table_name = 'vendure_audit_log'
         );
-      `;
+      `) as any[];
             this.isSystemReady = tableExists[0]?.exists || false;
         } catch (e) {
             this.isSystemReady = false;
@@ -74,14 +74,14 @@ export class AuditService {
             const schemaName = tenantId === 'SYSTEM' ? 'tenant_SYSTEM' : await this.tenantContext.getTenantSchema(tenantId);
 
             // ⚡ التحقق من وجود الجدول قبل المحاولة لتجنب الانهيار
-            const tableExists = await (this.prisma as any).$queryRaw<any[]>`
+            const tableExists = (await (this.prisma as any).$queryRaw`
         SELECT EXISTS (
           SELECT 1 
           FROM information_schema.tables 
           WHERE table_schema = ${schemaName} 
           AND table_name = 'vendure_audit_log'
         );
-      `;
+      `) as any[];
 
             if (!tableExists[0]?.exists) {
                 this.logger.warn(`[AUDIT_MISSING_TABLE] Table missing in schema ${schemaName} - logging to console`);
@@ -162,10 +162,10 @@ export class AuditService {
     async getAuditLogs(tenantId: string, filters: any): Promise<any[]> {
         try {
             const schemaName = await this.tenantContext.getTenantSchema(tenantId);
-            const logs = await this.prisma.$queryRawUnsafe<any[]>(`
+            const logs = (await this.prisma.$queryRawUnsafe(`
               SELECT * FROM "${schemaName}"."vendure_audit_log" 
               ORDER BY created_at DESC LIMIT 100
-          `);
+          `)) as any[];
             return logs;
         } catch (error) {
             throw new InternalServerErrorException('فشل الحصول على سجلات التدقيق');

@@ -26,7 +26,7 @@ jobs:
 
     - name: Generate Prisma Client
       working-directory: packages/core
-      run: npx prisma generate
+      run: npx prisma generate --schema=prisma/schema.prisma
       env:
         DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/apex_db?schema=public"
 

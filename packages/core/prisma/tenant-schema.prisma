@@ -1,0 +1,160 @@
+// Apex Platform - Tenant-Isolated Schema Template
+// This schema is applied per tenant in their isolated PostgreSQL schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/tenant-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("TENANT_DATABASE_URL")
+}
+
+// ============================================
+// PRODUCTS (Cooperative Intelligence Ready)
+// ============================================
+
+model Product {
+  id                   String   @id @default(uuid())
+  name                 String
+  description          String?
+  price                Float
+  compareAtPrice       Float?   // Original price for discounts
+  costPrice            Float?   // For profit calculations
+  stock                Int      @default(0)
+  sku                  String?  @unique
+  barcode              String?
+  
+  // Cooperative Intelligence Fields
+  cooperativeEligible  Boolean  @default(false)
+  replenishmentLeadTime Int?    // Days to restock
+  qualityScore         Float    @default(0) // Calculated from reviews
+  specializationTags   String[] // ["breakfast", "natural", "organic"]
+  
+  // Media
+  images               String[]
+  
+  // Status
+  status               String   @default("active") // active | draft | archived
+  
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relations
+  orderItems           OrderItem[]
+  
+  @@index([name])
+  @@index([status])
+  @@index([cooperativeEligible])
+}
+
+// ============================================
+// ORDERS (Multi-Fulfillment Ready)
+// ============================================
+
+model Order {
+  id               String   @id @default(uuid())
+  orderNumber      String   @unique
+  customerId       String
+  customerEmail    String
+  customerPhone    String?
+  
+  // Fulfillment
+  status           String   @default("pending") // pending | processing | shipped | delivered | cancelled
+  fulfillmentType  String   @default("single") // single | cooperative (multi-vendor)
+  
+  // Address
+  shippingAddress  Json
+  billingAddress   Json?
+  
+  // Pricing
+  subtotal         Float
+  shippingCost     Float    @default(0)
+  taxAmount        Float    @default(0)
+  discount         Float    @default(0)
+  total            Float
+  
+  // Payment
+  paymentStatus    String   @default("pending") // pending | paid | refunded | failed
+  paymentMethod    String?
+  stripePaymentId  String?
+  
+  // Metadata
+  notes            String?
+  metadata         Json?
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  items            OrderItem[]
+  fulfillmentGroups FulfillmentGroup[]
+  
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id          String  @id @default(uuid())
+  orderId     String
+  productId   String
+  productName String  // Snapshot at time of order
+  quantity    Int
+  unitPrice   Float
+  totalPrice  Float
+  
+  // Cooperative fulfillment
+  fulfilledBy String? // tenantId that fulfills this item (for cooperative orders)
+  
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product @relation(fields: [productId], references: [id])
+  
+  @@index([orderId])
+  @@index([productId])
+}
+
+// ============================================
+// FULFILLMENT GROUPS (Cooperative Orders)
+// ============================================
+
+model FulfillmentGroup {
+  id              String   @id @default(uuid())
+  orderId         String
+  fulfillerTenant String   // tenantId of the fulfiller
+  status          String   @default("pending")
+  trackingNumber  String?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  @@index([orderId])
+  @@index([fulfillerTenant])
+}
+
+// ============================================
+// CUSTOMERS
+// ============================================
+
+model Customer {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  phone        String?
+  firstName    String?
+  lastName     String?
+  
+  // Marketing
+  acceptsMarketing Boolean @default(false)
+  
+  // Analytics
+  totalOrders  Int      @default(0)
+  totalSpent   Float    @default(0)
+  lastOrderAt  DateTime?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@index([email])
+}

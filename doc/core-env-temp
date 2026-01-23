@@ -1,0 +1,12 @@
+# --- SUPER ADMIN LOGIN (لوحة التحكم) ---
+# Email:    live_verify_1768743600160@apex.com
+# Password: TestPassword123!
+
+# --- DATABASE CREDENTIALS (قاعدة البيانات) ---
+# User:     apex_app
+# Password: ApexApp@Docker2026
+
+# --- SERVER ENV CONFIG (ملف الإعدادات) ---
+DATABASE_URL="postgresql://apex_app:ApexApp%40Docker2026@localhost:5432/apex_platform"
+JWT_SECRET="apex-hq-super-secret-key-2026"
+PORT=3001

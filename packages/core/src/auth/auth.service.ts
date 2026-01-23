@@ -1,0 +1,76 @@
+import { Injectable, UnauthorizedException, ForbiddenException, InternalServerErrorException, Logger } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from '../prisma/prisma.service';
+import { TenantContextService } from '../common/security/tenant-context/tenant-context.service';
+import { EncryptedFieldService } from '../common/security/encryption/encrypted-field.service';
+import { AnomalyDetectionService } from '../common/access-control/services/anomaly-detection.service';
+import { RateLimiterService } from '../common/access-control/services/rate-limiter.service';
+import { AuditService } from '../common/monitoring/audit/audit.service';
+import { SecurityContext } from '../common/security/security.context';
+import { InputValidatorService } from '../common/security/validation/input-validator.service';
+import { z } from 'zod';
+import { generateSecureHash, verifySecureHash } from '../common/utils/crypto.utils';
+
+const LoginSchema = z.object({ email: z.string().email(), password: z.string().min(8) });
+const RegisterSchema = z.object({ email: z.string().email(), password: z.string().min(12).max(128), name: z.string().min(2) });
+
+@Injectable()
+export class AuthService {
+    private readonly logger = new Logger(AuthService.name);
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly jwtService: JwtService,
+        private readonly tenantContext: TenantContextService,
+        private readonly encryptionService: EncryptedFieldService,
+        private readonly anomalyService: AnomalyDetectionService,
+        private readonly rateLimiter: RateLimiterService,
+        private readonly auditService: AuditService,
+        private readonly securityContext: SecurityContext,
+        private readonly inputValidator: InputValidatorService,
+    ) { }
+
+    async login(data: any, tenantId: string, ip: string) {
+        const validated = await this.inputValidator.secureValidate(LoginSchema, data, 'auth.login');
+        const rateLimited = await this.rateLimiter.consume(`auth:${validated.email}:${tenantId}`);
+        if (!rateLimited) throw new ForbiddenException('طلبات كثيرة جداً');
+
+        try {
+            const schema = await this.tenantContext.getTenantSchema(tenantId);
+            const user = await this.prisma.$queryRawUnsafe<any[]>(`
+                SELECT id, email, password_hash, role FROM "${schema}"."vendure_user" 
+                WHERE email = $1 AND status = 'active' LIMIT 1
+            `, validated.email.toLowerCase());
+
+            if (user.length === 0 || !(await verifySecureHash(validated.password, user[0].password_hash))) {
+                throw new UnauthorizedException('بيانات الاعتماد غير صالحة');
+            }
+            return this.generateTokens(user[0].id, tenantId, user[0].role);
+        } catch (error) {
+            if (error instanceof UnauthorizedException || error instanceof ForbiddenException) throw error;
+            throw new InternalServerErrorException('فشل عملية تسجيل الدخول');
+        }
+    }
+
+    private async generateTokens(userId: number, tenantId: string, role: string) {
+        const payload = { sub: userId, tenantId, role };
+        return {
+            accessToken: this.jwtService.sign(payload, { expiresIn: '15m' }),
+            refreshToken: this.jwtService.sign(payload, { expiresIn: '7d' }),
+        };
+    }
+
+    async register(data: any, tenantId: string, ip: string) {
+        const validated = await this.inputValidator.secureValidate(RegisterSchema, data, 'auth.register');
+        const schema = await this.tenantContext.getTenantSchema(tenantId);
+        const passwordHash = await generateSecureHash(validated.password);
+        try {
+            await this.prisma.$executeRawUnsafe(`
+                INSERT INTO "${schema}"."vendure_user" (email, password_hash, name, role, status, created_at)
+                VALUES ($1, $2, $3, 'customer', 'active', NOW())
+            `, validated.email.toLowerCase(), passwordHash, validated.name);
+            return { success: true };
+        } catch (error) {
+            throw new InternalServerErrorException('فشل عملية التسجيل');
+        }
+    }
+}

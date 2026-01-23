@@ -1,0 +1,99 @@
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { ConfigService } from './config.service';
+
+@Injectable()
+export class EnvValidatorService {
+  private readonly logger = new Logger(EnvValidatorService.name);
+  private readonly requiredVars = ['JWT_SECRET', 'DATABASE_URL'];
+  private readonly minimumSecretLength = 64; // S1: التحقق من قوة الأسرار
+
+  constructor(private readonly configService: ConfigService) {}
+
+  /**
+   * ✅ S1: التحقق الشامل من متغيرات البيئة
+   * - التحقق من وجود جميع المتغيرات المطلوبة
+   * - التحقق من قوة الأسرار
+   * - تفعيل وضع التطوير الآمن عند الغياب
+   */
+  validateEnvironment(): void {
+    // 1. التحقق من وجود المتغيرات المطلوبة في الإنتاج
+    if (this.configService.isProduction()) {
+      const missingVars = this.requiredVars.filter(
+        varName => !this.configService.get(varName)
+      );
+      
+      if (missingVars.length > 0) {
+        this.logger.error(`🔥 متغيرات البيئة المطلوبة مفقودة: ${missingVars.join(', ')}`);
+        throw new InternalServerErrorException(
+          `رفض التشغيل في وضع الإنتاج: متغيرات البيئة المطلوبة مفقودة (${missingVars.join(', ')})`
+        );
+      }
+    }
+
+    // 2. التحقق من قوة الأسرار
+    this.validateSecrets();
+
+    // 3. تسجيل حالة البيئة
+    this.logEnvironmentStatus();
+  }
+
+  /**
+   * ✅ S1: التحقق من قوة الأسرار
+   * - التأكد من أن الأسرار طويلة بما فيه الكفاية
+   * - تحذير عند وجود أسرار ضعيفة في التطوير
+   */
+  private validateSecrets(): void {
+    const jwtSecret = this.configService.get('JWT_SECRET');
+    
+    if (jwtSecret && jwtSecret.length < this.minimumSecretLength) {
+      const message = `تحذير أمني: JWT_SECRET قصير جداً (${jwtSecret.length} حرفاً). 
+      يوصى باستخدام 64 حرفاً على الأقل لأمان عالي.`;
+      
+      if (this.configService.isProduction()) {
+        this.logger.error(message);
+        throw new InternalServerErrorException('JWT_SECRET غير آمن للإنتاج');
+      } else {
+        this.logger.warn(message);
+      }
+    }
+  }
+
+  /**
+   * ✅ S1: تسجيل حالة البيئة للأغراض الأمنية
+   */
+  private logEnvironmentStatus(): void {
+    const env = this.configService.get('NODE_ENV') || 'development';
+    const isProd = this.configService.isProduction();
+    
+    this.logger.log(`🔒 حالة البيئة: ${env.toUpperCase()}`);
+    
+    if (!isProd) {
+      this.logger.warn('⚠️ وضع التطوير الآمن مفعل. بعض القيود الأمنية مخففة.');
+      
+      // التحقق من وجود قيم افتراضية في التطوير
+      if (!this.configService.get('JWT_SECRET')) {
+        this.logger.warn('🔧 تم تعيين JWT_SECRET افتراضي للتطوير فقط');
+      }
+    }
+  }
+
+  /**
+   * ✅ S1: التحقق من استعداد النظام قبل التشغيل
+   */
+  async validateSystemReadiness(): Promise<boolean> {
+    try {
+      this.validateEnvironment();
+      
+      // يمكن إضافة المزيد من عمليات التحقق هنا:
+      // - التحقق من اتصال قاعدة البيانات
+      // - التحقق من مساحة التخزين
+      // - التحقق من الذاكرة المتاحة
+      
+      this.logger.log('✅ النظام جاهز للتشغيل');
+      return true;
+    } catch (error) {
+      this.logger.error(`❌ النظام غير جاهز: ${error.message}`);
+      throw error;
+    }
+  }
+}

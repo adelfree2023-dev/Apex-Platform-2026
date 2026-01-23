@@ -3,19 +3,18 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { ConfigService } from '@nestjs/config';
-import { ValidationPipe, Logger, INestApplication } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import rateLimit from 'express-rate-limit';
 import { PrismaService } from './prisma/prisma.service';
-import { AllExceptionsFilter } from './common/presentation/filters/all-exceptions.filter';
 import { SystemInitializationService } from './common/core/system-initialization.service';
 import { AuditService } from './common/monitoring/audit/audit.service';
+import * as crypto from 'crypto';
 
 /**
- * 🏰 Apex Core: ASMP Bootstrap
- */
+* 🏰 Apex Core: ASMP Bootstrap
+*/
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
-
   // التحقق من البيئة قبل إنشاء التطبيق
   const configService = new ConfigService();
   try {
@@ -24,7 +23,6 @@ async function bootstrap() {
     logger.error('❌ فشل التحقق من البيئة الاستباقي', error.message);
     process.exit(1);
   }
-
   const app = await NestFactory.create(AppModule);
 
   // الحصول على الخدمات الأساسية
@@ -36,10 +34,8 @@ async function bootstrap() {
     logger.log('🔧 بدء تهيئة النظام الأساسي (ASMP Protocol)...');
     const systemInitializationService = app.get(SystemInitializationService);
     await systemInitializationService.initializeSystem();
-
     // إخطار نظام التدقيق بأن قاعدة البيانات جاهزة
     auditService.setIsSystemReady(true);
-
     logger.log('✅ تم تهيئة النظام بنجاح');
   } catch (error) {
     logger.error('❌ فشل تهيئة النظام المعقدة', error.message);
@@ -49,11 +45,6 @@ async function bootstrap() {
   }
 
   // إعداد مصفاة الاستثناءات العالمية
-  // AllExceptionsFilter تستخدم DI في AppModule، لذا لا نحتاج لتعيينها يدوياً هنا إذا كانت APP_FILTER
-  // لكن للضمان اليدوي والتحكم الكامل:
-  // app.useGlobalFilters(app.get(AllExceptionsFilter));
-
-  // باقي إعدادات الأمان
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     transform: true,
@@ -62,29 +53,71 @@ async function bootstrap() {
     validationError: { target: false, value: false },
   }));
 
-  // رؤوس الأمان (Helmet)
+  // ✅ الإصلاح الأساسي: CSP محسّن دون 'unsafe-inline'
+  // 🔒 S8: سياسة أمان محتوى صارمة
+  const cspDirectives = {
+    defaultSrc: ["'self'"],
+    baseUri: ["'self'"],
+    connectSrc: [
+      "'self'",
+      'https://api.stripe.com',
+      'https://api.mapbox.com',
+      'https://*.apex-platform.com',
+      'https://checkout.stripe.com'
+    ],
+    fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net'],
+    frameAncestors: ["'none'"],
+    imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
+    objectSrc: ["'none'"],
+    scriptSrc: [
+      "'self'",
+      "'strict-dynamic'",
+      'https://cdn.jsdelivr.net',
+      'https://js.stripe.com',
+      'https://maps.googleapis.com',
+      'https://*.googleapis.com',
+      'https://cdnjs.cloudflare.com'
+    ],
+    styleSrc: [
+      "'self'",
+      'https://fonts.googleapis.com',
+      'https://cdnjs.cloudflare.com',
+      'https://cdn.jsdelivr.net'
+    ],
+    upgradeInsecureRequests: [],
+    reportUri: '/api/report/csp-violation'
+  };
+
+  // إضافة nonce للمصادر الداخلية عند الحاجة
+  app.use((req: any, res: any, next: any) => {
+    res.locals.cspNonce = Buffer.from(crypto.randomBytes(16)).toString('base64');
+    next();
+  });
+
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
-        defaultSrc: ["'self'"],
-        baseUri: ["'self'"],
-        connectSrc: ["'self'", 'https://api.stripe.com'],
-        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-        frameAncestors: ["'none'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
-        objectSrc: ["'none'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
-        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-        upgradeInsecureRequests: [],
+        ...cspDirectives,
+        scriptSrc: [...cspDirectives.scriptSrc, (req: any, res: any) => `'nonce-${res.locals.cspNonce}'`],
+        styleSrc: [...cspDirectives.styleSrc, (req: any, res: any) => `'nonce-${res.locals.cspNonce}'`],
       },
+      reportOnly: process.env.NODE_ENV !== 'production' ? true : false,
     },
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: { policy: 'cross-origin' },
-    hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+    crossOriginOpenerPolicy: { policy: 'same-origin' },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true
+    },
     frameguard: { action: 'deny' },
     noSniff: true,
     xssFilter: true,
     hidePoweredBy: true,
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    dnsPrefetchControl: { allow: false },
+    ieNoOpen: true
   }));
 
   app.enableCors({
@@ -98,6 +131,8 @@ async function bootstrap() {
     windowMs: 15 * 60 * 1000,
     max: 100,
     message: 'Too many requests, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false
   }));
 
   // Swagger Documentation
@@ -112,7 +147,7 @@ async function bootstrap() {
 
   const port = configService.get('PORT') || 3001;
   await app.listen(port);
-  logger.log(`🚀 Apex Core is running on port ${port}`);
+  logger.log(`🚀 Apex Core is running on port ${port} with ENHANCED CSP SECURITY`);
 }
 
 bootstrap().catch(error => {

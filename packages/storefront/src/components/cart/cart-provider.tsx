@@ -7,6 +7,7 @@ import { useTenant } from '@/providers/tenant-provider';
 
 interface CartItem extends Product {
     quantity: number;
+    tenantId?: string;
 }
 
 interface CartContextType {

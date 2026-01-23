@@ -1,0 +1,37 @@
+name: Apex Platform CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-core:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+        cache-dependency-path: packages/core/package-lock.json
+
+    - name: Install dependencies
+      working-directory: packages/core
+      run: npm install --prefer-offline
+
+    - name: Generate Prisma Client
+      working-directory: packages/core
+      run: npx prisma generate
+
+    - name: Run Unit Tests
+      working-directory: packages/core
+      run: npm run test
+
+    - name: Build Check
+      working-directory: packages/core
+      run: npm run build

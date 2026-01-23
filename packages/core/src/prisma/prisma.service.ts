@@ -36,14 +36,13 @@ export class PrismaService
           this.logger.warn(`Potential tenant isolation violation: ${event.query}`);
 
           // ✅ S4: تسجيل محاولة الوصول بدون عزل المستأجر
-          await this.tenantContextService.auditService?.logSecurityEvent({
-            eventType: 'TENANT_ISOLATION_VIOLATION',
-            severity: 'HIGH',
-            details: {
+          if (this.tenantContextService.auditService) {
+            await this.tenantContextService.auditService.logSecurityEvent('TENANT_ISOLATION_VIOLATION', {
               query: event.query.substring(0, 200) + '...',
               tenantId: currentTenant.id,
-            },
-          });
+              severity: 'HIGH'
+            });
+          }
         }
       });
     } catch (error) {

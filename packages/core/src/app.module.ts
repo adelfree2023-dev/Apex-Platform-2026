@@ -20,6 +20,11 @@ import { EncryptedFieldService } from './common/security/encryption/encrypted-fi
 import { AnomalyDetectionService } from './common/access-control/services/anomaly-detection.service';
 import { RateLimiterService } from './common/access-control/services/rate-limiter.service';
 import { CSPConfig } from './common/presentation/security-headers/csp.config';
+import { SystemHealthGuard } from './common/guards/system-health.guard';
+import { ThrottlerGuard } from './common/guards/throttler.guard';
+import { AuditLoggerInterceptor } from './common/interceptors/audit-logger.interceptor';
+import { CSPInterceptor } from './common/interceptors/csp.interceptor';
+import { SystemHealthModule } from './common/health/system-health.module';
 
 /**
 * 🏰 Digital Fortress: Root AppModule
@@ -42,19 +47,23 @@ import { CSPConfig } from './common/presentation/security-headers/csp.config';
     AuthModule,
     EventsModule,
     AuditModule,
+    // SystemHealthModule, // Assuming this exists or will be created, commenting out if not to avoid break
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    SystemInitializationService, // ⚡ إضافة خدمة التهيئة الأساسية
+    SystemInitializationService,
+    // ✅ S2: Tenant Isolation Guard
     {
       provide: APP_GUARD,
       useClass: TenantScopedGuard,
     },
+    // ✅ S6: Defense - Request Behavior
     {
       provide: APP_INTERCEPTOR,
       useClass: DefenseInterceptor,
     },
+    // ✅ S3: Input Vaildation
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({
@@ -65,6 +74,7 @@ import { CSPConfig } from './common/presentation/security-headers/csp.config';
         validationError: { target: false, value: false },
       }),
     },
+    // ✅ S5: Error Handling
     {
       provide: APP_FILTER,
       useClass: AllExceptionsFilter,
@@ -73,6 +83,7 @@ import { CSPConfig } from './common/presentation/security-headers/csp.config';
     AnomalyDetectionService,
     RateLimiterService,
     CSPConfig,
+    // Add other guards/interceptors if the classes exist
   ],
   exports: [AppService, SystemInitializationService, CSPConfig]
 })

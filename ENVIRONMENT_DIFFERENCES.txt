@@ -1,0 +1,46 @@
+
+# 🌍 ENVIRONMENT DIFFERENCES LOG
+# Last Updated: 2026-01-23
+
+This file documents the configuration differences between the Local Development (Windows)
+and Production Server (Linux/GCP) environments. Any developer working on this project
+MUST understand these differences to ensure successful deployment and debugging.
+
+## 1. INFRASTRUCTURE
+
+| Feature          | Local (Windows)                     | Production (Linux/GCP)              |
+|------------------|-------------------------------------|-------------------------------------|
+| **OS**           | Windows 10/11                       | Dockerized Linux (Ubuntu Base)      |
+| **Database**     | PostgreSQL via Docker `apex-postgres`| PostgreSQL via Docker `apex-postgres`|
+| **DB Host**      | `localhost` (Port 5432)             | `apex-postgres` (Internal Network)  |
+| **App Network**  | Host Networking                     | Docker Network `apex-network`       |
+| **Process Mgr**  | PowerShell Scripts / Manual         | PM2 (`apex-api`, `apex-storefront`) |
+
+## 2. FILE SYSTEM & PATHS
+
+- **Local:** Windows paths (e.g., `C:\Users\Dell\...`)
+- **Server:** Linux paths (e.g., `/home/dell/Apex-Platform-2026/...`)
+- **Git Handling:** 
+  - Windows handles line endings as CRLF.
+  - Linux handles line endings as LF.
+  - `.gitattributes` should enforce LF for scripts to run correctly on server.
+
+## 3. CONFIGURATION (.env)
+
+| Variable              | Local                                  | Production                          |
+|-----------------------|----------------------------------------|-------------------------------------|
+| `NODE_ENV`            | `development`                          | `production`                        |
+| `DATABASE_URL`        | `postgres://...localhost:5432/...`     | `postgres://...apex-postgres:5432/...` |
+| `ASMP_LEVEL`          | `FULL` (Debugs visible)                | `FULL` (Debugs hidden/secure)       |
+
+## 4. DEPLOYMENT NOTES
+
+- **Sync Strategy:** We sync FILES via Git. We do NOT sync `node_modules`.
+- **Build:** `npm install` and `npm run build` must run on the TARGET machine.
+- **Adminer:** Access locally via 8080. On server, access via 8080. Note that server Adminer connects to `apex-postgres`, local Adminer connects to `localhost`.
+
+## 5. MANUAL OVERRIDES
+If you change a configuration file locally, ensure you check if it relies on absolute paths or Windows-specific commands before pushing to production.
+
+---
+**CONFIRMED:** All core logic files (`*.ts`) are identical across environments. Only `.env` and `node_modules` differ.

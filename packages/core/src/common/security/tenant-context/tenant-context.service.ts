@@ -7,6 +7,9 @@ export class TenantContextService {
     private schemaName: string | null = null;
     private subdomain: string | null = null;
 
+    // 🛡️ المرجع لخدمة التدقيق (سيتم حقنه اختيارياً لتجنب الدوائر التكرارية)
+    public auditService: any = null;
+
     setContext(tenantId: string, userId?: string) {
         this.tenantId = tenantId;
         this.userId = userId || null;
@@ -20,6 +23,26 @@ export class TenantContextService {
         this.tenantId = tenantId;
         this.schemaName = schemaName;
         this.subdomain = subdomain;
+    }
+
+    // ✅ التوافق مع PrismaService
+    setTenantId(tenantId: string) {
+        this.tenantId = tenantId;
+        this.schemaName = `tenant_${tenantId.replace(/-/g, '_')}`;
+    }
+
+    clearTenantId() {
+        this.tenantId = null;
+        this.schemaName = null;
+    }
+
+    getCurrentTenant() {
+        if (!this.tenantId) return null;
+        return {
+            id: this.tenantId,
+            schemaName: this.schemaName,
+            subdomain: this.subdomain
+        };
     }
 
     getTenantId(): string | null { return this.tenantId; }

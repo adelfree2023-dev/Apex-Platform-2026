@@ -39,44 +39,43 @@ export class TenantScopedGuard implements CanActivate {
       // ✅ S2: استخراج معرف المستأجر من الطلب
       const tenantId = this.extractTenantId(request);
 
-      if (!tenantId) {
-        this.logUnauthorizedAccess(request, 'TENANT_ID_MISSING');
-        throw new ForbiddenException('مطلوب معرف المستأجر');
+      // ✅ S2: التحقق الصارم من وجود tenantId وتنسيقه (UUID)
+      if (!tenantId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+        this.logger.error('معرف مستأجر غير صالح أو مفقود', { tenantId });
+        this.logUnauthorizedAccess(request, 'TENANT_ID_INVALID_OR_MISSING');
+        throw new ForbiddenException('معرف المستأجر غير صالح');
       }
 
-      // ✅ S2: التحقق من وجود المستأجر وحالته
+      // ✅ S2: التحقق من وجود المستأجر في قاعدة البيانات وحالته
       const tenant = await this.prisma.tenant.findUnique({
         where: { id: tenantId }
       });
 
-      if (!tenant) {
-        this.logUnauthorizedAccess(request, 'TENANT_NOT_FOUND');
-        throw new ForbiddenException('المستأجر غير موجود');
-      }
-
-      if (tenant.status !== 'ACTIVE' && tenant.status !== 'active') {
-        this.logUnauthorizedAccess(request, 'TENANT_INACTIVE');
-        // Temporary allowance for dev/provisioning status
-        if (tenant.status !== 'provisioning') {
-          throw new ForbiddenException('المستأجر غير نشط');
-        }
+      if (!tenant || (tenant.status !== 'ACTIVE' && tenant.status !== 'active')) {
+        this.logger.warn(`مستأجر غير نشط أو غير موجود: ${tenantId}`);
+        this.logUnauthorizedAccess(request, 'TENANT_INACTIVE_OR_NOT_FOUND');
+        throw new ForbiddenException('المستأجر غير نشط أو غير موجود');
       }
 
       // ✅ S2: التحقق من عزل البيانات على مستوى قاعدة البيانات
       if (!await this.verifyDatabaseIsolation(tenantId)) {
-        this.logUnauthorizedAccess(request, 'DATABASE_ISOLATION_FAILURE');
-        // Warning only for now to avoid locking out legitimate users during initial setup
         this.logger.warn(`Potential isolation failure for tenant ${tenantId}`);
       }
 
-      // ✅ S2: تعيين سياق المستأجر
+      // ✅ S2: تعيين سياق المستأجر (S7: تطبيق التشفير على البيانات الحساسة إذا لزم الأمر في الطبقات التالية)
       this.tenantContextService.setTenant(tenant);
-      request.tenant = tenant;
+      request.tenant = {
+        id: tenant.id,
+        name: tenant.name,
+        plan: tenant.plan,
+        subdomain: tenant.subdomain
+      };
 
       return true;
     } catch (error: any) {
-      this.logger.error('S2 Guard failure:', error.message);
-      throw error;
+      if (error instanceof ForbiddenException) throw error;
+      this.logger.error('فشل التحقق من المستأجر:', error.message);
+      throw new ForbiddenException('فشل التحقق من الهوية');
     }
   }
 

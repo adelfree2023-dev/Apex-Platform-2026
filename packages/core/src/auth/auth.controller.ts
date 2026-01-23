@@ -32,14 +32,31 @@ export class AuthController {
         private readonly authService: AuthService,
         private readonly securityContext: SecurityContext,
         private readonly inputValidator: InputValidatorService,
+        private readonly rateLimiter: RateLimiterService,
     ) { }
 
     @Post('login')
     @ApiSecurity('X-Request-ID')
     @ApiOperation({ summary: 'تسجيل الدخول' })
     async login(@Body() body: any, @Req() request: Request, @Res() response: Response, @Ip() ip: string) {
-        const tenantId = (request as any).tenantId;
+        const tenantId = (request as any).tenant?.id || (request as any).tenantId;
+
+        // ✅ S6: تطبيق حدود المعدل على مستوى المستخدم والمستأجر
+        const rateKey = `login:${body.email}:${tenantId || ip}`;
+        const rateLimitResult = await this.rateLimiter.consume(rateKey, 5, 2);
+
+        if (!rateLimitResult.allowed) {
+            this.logger.warn(`محاولة تسجيل دخول كثيرة من: ${body.email} للمستأجر ${tenantId}`);
+            this.securityContext.logSecurityEvent('RATE_LIMIT_EXCEEDED', { email: body.email, tenantId, ip });
+            return response.status(HttpStatus.TOO_MANY_REQUESTS).json({
+                statusCode: HttpStatus.TOO_MANY_REQUESTS,
+                message: 'عدد المحاولات تجاوز الحد المسموح به. الرجاء المحاولة لاحقاً',
+                timestamp: new Date().toISOString(),
+            });
+        }
+
         try {
+            // ✅ S3: التحقق والتطهير من المدخلات
             const validated = await this.inputValidator.secureValidate(LoginRequestSchema, body, 'auth.login');
             this.securityContext.logSecurityEvent('LOGIN_ATTEMPT', { email: validated.email, tenantId, ip });
             const result = await this.authService.login(validated, tenantId, ip);
@@ -59,7 +76,20 @@ export class AuthController {
     @ApiSecurity('X-Request-ID')
     @ApiOperation({ summary: 'إنشاء حساب جديد' })
     async register(@Body() body: any, @Req() request: Request, @Res() response: Response, @Ip() ip: string) {
-        const tenantId = (request as any).tenantId;
+        const tenantId = (request as any).tenant?.id || (request as any).tenantId;
+
+        // ✅ S6: حماية ضد هجمات إنشاء الحسابات
+        const rateKey = `register:${body.email}:${ip}`;
+        const rateLimitResult = await this.rateLimiter.consume(rateKey, 3, 1);
+
+        if (!rateLimitResult.allowed) {
+            return response.status(HttpStatus.TOO_MANY_REQUESTS).json({
+                statusCode: HttpStatus.TOO_MANY_REQUESTS,
+                message: 'تم تجاوز حد إنشاء الحسابات. الرجاء المحاولة لاحقاً',
+                timestamp: new Date().toISOString(),
+            });
+        }
+
         try {
             const validated = await this.inputValidator.secureValidate(RegisterRequestSchema, body, 'auth.register');
             const result = await this.authService.register(validated, tenantId, ip);

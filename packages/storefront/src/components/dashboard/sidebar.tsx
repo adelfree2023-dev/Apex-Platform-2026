@@ -27,10 +27,10 @@ export function Sidebar({ section, onClose }: { section: string; onClose?: () =>
                 {navItems.map((item) => (
                     <Link
                         key={item.href}
-                        href={`dashboard?section=${item.href}`}
+                        href={`dashboard?section=${item.href}` as any}
                         className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${section === item.href
-                                ? 'bg-primary text-primary-foreground'
-                                : 'text-gray-600 hover:bg-gray-100'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'text-gray-600 hover:bg-gray-100'
                             }`}
                     >
                         {/* Icon placeholder */}

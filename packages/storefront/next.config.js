@@ -2,7 +2,10 @@
 const nextConfig = {
     reactStrictMode: true,
     experimental: {
-        typedRoutes: true,
+        serverActions: {
+            allowedOrigins: ['*'],
+        },
+        typedRoutes: false,
     },
     async rewrites() {
         return [

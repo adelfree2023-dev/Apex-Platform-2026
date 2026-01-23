@@ -27,10 +27,15 @@ jobs:
     - name: Generate Prisma Client
       working-directory: packages/core
       run: npx prisma generate
+      env:
+        DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/apex_db?schema=public"
 
     - name: Run Unit Tests
       working-directory: packages/core
       run: npm run test
+      env:
+        DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/apex_db?schema=public"
+        JWT_SECRET: "test_secret_for_ci"
 
     - name: Build Check
       working-directory: packages/core

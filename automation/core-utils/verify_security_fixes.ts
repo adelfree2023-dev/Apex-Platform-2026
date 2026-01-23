@@ -1,107 +1,159 @@
-
 import { Test, TestingModule } from '@nestjs/testing';
-import { VendureService } from '../../packages/core/src/vendors/vendure.service';
-import { WishlistService } from '../../packages/core/src/wishlists/wishlist.service';
-import { TenantsService } from '../../packages/core/src/tenants/tenants.service';
+import { INestApplication } from '@nestjs/common';
+import * as request from 'supertest';
+import { AppModule } from '../../packages/core/src/app.module';
 import { PrismaService } from '../../packages/core/src/prisma/prisma.service';
-import { EventService } from '../../packages/core/src/events/event.service';
-import { NotFoundException } from '@nestjs/common';
+import { SystemInitializationService } from '../../packages/core/src/common/core/system-initialization.service';
 
-// Mock Prisma
-const mockPrisma = {
-    $executeRawUnsafe: () => Promise.resolve(),
-    $queryRawUnsafe: () => Promise.resolve([]),
-};
-
-// Mock Events
-const mockEvents = {
-    record: () => Promise.resolve(),
-};
-
-// Mock Tenants
-const mockTenantsService = {
-    findById: (id: string) => {
-        if (id === 'valid-tenant') {
-            return Promise.resolve({ id, status: 'active', subdomain: 'valid' });
-        }
-        if (id === 'suspended-tenant') {
-            return Promise.resolve({ id, status: 'suspended', subdomain: 'suspended' });
-        }
-        return Promise.resolve(null);
-    },
-};
-
-async function verify() {
-    console.log('🔒 Verifying Security Fixes...');
-
-    const module: TestingModule = await Test.createTestingModule({
-        providers: [
-            VendureService,
-            WishlistService,
-            { provide: PrismaService, useValue: mockPrisma },
-            { provide: EventService, useValue: mockEvents },
-            { provide: TenantsService, useValue: mockTenantsService },
-        ],
+/**
+* 🔒 Security Verification Suite - يحقق من جميع الإصلاحات الأمنية
+* - يتحقق من عزل المستأجرين
+* - يتحقق من حماية CSP
+* - يتحقق من صحة التشفير
+*/
+describe('Security Verification Suite', () => {
+  let app: INestApplication;
+  let prisma: PrismaService;
+  
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
     }).compile();
+    
+    app = moduleFixture.createNestApplication();
+    prisma = app.get(PrismaService);
+    
+    // ✅ حل المشكلة: التحقق من الاتصال بقاعدة البيانات
+    await prisma.connectWithRetry(3, 1000);
+    
+    // ✅ حل المشكلة: تهيئة النظام قبل الاختبار
+    const systemInit = app.get(SystemInitializationService);
+    await systemInit.initializeSystem();
+    
+    await app.init();
+  }, 60000);
 
-    const vendureService = module.get<VendureService>(VendureService);
-    const wishlistService = module.get<WishlistService>(WishlistService);
+  afterAll(async () => {
+    await app.close();
+  });
 
-    console.log('✅ Dependency Injection Successful');
-
-    // Test 1: VendureService with valid tenant
-    try {
-        await vendureService.getProducts('valid-tenant');
-        console.log('✅ VendureService: valid tenant accepted');
-    } catch (e) {
-        console.error('❌ VendureService: Unexpected validation failure for valid tenant', e);
-    }
-
-    // Test 2: VendureService with invalid tenant
-    try {
-        await vendureService.getProducts('invalid-tenant');
-        console.error('❌ VendureService: Failed to block invalid tenant');
-    } catch (e: any) {
-        if (e instanceof NotFoundException) {
-            console.log('✅ VendureService: invalid tenant blocked (NotFoundException)');
-        } else {
-            console.error('❌ VendureService: Unexpected error type:', e);
+  describe('S2: Tenant Isolation', () => {
+    it('should prevent cross-tenant data access', async () => {
+      // إنشاء مستأجرين للاختبار
+      const tenantA = await prisma.tenant.create({
+        data: {
+          name: 'Tenant A',
+          subdomain: `test-a-${Date.now()}`,
+          schemaName: `tenant_test_a_${Date.now()}`,
+          businessType: 'RETAIL',
+          status: 'active'
         }
-    }
-
-    // Test 3: VendureService with suspended tenant
-    try {
-        await vendureService.getProducts('suspended-tenant');
-        console.error('❌ VendureService: Failed to block suspended tenant');
-    } catch (e: any) {
-        if (e && e.message && e.message.includes('suspended')) {
-            console.log('✅ VendureService: suspended tenant blocked (Forbidden)');
-        } else {
-            console.error('❌ VendureService: Unexpected error type:', e);
+      });
+      
+      const tenantB = await prisma.tenant.create({
+        data: {
+          name: 'Tenant B',
+          subdomain: `test-b-${Date.now()}`,
+          schemaName: `tenant_test_b_${Date.now()}`,
+          businessType: 'RETAIL',
+          status: 'active'
         }
-    }
+      });
+      
+      // تهيئة مخططات قاعدة البيانات
+      await prisma.$executeRawUnsafe(`CREATE SCHEMA IF NOT EXISTS "${tenantA.schemaName}"`);
+      await prisma.$executeRawUnsafe(`CREATE SCHEMA IF NOT EXISTS "${tenantB.schemaName}"`);
+      
+      // إنشاء جدول واختبار في tenantA
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "${tenantA.schemaName}".test_data (
+          id SERIAL PRIMARY KEY,
+          secret VARCHAR(255) NOT NULL
+        );
+      `);
+      
+      await prisma.$executeRawUnsafe(`
+        INSERT INTO "${tenantA.schemaName}".test_data (secret) VALUES ('CONFIDENTIAL_DATA_A');
+      `);
+      
+      // التحقق من عدم إمكانية الوصول من tenantB
+      await prisma.setTenantSchema(tenantB.schemaName);
+      
+      try {
+        await prisma.$queryRawUnsafe(`
+          SELECT * FROM "${tenantA.schemaName}".test_data;
+        `);
+        fail('Should not be able to access tenant A data from tenant B context');
+      } catch (error) {
+        expect(error.message).toContain('relation');
+      }
+    });
+  });
 
-    // Test 4: WishlistService with valid tenant
-    try {
-        await wishlistService.getWishlist('valid-tenant', 1);
-        console.log('✅ WishlistService: valid tenant accepted');
-    } catch (e) {
-        console.error('❌ WishlistService: Unexpected failure for valid tenant', e);
-    }
+  describe('S8: CSP Headers', () => {
+    it('should have secure CSP headers on health endpoint', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/api/app/health')
+        .expect(200);
+        
+      // التحقق من رؤوس CSP
+      const cspHeader = response.header['content-security-policy'];
+      expect(cspHeader).toBeDefined();
+      
+      // التحقق من عدم وجود 'unsafe-inline' or 'unsafe-eval'
+      expect(cspHeader).not.toContain("'unsafe-inline'");
+      expect(cspHeader).not.toContain("'unsafe-eval'");
+      
+      // التحقق من التوجيهات الأساسية
+      expect(cspHeader).toContain("default-src 'self'");
+      expect(cspHeader).toContain("frame-ancestors 'none'");
+      expect(cspHeader).toContain("object-src 'none'");
+    });
+  });
 
-    // Test 5: WishlistService with invalid tenant
-    try {
-        await wishlistService.getWishlist('invalid-tenant', 1);
-        console.error('❌ WishlistService: Failed to block invalid tenant');
-    } catch (e: any) {
-        if (e instanceof NotFoundException) {
-            console.log('✅ WishlistService: invalid tenant blocked (NotFoundException)');
-        } else {
-            console.error('❌ WishlistService: Unexpected error type:', e);
-        }
-    }
+  describe('S7: Encryption Service', () => {
+    it('should encrypt and decrypt data correctly', async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        imports: [AppModule],
+      }).compile();
+      
+      const encryptedFieldService = module.get('EncryptedFieldService');
+      const tenantId = 'test-tenant';
+      const secretData = 'sensitive-information-123';
+      
+      // التشفير
+      const encrypted = encryptedFieldService.encrypt(tenantId, secretData);
+      expect(encrypted).not.toEqual(secretData);
+      expect(encrypted).toContain(':');
+      
+      // فك التشفير
+      const decrypted = encryptedFieldService.decrypt(tenantId, encrypted);
+      expect(decrypted).toEqual(secretData);
+    });
+  });
 
-    console.log('🎉 Verification Complete!');
-}
-
-verify().catch(console.error);
+  describe('S1: Environment Validation', () => {
+    it('should fail to start in production without required env variables', async () => {
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      const originalJwtSecret = process.env.JWT_SECRET;
+      delete process.env.JWT_SECRET;
+      
+      try {
+        await SystemInitializationService.validateEnvironment({
+          get: (key: string) => {
+            if (key === 'NODE_ENV') return 'production';
+            if (key === 'DATABASE_URL') return 'test-url';
+            return undefined;
+          }
+        } as any);
+        fail('Should throw error when JWT_SECRET is missing in production');
+      } catch (error) {
+        expect(error.message).toContain('JWT_SECRET');
+      } finally {
+        process.env.NODE_ENV = originalEnv;
+        process.env.JWT_SECRET = originalJwtSecret;
+      }
+    });
+  });
+});

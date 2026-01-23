@@ -19,6 +19,7 @@ import { AuditService } from './common/monitoring/audit/audit.service';
 import { EncryptedFieldService } from './common/security/encryption/encrypted-field.service';
 import { AnomalyDetectionService } from './common/access-control/services/anomaly-detection.service';
 import { RateLimiterService } from './common/access-control/services/rate-limiter.service';
+import { CSPConfig } from './common/presentation/security-headers/csp.config';
 
 /**
 * 🏰 Digital Fortress: Root AppModule
@@ -71,7 +72,8 @@ import { RateLimiterService } from './common/access-control/services/rate-limite
     EncryptedFieldService,
     AnomalyDetectionService,
     RateLimiterService,
+    CSPConfig,
   ],
-  exports: [AppService, SystemInitializationService]
+  exports: [AppService, SystemInitializationService, CSPConfig]
 })
 export class AppModule { }

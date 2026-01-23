@@ -1,171 +1,173 @@
 import { Injectable, Logger } from '@nestjs/common';
+import * as crypto from 'crypto';
 
 /**
- * 🏰 Digital Fortress: CSP Configuration (S8)
- * - S8: Comprehensive Content Security Policy Management
- * - S8: Tenant-specific CSP rules
- * - S8: CSP violation reporting and analysis
- * - S8: Dynamic CSP generation for third-party integrations
- */
+* 🏰 Digital Fortress: CSP Configuration (S8)
+* - سياسة أمان محتوى موحدة وآمنة
+* - يدعم البيئات المختلفة (تطوير، إنتاج)
+* - يوفر تقارير الانتهاكات للتحليل
+*/
 @Injectable()
 export class CSPConfig {
   private readonly logger = new Logger(CSPConfig.name);
+  private readonly isProduction = process.env.NODE_ENV === 'production';
+  private readonly nonceCache = new Map<string, { nonce: string, timestamp: number }>();
+  private readonly nonceExpiry = 10 * 60 * 1000; // 10 دقائق
 
-  // 🛡️ S8: Base CSP directives
-  private readonly baseDirectives: Record<string, string[]> = {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", "'unsafe-inline'"],
-    styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
-    imgSrc: ["'self'", 'data:', 'https:'],
-    fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
-    connectSrc: ["'self'"],
-    frameSrc: ["'none'"],
-    objectSrc: ["'none'"],
-    baseUri: ["'self'"],
-    formAction: ["'self'"],
-    frameAncestors: ["'none'"],
-    workerSrc: ["'none'"],
-    manifestSrc: ["'self'"],
-    mediaSrc: ["'none'"],
-    prefetchSrc: ["'self'"],
-  };
+  constructor() {
+    this.cleanupNonceCache();
+  }
 
-  // 🛡️ S8: Environment-specific overrides
-  private readonly environmentOverrides: Record<string, any> = {
-    development: {
-      scriptSrc: ["'self'", "'unsafe-inline'", 'http://localhost:*', 'ws://localhost:*'],
-      connectSrc: ["'self'", 'http://localhost:*', 'ws://localhost:*'],
-      imgSrc: ["'self'", 'data:', 'https:', 'http://localhost:*'],
-    },
-    staging: {
-      reportOnly: true,
-      reportUri: '/api/report/csp-violation',
-    },
-    production: {
-      scriptSrc: [
-        "'self'",
-        'https://cdn.jsdelivr.net',
-        'https://cdnjs.cloudflare.com',
-      ],
-      connectSrc: [
-        "'self'",
-        'https://api.apex-platform.com',
-        'https://checkout.stripe.com',
-        'https://api.mapbox.com',
-      ],
-      reportUri: 'https://api.apex-platform.com/report/csp-violation',
-    },
-  };
-
-  // 🛡️ S8: Tenant-specific CSP overrides
-  private tenantOverrides: Record<string, Record<string, string[]>> = {
-    'social-commerce-tenant': {
-      scriptSrc: ["'self'", "'unsafe-inline'", 'https://connect.facebook.net', 'https://platform.twitter.com'],
-      frameSrc: ["'self'", 'https://www.facebook.com', 'https://platform.twitter.com'],
-      connectSrc: ["'self'", 'https://graph.facebook.com', 'https://api.twitter.com'],
-      imgSrc: ["'self'", 'data:', 'https:', 'https://*.fbcdn.net', 'https://pbs.twimg.com'],
-    },
-    'payment-focused-tenant': {
-      scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com', 'https://checkout.razorpay.com'],
-      frameSrc: ["'self'", 'https://js.stripe.com', 'https://checkout.razorpay.com'],
-      connectSrc: ["'self'", 'https://api.stripe.com', 'https://api.razorpay.com'],
-    },
-  };
+  private cleanupNonceCache(): void {
+    setInterval(() => {
+      const now = Date.now();
+      for (const [key, value] of this.nonceCache.entries()) {
+        if (now - value.timestamp > this.nonceExpiry) {
+          this.nonceCache.delete(key);
+        }
+      }
+    }, 60000); // تنظيف كل دقيقة
+  }
 
   /**
-   * 🛡️ S8: Get CSP directives for a specific tenant and environment
-   */
-  getCSPDirectives(tenantId?: string, environment: string = process.env.NODE_ENV || 'development'): any {
-    try {
-      let directives = { ...this.baseDirectives } as Record<string, any>;
-      const envConfig = this.environmentOverrides[environment] || {};
+  * 🛡️ S8: توليد nonce آمن للمصادر الداخلية
+  */
+  generateNonce(requestId: string): string {
+    const nonce = Buffer.from(crypto.randomBytes(16)).toString('base64');
+    this.nonceCache.set(requestId, { nonce, timestamp: Date.now() });
+    return nonce;
+  }
 
-      if (envConfig.reportOnly || envConfig.reportUri) {
-        directives.reportOnly = envConfig.reportOnly;
-        directives.reportUri = envConfig.reportUri;
-      }
+  /**
+  * 🛡️ S8: التحقق من صحة nonce
+  */
+  validateNonce(requestId: string, nonce: string): boolean {
+    const cached = this.nonceCache.get(requestId);
+    if (!cached || Date.now() - cached.timestamp > this.nonceExpiry) {
+      return false;
+    }
+    return crypto.timingSafeEqual(
+      Buffer.from(cached.nonce),
+      Buffer.from(nonce)
+    );
+  }
 
-      if (tenantId && this.tenantOverrides[tenantId]) {
-        const tenantConfig = this.tenantOverrides[tenantId];
-        for (const [directive, values] of Object.entries(tenantConfig)) {
-          if (directives[directive] && Array.isArray(values)) {
-            directives[directive] = [...new Set([...directives[directive], ...values])];
-          } else {
-            directives[directive] = values;
-          }
-        }
-      }
+  /**
+  * 🛡️ S8: الحصول على توجيهات CSP المناسبة للبيئة
+  */
+  getCSPDirectives(tenantId?: string, environment: string = process.env.NODE_ENV || 'development'): Record<string, string[]> {
+    const baseDirectives: Record<string, string[]> = {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
+      connectSrc: ["'self'"],
+      frameAncestors: ["'none'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameSrc: ["'none'"],
+      workerSrc: ["'none'"],
+      manifestSrc: ["'self'"],
+      mediaSrc: ["'none'"],
+      prefetchSrc: ["'self'"],
+      upgradeInsecureRequests: [],
+    };
 
-      for (const [directive, values] of Object.entries(envConfig)) {
-        if (directive !== 'reportOnly' && directive !== 'reportUri' && Array.isArray(values)) {
-          if (directives[directive]) {
-            directives[directive] = [...new Set([...directives[directive], ...values])];
-          } else {
-            directives[directive] = values;
-          }
-        }
-      }
+    // التعديلات حسب البيئة
+    if (environment === 'development') {
+      baseDirectives.scriptSrc.push('http://localhost:*', 'ws://localhost:*');
+      baseDirectives.connectSrc.push('http://localhost:*', 'ws://localhost:*');
+      baseDirectives.imgSrc.push('http://localhost:*');
+    } else {
+      baseDirectives.connectSrc.push('https://api.stripe.com', 'https://checkout.stripe.com');
+      baseDirectives.imgSrc.push('https://*.stripe.com');
+      baseDirectives.frameSrc.push('https://js.stripe.com', 'https://checkout.stripe.com');
 
-      if (environment === 'development') {
-        directives.scriptSrc = [...(directives.scriptSrc || []), "'nonce-dev'"];
-      }
       if (environment === 'production') {
-        directives.upgradeInsecureRequests = [];
+        baseDirectives.connectSrc.push('https://api.apex-platform.com');
+        baseDirectives.reportUri = ['https://api.apex-platform.com/report/csp-violation'];
       }
-
-      return directives;
-    } catch (error) {
-      this.logger.error(`Failed to generate CSP: ${error.message}`);
-      return { ...this.baseDirectives };
     }
+
+    // التعديلات حسب نوع المستأجر
+    if (tenantId) {
+      const tenantSpecific = this.getTenantSpecificDirectives(tenantId, environment);
+      for (const [directive, values] of Object.entries(tenantSpecific)) {
+        if (baseDirectives[directive]) {
+          baseDirectives[directive] = [...new Set([...baseDirectives[directive], ...values])];
+        } else {
+          baseDirectives[directive] = values;
+        }
+      }
+    }
+
+    return baseDirectives;
+  }
+
+  private getTenantSpecificDirectives(tenantId: string, environment: string): Record<string, string[]> {
+    const tenantDirectives: Record<string, string[]> = {};
+
+    // التحقق من نوع المستأجر للسماح بمصادر محددة
+    if (this.isPaymentFocusedTenant(tenantId)) {
+      tenantDirectives.scriptSrc = ['https://js.stripe.com', 'https://checkout.razorpay.com'];
+      tenantDirectives.frameSrc = ['https://js.stripe.com', 'https://checkout.razorpay.com'];
+      tenantDirectives.connectSrc = ['https://api.stripe.com', 'https://api.razorpay.com'];
+    }
+
+    if (this.isSocialCommerceTenant(tenantId)) {
+      tenantDirectives.scriptSrc = ['https://connect.facebook.net', 'https://platform.twitter.com'];
+      tenantDirectives.frameSrc = ['https://www.facebook.com', 'https://platform.twitter.com'];
+      tenantDirectives.connectSrc = ['https://graph.facebook.com', 'https://api.twitter.com'];
+      tenantDirectives.imgSrc = ['https://*.fbcdn.net', 'https://pbs.twimg.com'];
+    }
+
+    return tenantDirectives;
+  }
+
+  private isPaymentFocusedTenant(tenantId: string): boolean {
+    // هنا يمكن وضع منطق للتحقق من نوع المستأجر
+    // للتبسيط، نستخدم قائمة بيضاء للمستأجرين
+    const paymentTenants = ['payment-tenant-1', 'enterprise-store'];
+    return paymentTenants.includes(tenantId);
+  }
+
+  private isSocialCommerceTenant(tenantId: string): boolean {
+    const socialTenants = ['social-store-1', 'influencer-shop'];
+    return socialTenants.includes(tenantId);
   }
 
   /**
-   * 🛡️ S8: Generate CSP header value from directives
-   */
-  generateCSPHeader(directives: any): string {
-    const headerParts = [];
-    for (const [directive, values] of Object.entries(directives)) {
-      if (directive === 'reportOnly' || directive === 'reportUri') continue;
-      if (Array.isArray(values)) {
-        headerParts.push(`${directive} ${values.join(' ')}`);
-      }
-    }
-    if (directives.reportUri) headerParts.push(`report-uri ${directives.reportUri}`);
-    return headerParts.join('; ');
+  * 🛡️ S8: توليد رأس CSP من التوجيهات
+  */
+  generateCSPHeader(directives: Record<string, string[]>): string {
+    return Object.entries(directives)
+      .map(([directive, values]) => {
+        if (directive === 'reportUri' && values.length > 0) {
+          return `report-uri ${values.join(' ')}`;
+        }
+        return `${directive} ${values.join(' ')}`;
+      })
+      .join('; ');
   }
 
   /**
-   * 🛡️ S8: Violation reporting
-   */
-  async processViolationReport(report: any, tenantId?: string): Promise<void> {
-    this.logger.warn('CSP Violation Detected', { tenantId, report });
-    // Pattern analysis logic preserved in audit service
-  }
+  * 🛡️ S8: معالجة تقارير انتهاكات CSP
+  */
+  async processViolationReport(report: any, tenantId?: string, requestId?: string): Promise<void> {
+    this.logger.warn('CSP Violation Detected', {
+      tenantId,
+      requestId,
+      blockedUri: report['blocked-uri'],
+      violatedDirective: report['violated-directive'],
+      documentUri: report['document-uri']
+    });
 
-  private extractDomain(url: string): string | null {
-    try {
-      if (!url || url === 'about:blank') return null;
-      const match = url.match(/^(?:https?:)?(?:\/\/)?([^\/]+)/i);
-      return match ? match[1].toLowerCase() : null;
-    } catch { return null; }
-  }
-
-  getAdminCSP(environment: string = process.env.NODE_ENV || 'development'): string {
-    const adminDirectives = {
-      ...this.getCSPDirectives(undefined, environment),
-      scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
-      connectSrc: ["'self'", 'https://api.apex-platform.com'],
-    };
-    return this.generateCSPHeader(adminDirectives);
-  }
-
-  getStorefrontCSP(tenantId?: string, environment: string = process.env.NODE_ENV || 'development'): string {
-    const storefrontDirectives = {
-      ...this.getCSPDirectives(tenantId, environment),
-      scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
-      connectSrc: ["'self'", 'https://api.stripe.com'],
-    };
-    return this.generateCSPHeader(storefrontDirectives);
+    // هنا يمكن إضافة منطق لتحليل النمط واتخاذ إجراءات
+    if (tenantId && requestId) {
+      // تسجيل الحدث في نظام التدقيق
+      // ... منطق التسجيل
+    }
   }
 }

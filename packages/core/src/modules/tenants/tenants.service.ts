@@ -1,7 +1,9 @@
 import { Injectable, InternalServerErrorException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { TenantContextService } from '../../common/security/tenant-context/tenant-context.service';
 import { EncryptedFieldService } from '../../common/security/encryption/encrypted-field.service';
+import { CreateTenantDto } from './dto/create-tenant.dto';
 import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcryptjs';
 
@@ -18,14 +20,14 @@ export class TenantsService {
         private readonly encryptionService: EncryptedFieldService
     ) { }
 
-    async createTenantWithStore(data: any) {
+    async createTenantWithStore(data: CreateTenantDto) {
         // S3: Validate inputs
         await this.validateTenantCreation(data);
 
         // S7: Hash password
         const hashedPassword = await bcrypt.hash(data.password, 12);
 
-        return this.prisma.$transaction(async (tx: any) => {
+        return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             // 1. Create tenant record
             const tenant = await tx.tenant.create({
                 data: {
@@ -79,7 +81,7 @@ export class TenantsService {
         });
     }
 
-    private async validateTenantCreation(data: any) {
+    private async validateTenantCreation(data: CreateTenantDto) {
         if (this.RESERVED_SUBDOMAINS.includes(data.subdomain.toLowerCase())) {
             throw new BadRequestException(`Subdomain "${data.subdomain}" is reserved`);
         }
@@ -95,13 +97,13 @@ export class TenantsService {
         }
     }
 
-    private async createTenantSchema(tx: any, tenantId: string): Promise<string> {
+    private async createTenantSchema(tx: Prisma.TransactionClient, tenantId: string): Promise<string> {
         const schemaName = `tenant_${tenantId.replace(/-/g, '_')}`;
         await tx.$executeRawUnsafe(`CREATE SCHEMA IF NOT EXISTS "${schemaName}";`);
         return schemaName;
     }
 
-    private async initializeTenantDatabase(tx: any, schemaName: string): Promise<void> {
+    private async initializeTenantDatabase(tx: Prisma.TransactionClient, schemaName: string): Promise<void> {
         const createTablesSQL = `
       CREATE TABLE IF NOT EXISTS "${schemaName}"."products" (
         id SERIAL PRIMARY KEY,

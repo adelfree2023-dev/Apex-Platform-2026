@@ -1,4 +1,5 @@
 import { Injectable, Logger, ForbiddenException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { TenantContextService } from '../../security/tenant-context/tenant-context.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AnomalyDetectionService } from './anomaly-detection.service';
@@ -14,12 +15,7 @@ export class RateLimiterService {
         requestsPerSecond: number;
         burstFactor: number;
         circuitBreakerThreshold: number
-    }> = {
-            'FREE': { requestsPerSecond: 10, burstFactor: 1.5, circuitBreakerThreshold: 100 },
-            'PRO': { requestsPerSecond: 50, burstFactor: 2, circuitBreakerThreshold: 500 },
-            'ENTERPRISE': { requestsPerSecond: 200, burstFactor: 3, circuitBreakerThreshold: 2000 },
-            'SUPER_ADMIN': { requestsPerSecond: 1000, burstFactor: 5, circuitBreakerThreshold: 10000 },
-        };
+    }>;
 
     private readonly TOKEN_BUCKETS: Map<string, {
         tokens: number;
@@ -29,10 +25,34 @@ export class RateLimiterService {
     }> = new Map();
 
     constructor(
+        private readonly configService: ConfigService,
         private readonly tenantContext: TenantContextService,
         private readonly prisma: PrismaService,
         private readonly anomalyService: AnomalyDetectionService,
     ) {
+        // ✅ STAGE 2: Load from environment or use secure defaults
+        this.PLAN_LIMITS = {
+            'FREE': {
+                requestsPerSecond: this.configService.get<number>('RATE_LIMIT_FREE_RPS', 10),
+                burstFactor: this.configService.get<number>('RATE_LIMIT_FREE_BURST', 1.5),
+                circuitBreakerThreshold: this.configService.get<number>('RATE_LIMIT_FREE_CIRCUIT', 100),
+            },
+            'PRO': {
+                requestsPerSecond: this.configService.get<number>('RATE_LIMIT_PRO_RPS', 50),
+                burstFactor: this.configService.get<number>('RATE_LIMIT_PRO_BURST', 2),
+                circuitBreakerThreshold: this.configService.get<number>('RATE_LIMIT_PRO_CIRCUIT', 500),
+            },
+            'ENTERPRISE': {
+                requestsPerSecond: this.configService.get<number>('RATE_LIMIT_ENTERPRISE_RPS', 200),
+                burstFactor: this.configService.get<number>('RATE_LIMIT_ENTERPRISE_BURST', 3),
+                circuitBreakerThreshold: this.configService.get<number>('RATE_LIMIT_ENTERPRISE_CIRCUIT', 2000),
+            },
+            'SUPER_ADMIN': {
+                requestsPerSecond: this.configService.get<number>('RATE_LIMIT_ADMIN_RPS', 1000),
+                burstFactor: this.configService.get<number>('RATE_LIMIT_ADMIN_BURST', 5),
+                circuitBreakerThreshold: this.configService.get<number>('RATE_LIMIT_ADMIN_CIRCUIT', 10000),
+            },
+        };
         setInterval(() => this.cleanupBuckets(), 3600000);
     }
 

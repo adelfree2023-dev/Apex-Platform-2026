@@ -1,5 +1,6 @@
 import { Injectable, Scope, Logger, Optional, Inject, OnModuleInit, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Request } from 'express';
 import { AuditService } from '../monitoring/audit/audit.service';
 import { INestApplication } from '@nestjs/common';
 
@@ -57,7 +58,7 @@ export class SecurityContext implements OnModuleInit {
     /**
     * 🛡️ S1 Protocol: Static Database Connection Verification
     */
-    static async verifyDatabaseConnection(prisma: any, app: INestApplication): Promise<void> {
+    static async verifyDatabaseConnection(prisma: { $queryRaw: any; $connect: any }, app: INestApplication): Promise<void> {
         try {
             await prisma.$queryRaw`SELECT 1`;
             this.staticLogger.log('✅ Database connection verified');
@@ -78,7 +79,7 @@ export class SecurityContext implements OnModuleInit {
     /**
     * Log a security event with automatic AuditService fallback
     */
-    logSecurityEvent(event: string, details: any): void {
+    logSecurityEvent(event: string, details: Record<string, unknown>): void {
         try {
             if (this.auditService) {
                 this.auditService.logSecurityEvent(event, details);
@@ -96,7 +97,7 @@ export class SecurityContext implements OnModuleInit {
     /**
     * Log critical security events
     */
-    logCriticalSecurityEvent(event: string, details: any): void {
+    logCriticalSecurityEvent(event: string, details: Record<string, unknown>): void {
         try {
             if (this.auditService) {
                 this.auditService.logSecurityEvent(`CRITICAL_${event}`, details);
@@ -112,11 +113,12 @@ export class SecurityContext implements OnModuleInit {
     /**
     * Capture and log an exception securely
     */
-    captureException(error: any): void {
+    captureException(error: Error | unknown): void {
+        const err = error as Error;
         const errorDetails = {
-            message: error.message,
-            name: error.name,
-            stack: error.stack ? error.stack.substring(0, 500) : 'No stack trace',
+            message: err?.message || 'Unknown error',
+            name: err?.name || 'Error',
+            stack: err?.stack ? err.stack.substring(0, 500) : 'No stack trace',
             timestamp: new Date().toISOString()
         };
 
@@ -126,7 +128,7 @@ export class SecurityContext implements OnModuleInit {
     /**
     * 🛡️ S5: Safe method to get IP address from request
     */
-    getIpFromRequest(request: any): string {
+    getIpFromRequest(request: Request | any): string {
         try {
             let ip = request.ip || request.socket.remoteAddress || 'unknown';
             if (request.headers['x-forwarded-for']) {

@@ -30,7 +30,8 @@ export class SanitizerService {
 
     for (const key in obj) {
       if (typeof obj[key] === 'string') {
-        (obj[key] as any) = this.sanitize(obj[key] as string);
+        // ✅ STAGE 3: Proper type assertion without 'any'
+        (obj as Record<string, unknown>)[key] = this.sanitize(obj[key] as string);
       } else if (typeof obj[key] === 'object') {
         this.sanitizeObject(obj[key]);
       }

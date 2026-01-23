@@ -8,6 +8,8 @@ import { RateLimiterService } from '../common/access-control/services/rate-limit
 import { AuditService } from '../common/monitoring/audit/audit.service';
 import { SecurityContext } from '../common/security/security.context';
 import { InputValidatorService } from '../common/security/validation/input-validator.service';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import { z } from 'zod';
 import { generateSecureHash, verifySecureHash } from '../common/utils/crypto.utils';
 
@@ -29,7 +31,7 @@ export class AuthService {
         private readonly inputValidator: InputValidatorService,
     ) { }
 
-    async login(data: any, tenantId: string, ip: string) {
+    async login(data: LoginDto, tenantId: string, ip: string) {
         const validated = await this.inputValidator.secureValidate<z.infer<typeof LoginSchema>>(LoginSchema, data, 'auth.login');
         const rateLimited = await this.rateLimiter.consume(`auth:${validated.email}:${tenantId}`);
         if (!rateLimited) throw new ForbiddenException('طلبات كثيرة جداً');
@@ -59,7 +61,7 @@ export class AuthService {
         };
     }
 
-    async register(data: any, tenantId: string, ip: string) {
+    async register(data: RegisterDto, tenantId: string, ip: string) {
         const validated = await this.inputValidator.secureValidate<z.infer<typeof RegisterSchema>>(RegisterSchema, data, 'auth.register');
         const schema = await this.tenantContext.getTenantSchema(tenantId);
         const passwordHash = await generateSecureHash(validated.password);

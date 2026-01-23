@@ -22,6 +22,11 @@ model Tenant {
   updatedAt   DateTime  @updatedAt
   
   users      User[]
+  products   Product[]
+  orders     Order[]
+  payments   Payment[]
+  customers  Customer[]
+  refunds    Refund[]
   
   @@map("tenants")
 }

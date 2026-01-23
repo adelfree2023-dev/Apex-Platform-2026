@@ -30,7 +30,7 @@ export class AuthService {
     ) { }
 
     async login(data: any, tenantId: string, ip: string) {
-        const validated = await this.inputValidator.secureValidate(LoginSchema, data, 'auth.login');
+        const validated = await this.inputValidator.secureValidate<z.infer<typeof LoginSchema>>(LoginSchema, data, 'auth.login');
         const rateLimited = await this.rateLimiter.consume(`auth:${validated.email}:${tenantId}`);
         if (!rateLimited) throw new ForbiddenException('طلبات كثيرة جداً');
 
@@ -60,7 +60,7 @@ export class AuthService {
     }
 
     async register(data: any, tenantId: string, ip: string) {
-        const validated = await this.inputValidator.secureValidate(RegisterSchema, data, 'auth.register');
+        const validated = await this.inputValidator.secureValidate<z.infer<typeof RegisterSchema>>(RegisterSchema, data, 'auth.register');
         const schema = await this.tenantContext.getTenantSchema(tenantId);
         const passwordHash = await generateSecureHash(validated.password);
         try {

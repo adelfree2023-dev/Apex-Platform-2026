@@ -60,12 +60,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   /**
   * 🛡️ S3: التحقق الآمن من الاستعلامات الخام
   */
-  async $queryRawUnsafe<T = any>(query: string, ...values: any[]): Promise<T> {
+  $queryRawUnsafe<T = any>(query: string, ...values: any[]): Prisma.PrismaPromise<T> {
     this.validateRawQuery(query);
     return super.$queryRawUnsafe(query, ...values);
   }
 
-  async $executeRawUnsafe(query: string, ...values: any[]): Promise<number> {
+  $executeRawUnsafe(query: string, ...values: any[]): Prisma.PrismaPromise<number> {
     this.validateRawQuery(query);
     return super.$executeRawUnsafe(query, ...values);
   }

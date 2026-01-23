@@ -2,7 +2,7 @@ import { getTenantBySubdomain } from '@/lib/api/tenants';
 import { TenantProvider } from '@/providers/tenant-provider';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
-import './globals.css';
+import '../globals.css';
 
 export async function generateMetadata({ params }: { params: { tenantSubdomain: string } }) {
     const tenant = await getTenantBySubdomain(params.tenantSubdomain);

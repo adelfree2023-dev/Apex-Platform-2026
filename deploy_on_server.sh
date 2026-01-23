@@ -21,6 +21,8 @@ npx prisma migrate dev --name storefront-final
 echo "📦 Installing Storefront Dependencies..."
 cd ../storefront
 npm install
+npm install sonner use-debounce
+
 
 echo "🏗️ Building Storefront..."
 npm run build

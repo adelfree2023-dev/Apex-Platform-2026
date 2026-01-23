@@ -61,7 +61,7 @@ model Product {
   images      Json?     @db.Json
   category    String    @db.VarChar(100)
   subcategory String?   @db.VarChar(100)
-  tags        String[]  @db.Text[]
+  tags        String[]
   sku         String    @unique @db.VarChar(100)
   stock       Int       @default(0)
   rating      Float     @default(0)

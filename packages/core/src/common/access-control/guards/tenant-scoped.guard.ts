@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException, Inject, Optional } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException, Inject, Optional, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { TenantContextService } from '../../../common/security/tenant-context/tenant-context.service';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -18,7 +18,7 @@ export class TenantScopedGuard implements CanActivate {
     private readonly prisma: PrismaService,
     @Optional() private readonly reflector?: Reflector,
     @Optional() private readonly securityContext?: SecurityContext,
-  ) {}
+  ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // 1. التحقق من نقاط النهاية العامة (مع معالجة السلامة للـ Reflector)
@@ -42,7 +42,7 @@ export class TenantScopedGuard implements CanActivate {
     // 2. التحقق من سياق المستأجر
     const request = context.switchToHttp().getRequest();
     const subdomain = this.extractSubdomain(request);
-    
+
     if (!subdomain || ['www', 'admin', 'system'].includes(subdomain)) {
       return true; // السماح بالوصول إلى النطاق الرئيسي
     }
@@ -60,8 +60,8 @@ export class TenantScopedGuard implements CanActivate {
       }
 
       if (tenant.status !== 'active') {
-        this.logSecurityEvent('INACTIVE_TENANT_ACCESS_ATTEMPT', { 
-          tenantId: tenant.id, 
+        this.logSecurityEvent('INACTIVE_TENANT_ACCESS_ATTEMPT', {
+          tenantId: tenant.id,
           status: tenant.status,
           subdomain
         });
@@ -70,16 +70,16 @@ export class TenantScopedGuard implements CanActivate {
 
       // 4. تعيين سياق المستأجر بشكل آمن
       this.tenantContext.setTenantContext(tenant.id, tenant.schemaName, tenant.subdomain);
-      
+
       // 5. تهيئة مخطط قاعدة البيانات للمستأجر
       await this.prisma.setTenantSchema(tenant.schemaName);
-      
+
       // 6. التحقق من استعداد مخطط المستأجر
       const isReady = await this.prisma.isSchemaReady(tenant.schemaName);
       if (!isReady) {
-        this.logSecurityEvent('TENANT_SCHEMA_NOT_READY', { 
-          tenantId: tenant.id, 
-          schema: tenant.schemaName 
+        this.logSecurityEvent('TENANT_SCHEMA_NOT_READY', {
+          tenantId: tenant.id,
+          schema: tenant.schemaName
         });
         throw new ForbiddenException('Tenant schema is not fully initialized');
       }
@@ -100,19 +100,19 @@ export class TenantScopedGuard implements CanActivate {
   private extractSubdomain(request: any): string | null {
     const host = request.headers['host'] || request.hostname;
     if (!host) return null;
-    
+
     const hostParts = host.split(':')[0].split('.');
     if (hostParts.length < 3) return null; // لا يوجد نطاق فرعي
-    
+
     // استخراج النطاق الفرعي (الجزء الأول من النطاق)
     const subdomain = hostParts[0].toLowerCase();
-    
+
     // التحقق من صحة النطاق الفرعي
     const reservedSubdomains = ['www', 'api', 'admin', 'system', 'localhost', 'test', 'dev'];
     if (reservedSubdomains.includes(subdomain)) {
       return null;
     }
-    
+
     return subdomain;
   }
 

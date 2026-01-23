@@ -56,7 +56,7 @@ export class EncryptedFieldService implements OnModuleInit {
   private deriveTenantKey(tenantId: string, version: string): Buffer {
     const salt = crypto.createHash('sha256').update(tenantId).digest();
     const info = Buffer.from(`tenant-key-${version}`, 'utf8');
-    return crypto.hkdfSync('sha256', this.masterKey, salt, info, this.KEY_LENGTH);
+    return Buffer.from(crypto.hkdfSync('sha256', this.masterKey, salt, info, this.KEY_LENGTH));
   }
 
   encrypt(tenantId: string, text: string, version: string = 'v1'): string {
@@ -65,11 +65,11 @@ export class EncryptedFieldService implements OnModuleInit {
       const key = this.deriveTenantKey(tenantId, version);
       const iv = crypto.randomBytes(this.IV_LENGTH);
       const cipher = crypto.createCipheriv(this.algorithm, key, iv);
-      
+
       let encrypted = cipher.update(text, 'utf8', 'hex');
       encrypted += cipher.final('hex');
       const authTag = cipher.getAuthTag().toString('hex');
-      
+
       return `${version}:${iv.toString('hex')}:${authTag}:${encrypted}`;
     } catch (error) {
       this.logger.error(`[S7] Encryption Failure: ${error.message}`);
@@ -84,10 +84,10 @@ export class EncryptedFieldService implements OnModuleInit {
       const key = this.deriveTenantKey(tenantId, version);
       const decipher = crypto.createDecipheriv(this.algorithm, key, Buffer.from(ivHex, 'hex'));
       decipher.setAuthTag(Buffer.from(authTagHex, 'hex'));
-      
+
       let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
-      
+
       return decrypted;
     } catch (error) {
       this.logger.warn(`[S7] Decryption failure`, {

@@ -19,19 +19,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
   constructor(
     @Inject(SecurityContext) private readonly securityContext: SecurityContext,
     @Optional() private readonly auditService?: AuditService,
-  ) {}
+  ) { }
 
   catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-    const status = exception instanceof HttpException 
-      ? exception.getStatus() 
+    const status = exception instanceof HttpException
+      ? exception.getStatus()
       : HttpStatus.INTERNAL_SERVER_ERROR;
-    
+
     const requestId = (request as any).requestId || crypto.randomUUID();
     const isProduction = process.env.NODE_ENV === 'production';
-    const safeError = safeRedactError(exception, isProduction);
+    const safeError = safeRedactError(exception);
     const ip = this.getClientIp(request);
 
     // 🛡️ S5: تسجيل آمن للاستثناءات
@@ -85,7 +85,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 
   private getClientIp(request: Request): string {
-    return (request.headers['x-forwarded-for'] || request.socket.remoteAddress || 'unknown')
+    const forwarded = request.headers['x-forwarded-for'];
+    const ip = typeof forwarded === 'string' ? forwarded : (Array.isArray(forwarded) ? forwarded[0] : (request.socket.remoteAddress || 'unknown'));
+    return ip
       .split(',')[0]
       .trim()
       .replace(/[^a-z0-9\.:]/gi, '')

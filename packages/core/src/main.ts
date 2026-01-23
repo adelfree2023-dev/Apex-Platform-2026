@@ -88,13 +88,13 @@ async function bootstrap() {
     windowMs: 15 * 60 * 1000,
     max: (req, res) => {
       const tenantId = (req as any).tenantId || 'FREE';
-      const limits = {
+      const limits: Record<string, number> = {
         'FREE': 100,
         'PRO': 500,
         'ENTERPRISE': 2000,
         'SUPER_ADMIN': 10000
       };
-      return limits[tenantId] || limits['FREE'];
+      return limits[tenantId as keyof typeof limits] || limits['FREE'];
     },
     message: 'Too many requests, please try again later.',
     standardHeaders: true,
@@ -117,10 +117,10 @@ async function bootstrap() {
   const port = configService.get('PORT') || 3001;
   await app.listen(port);
   logger.log(`🚀 Apex Core is running on port ${port} with ENHANCED CSP SECURITY`);
-  
+
   // ✅ S8: التحقق من صحة رؤوس الأمان
   const server = app.getHttpServer();
-  server.on('response', (res) => {
+  server.on('response', (res: any) => {
     const headers = res.getHeaders();
     if (!headers['content-security-policy']) {
       logger.warn('🚨 تحذير أمني: لم يتم تعيين رؤوس CSP بشكل صحيح');

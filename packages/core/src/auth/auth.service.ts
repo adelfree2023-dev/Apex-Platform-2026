@@ -36,15 +36,15 @@ export class AuthService {
 
         try {
             const schema = await this.tenantContext.getTenantSchema(tenantId);
-            const user = await this.prisma.$queryRawUnsafe<any[]>(`
+            const users = await this.prisma.$queryRawUnsafe<any[]>(`
                 SELECT id, email, password_hash, role FROM "${schema}"."vendure_user" 
                 WHERE email = $1 AND status = 'active' LIMIT 1
             `, validated.email.toLowerCase());
 
-            if (user.length === 0 || !(await verifySecureHash(validated.password, user[0].password_hash))) {
+            if (!users || users.length === 0 || !(await verifySecureHash(validated.password, users[0].password_hash))) {
                 throw new UnauthorizedException('بيانات الاعتماد غير صالحة');
             }
-            return this.generateTokens(user[0].id, tenantId, user[0].role);
+            return this.generateTokens(users[0].id, tenantId, users[0].role);
         } catch (error) {
             if (error instanceof UnauthorizedException || error instanceof ForbiddenException) throw error;
             throw new InternalServerErrorException('فشل عملية تسجيل الدخول');

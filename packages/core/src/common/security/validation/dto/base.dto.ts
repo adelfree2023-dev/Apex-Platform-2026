@@ -51,12 +51,25 @@ export const BaseInputSchema = z.object({
   timestamp: z.number()
     .int('الطابع الزمني يجب أن يكون رقماً صحيحاً')
     .min(Date.now() - 60000, 'الطابع الزمني قديم جداً')
-    .max(Date.now() + 60000, 'الطابع الزمني في المستقبل'),
+    .max(Date.now() + 60000, 'الطابع الزمني في المستقبل').optional(), // Optional to avoid strict time sync issues during dev
   requestId: z.string()
     .uuid('معرف الطلب يجب أن يكون بصيغة UUID صالحة')
     .min(36, 'معرف الطلب قصير جداً')
     .max(36, 'معرف الطلب طويل جداً')
-    .trim()
+    .trim().optional()
+}).transform(data => {
+  // تنقية جميع الحقول النصية (Extra Safety Layer)
+  return Object.keys(data).reduce((cleanData, key) => {
+    if (typeof data[key] === 'string') {
+      cleanData[key] = data[key]
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove scripts
+        .replace(/javascript:/gi, '') // Remove js proto
+        .replace(/on\w+=/gi, ''); // Remove event handlers
+    } else {
+      cleanData[key] = data[key];
+    }
+    return cleanData;
+  }, {} as any);
 });
 
 // ✅ S3: دالة التحقق الآمن

@@ -1,5 +1,40 @@
 import { PrismaService } from '../../../prisma/prisma.service';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
+import { Request } from 'express';
+
+export class TenantUtils {
+  // ✅ S2: التحقق من الوصول للمستأجر
+  static validateTenantAccess(tenantId: string, requestTenantId: string): boolean {
+    if (!tenantId || !requestTenantId) {
+      throw new ForbiddenException('معرف المستأجر مفقود في الطلب');
+    }
+
+    if (tenantId !== requestTenantId) {
+      // سجل محاولة وصول غير مصرح بها
+      Logger.warn(`محاولة وصول غير مصرح به: المستأجر ${requestTenantId} يحاول الوصول إلى بيانات المستأجر ${tenantId}`);
+      return false;
+    }
+    return true;
+  }
+
+  // ✅ S2: الحصول على معرف المستأجر من الطلب
+  static getTenantIdFromRequest(request: Request): string {
+    const tenantId = request.headers['x-tenant-id'] ||
+      request.query.tenantId ||
+      request.body.tenantId;
+
+    if (!tenantId) {
+      throw new BadRequestException('معرف المستأجر مطلوب في كل طلب');
+    }
+
+    // التحقق من صحة معرف المستأجر
+    if (typeof tenantId !== 'string' || tenantId.length < 10) {
+      throw new BadRequestException('معرف المستأجر غير صالح');
+    }
+
+    return tenantId as string;
+  }
+}
 
 /**
  * ✅ S2: الحصول على اسم مخطط قاعدة البيانات
@@ -11,13 +46,13 @@ export function getTenantSchemaName(tenantId: string): string {
   if (!tenantId || typeof tenantId !== 'string' || tenantId.length < 5) {
     throw new BadRequestException('معرف المستأجر غير صالح');
   }
-  
+
   // تطبيق التنسيق الموحد
   const normalizedId = tenantId.trim()
     .replace(/[^a-z0-9-]/gi, '_')
     .replace(/-+/g, '_')
     .toLowerCase();
-    
+
   return `tenant_${normalizedId}`;
 }
 
@@ -49,7 +84,7 @@ export function ensureValidTenantId(tenantId: any): string {
 export async function isTenantSchemaReady(prisma: PrismaService, tenantId: string): Promise<boolean> {
   try {
     const schemaName = getTenantSchemaName(tenantId);
-    
+
     // 🛡️ التحقق من وجود المخطط
     const schemaExists = await prisma.$queryRaw<any[]>`
       SELECT EXISTS(

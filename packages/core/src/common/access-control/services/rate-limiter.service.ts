@@ -48,70 +48,131 @@ export class RateLimiterService {
                 circuitBreakerThreshold: this.configService.get<number>('RATE_LIMIT_ENTERPRISE_CIRCUIT', 2000),
             },
             'SUPER_ADMIN': {
-                requestsPerSecond: this.configService.get<number>('RATE_LIMIT_ADMIN_RPS', 1000),
-                burstFactor: this.configService.get<number>('RATE_LIMIT_ADMIN_BURST', 5),
-                circuitBreakerThreshold: this.configService.get<number>('RATE_LIMIT_ADMIN_CIRCUIT', 10000),
-            },
+                requestsPerSecond: this.configService.get<number>('RATE_LIMIT_SUPER_ADMIN_RPS', 500),
+                burstFactor: this.configService.get<number>('RATE_LIMIT_SUPER_ADMIN_BURST', 5),
+                circuitBreakerThreshold: this.configService.get<number>('RATE_LIMIT_SUPER_ADMIN_CIRCUIT', 5000),
+            }
         };
-        setInterval(() => this.cleanupBuckets(), 3600000);
     }
 
-    async consume(tenantId: string, limit?: number, burst?: number): Promise<any> {
-        // ✅ S6: Integrated Behavioral Tracking
-        if (this.anomalyService.isSuspended(tenantId)) {
-            return { allowed: false, remaining: 0, reset: 3600 };
+    // ✅ S6: Sensitive Routes Configuration
+    private readonly sensitiveRoutes: string[] = [
+        '/auth/login',
+        '/auth/register',
+        '/payments/process',
+        '/admin/*'
+    ];
+
+    /**
+     * ✅ S6: Get Rate Limit Config based on route sensitivity
+     */
+    getRateLimitConfig(route: string): any {
+        if (this.sensitiveRoutes.some(sensitiveRoute =>
+            route.startsWith(sensitiveRoute.replace('/*', '')))) {
+            return {
+                windowMs: 10 * 60 * 1000, // 10 minutes
+                max: 5, // 5 attempts strict limit
+                message: 'تم تجاوز حد المحاولات. يرجى المحاولة لاحقًا.'
+            };
         }
 
-        const now = Date.now();
-        let bucket = this.TOKEN_BUCKETS.get(tenantId);
+        // Default for other routes
+        return {
+            windowMs: 15 * 60 * 1000, // 15 minutes
+            max: 100,
+            message: 'تم تجاوز حد الطلبات. يرجى المحاولة لاحقًا.'
+        };
+    }
 
-        try {
-            const tenant = await this.prisma.tenant.findUnique({
-                where: { id: tenantId },
-                select: { plan: true, status: true },
-            });
+    /**
+     * ✅ S6: Detect Attack Patterns (Brute Force / DDoS)
+     */
+    detectAttackPattern(requests: any[]): boolean {
+        // Detect Brute Force on Login
+        const loginAttempts = requests.filter(r =>
+            r.route.startsWith('/auth/login') &&
+            r.timestamp > Date.now() - 60000 // Last minute
+        );
 
-            if (!tenant || tenant.status === 'SUSPENDED') {
-                return { allowed: false, remaining: 0, reset: 60 };
-            }
-
-            const plan = tenant.plan?.toUpperCase() || 'FREE';
-            const planConfig = this.PLAN_LIMITS[plan] || this.PLAN_LIMITS['FREE'];
-            const reqLimit = limit || planConfig.requestsPerSecond;
-            const burstLimit = burst || (reqLimit * planConfig.burstFactor);
-
-            if (!bucket) {
-                bucket = { tokens: burstLimit, lastRefill: now, plan: plan, requestsSinceRefill: 0 };
-                this.TOKEN_BUCKETS.set(tenantId, bucket);
-            } else {
-                const elapsedSeconds = (now - bucket.lastRefill) / 1000;
-                bucket.tokens = Math.min(bucket.tokens + (elapsedSeconds * reqLimit), burstLimit);
-                bucket.lastRefill = now;
-                bucket.requestsSinceRefill++;
-            }
-
-            if (bucket.requestsSinceRefill > planConfig.circuitBreakerThreshold) {
-                // ✅ S6: Signal anomaly on circuit breaker trip
-                this.anomalyService.inspect(tenantId, true);
-                return { allowed: false, remaining: 0, reset: 300 };
-            }
-
-            if (bucket.tokens >= 1) {
-                bucket.tokens -= 1;
-                return { allowed: true, remaining: Math.floor(bucket.tokens), reset: 0 };
-            }
-
-            return { allowed: false, remaining: 0, reset: 1 };
-        } catch (error) {
-            this.logger.error(`Rate limiter error: ${error.message}`);
-            return { allowed: true, remaining: 5, reset: 0 };
+        if (loginAttempts.length > 10) {
+            this.logger.warn(`Potential Brute Force detected from IP: ${requests[0]?.ip}`);
+            return true;
         }
+
+        // Detect High Volume from Single IP
+        const uniqueIps = new Set(requests.map(r => r.ip));
+        if (requests.length > 50 && uniqueIps.size === 1) {
+            this.logger.warn(`Potential DDoS detected from IP: ${[...uniqueIps][0]}`);
+            return true;
+        }
+
+        return false;
+    }
+}
+requestsPerSecond: this.configService.get<number>('RATE_LIMIT_ADMIN_RPS', 1000),
+    burstFactor: this.configService.get<number>('RATE_LIMIT_ADMIN_BURST', 5),
+        circuitBreakerThreshold: this.configService.get<number>('RATE_LIMIT_ADMIN_CIRCUIT', 10000),
+            },
+        };
+setInterval(() => this.cleanupBuckets(), 3600000);
+    }
+
+    async consume(tenantId: string, limit ?: number, burst ?: number): Promise < any > {
+    // ✅ S6: Integrated Behavioral Tracking
+    if(this.anomalyService.isSuspended(tenantId)) {
+    return { allowed: false, remaining: 0, reset: 3600 };
+}
+
+const now = Date.now();
+let bucket = this.TOKEN_BUCKETS.get(tenantId);
+
+try {
+    const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { plan: true, status: true },
+    });
+
+    if (!tenant || tenant.status === 'SUSPENDED') {
+        return { allowed: false, remaining: 0, reset: 60 };
+    }
+
+    const plan = tenant.plan?.toUpperCase() || 'FREE';
+    const planConfig = this.PLAN_LIMITS[plan] || this.PLAN_LIMITS['FREE'];
+    const reqLimit = limit || planConfig.requestsPerSecond;
+    const burstLimit = burst || (reqLimit * planConfig.burstFactor);
+
+    if (!bucket) {
+        bucket = { tokens: burstLimit, lastRefill: now, plan: plan, requestsSinceRefill: 0 };
+        this.TOKEN_BUCKETS.set(tenantId, bucket);
+    } else {
+        const elapsedSeconds = (now - bucket.lastRefill) / 1000;
+        bucket.tokens = Math.min(bucket.tokens + (elapsedSeconds * reqLimit), burstLimit);
+        bucket.lastRefill = now;
+        bucket.requestsSinceRefill++;
+    }
+
+    if (bucket.requestsSinceRefill > planConfig.circuitBreakerThreshold) {
+        // ✅ S6: Signal anomaly on circuit breaker trip
+        this.anomalyService.inspect(tenantId, true);
+        return { allowed: false, remaining: 0, reset: 300 };
+    }
+
+    if (bucket.tokens >= 1) {
+        bucket.tokens -= 1;
+        return { allowed: true, remaining: Math.floor(bucket.tokens), reset: 0 };
+    }
+
+    return { allowed: false, remaining: 0, reset: 1 };
+} catch (error) {
+    this.logger.error(`Rate limiter error: ${error.message}`);
+    return { allowed: true, remaining: 5, reset: 0 };
+}
     }
 
     private cleanupBuckets(): void {
-        const now = Date.now();
-        for (const [tenantId, bucket] of this.TOKEN_BUCKETS.entries()) {
-            if (now - bucket.lastRefill > 86400000) this.TOKEN_BUCKETS.delete(tenantId);
-        }
+    const now = Date.now();
+    for(const [tenantId, bucket] of this.TOKEN_BUCKETS.entries()) {
+    if (now - bucket.lastRefill > 86400000) this.TOKEN_BUCKETS.delete(tenantId);
+}
     }
 }

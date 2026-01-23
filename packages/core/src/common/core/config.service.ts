@@ -58,6 +58,25 @@ export class ConfigService {
       this.logger.warn(`Invalid NODE_ENV value: ${nodeEnv}. Defaulting to 'development'`);
       process.env.NODE_ENV = 'development';
     }
+
+    // ✅ S1 (NEW): Strict Production Checks
+    if (this.isProduction()) {
+      this.validateProductionSecurity();
+    }
+  }
+
+  private validateProductionSecurity(): void {
+    const requiredVars = ['DATABASE_URL', 'JWT_SECRET', 'STRIPE_SECRET_KEY'];
+    const missingVars = requiredVars.filter(varName => !process.env[varName]);
+
+    if (missingVars.length > 0) {
+      throw new Error(`الوضع الإنتاجي يتطلب المتغيرات التالية: ${missingVars.join(', ')}`);
+    }
+
+    // التحقق من قوة أسرار JWT
+    if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
+      throw new Error('مفتاح JWT يجب أن يكون 32 حرفاً على الأقل في وضع الإنتاج');
+    }
   }
 
   /**

@@ -17,7 +17,7 @@ export default async function TenantHomePage({
     const searchQuery = searchParams?.q?.toString() || '';
     const category = searchParams?.category?.toString() || '';
 
-    let products = [];
+    let products: any[] = [];
     let totalProducts = 0;
     let error = null;
 

@@ -1,0 +1,322 @@
+
+[1m[34m📅 هيكل المشروع المرئي - 2026-01-23 20:53:01[0m
+[1m==================================================[0m
+[36m🏗️ المشروع:[0m Apex-Platform-2026
+[36m📁 إجمالي الملفات:[0m 153
+[36m📁 إجمالي المجلدات:[0m 57
+[36m📦 الحجم الكلي:[0m 1250.74 KB
+[1m==================================================[0m
+
+[35m🎯 رؤية شاملة لهيكل المشروع[0m
+[1m==================================================[0m
+🗺️ خريطة المشروع التفاعلية
+==================================================
+
+├── 📁 
+├── ⚙️ register-store.json ❗ (0.2KB)
+├── 📄 .env.example 📋 (0.6KB)
+├── 📄 .env.prod_stage 📋 (0.4KB)
+├── 📄 .env.server 📋 (0.4KB)
+├── 📄 deploy_on_server.sh 📋 (0.9KB)
+├── 📄 .gitignore ▫️ (0.2KB)
+├── 📚 11.txt ▫️ (124.4KB)
+├── 📚 ENVIRONMENT_DIFFERENCES.txt ▫️ (2.5KB)
+
+├── 📁 automation
+├── 💻 verify-endpoints.js 🔥 (3.8KB)
+├── 📚 README.md 📋 (0.9KB)
+├── 📄 deploy-all.ps1 📋 (2.9KB)
+├── 🧪 run-quick-tests.sh 📋 (3.4KB)
+├── 📄 start-apex.ps1 📋 (2.1KB)
+├── 📄 start-server.sh 📋 (1.1KB)
+
+├── 📁 automation\core-utils
+├── 💻 inspect_db.js 🔥 (2.0KB)
+├── 🧪 isolation_test.js 🔥 (8.9KB)
+├── 💻 seed-verify.js 🔥 (1.3KB)
+├── 💻 verify_isolation.js 🔥 (2.8KB)
+├── 💻 verify_real_isolation.ts 🔥 (2.8KB)
+├── 💻 verify_security_fixes.ts 🔥 (5.6KB)
+
+├── 📁 automation\failure
+├── 🧪 failure-tests.sh 📋 (2.9KB)
+
+├── 📁 automation\load
+├── ⚙️ artillery-config.json ❗ (2.4KB)
+├── 🧪 simple-load-test.sh 📋 (2.4KB)
+
+├── 📁 automation\nuclear
+├── 🧪 nuclear_protocol.spec.ts 🔥 (13.2KB)
+
+├── 📁 automation\security
+├── 🧪 security-tests.sh 📋 (2.4KB)
+
+├── 📁 doc
+├── 💻 unified_verify_45.js 🔥 (2.7KB)
+├── 📚 ASMP.md 📋 (19.2KB)
+├── 📚 codebase_summary.md 📋 (4.3KB)
+├── 📄 core-env-temp ▫️ (0.4KB)
+├── 📚 server_credentials.txt ▫️ (2.0KB)
+
+├── 📁 infra
+├── 🗃️ init-db.sql ⚠️ (0.5KB)
+├── ⚙️ docker-compose.yml ❗ (1.5KB)
+
+├── 📁 packages\core
+├── ⚙️ jest.config.js 🔥 (0.5KB)
+├── ⚙️ nest-cli.json ❗ (0.2KB)
+├── ⚙️ package-lock.json ❗ (526.2KB)
+├── ⚙️ package.json ❗ (2.5KB)
+├── ⚙️ tsconfig.json ❗ (0.8KB)
+├── 📄 .env.production.example 📋 (0.7KB)
+├── 🔒 .env ▫️ (0.8KB)
+├── 📄 .gitignore ▫️ (0.2KB)
+
+├── 📁 packages\core\prisma
+├── 📄 schema.prisma 📋 (5.5KB)
+├── 📄 tenant-schema.prisma 📋 (4.5KB)
+
+├── 📁 packages\core\src
+├── 💻 app.controller.ts 🔥 (8.4KB)
+├── 💻 app.module.ts 🔥 (3.7KB)
+├── 💻 app.service.ts 🔥 (2.9KB)
+├── 💻 main.ts 🔥 (5.8KB)
+├── 📚 file src.md 📋 (76.5KB)
+
+├── 📁 packages\core\src\auth
+├── 💻 auth.controller.ts 🔥 (4.0KB)
+├── 💻 auth.module.ts 🔥 (1.8KB)
+├── 💻 auth.service.ts 🔥 (4.4KB)
+
+├── 📁 packages\core\src\auth\dto
+├── 💻 login.dto.ts 🔥 (0.5KB)
+├── 💻 register.dto.ts 🔥 (0.7KB)
+
+├── 📁 packages\core\src\common
+├── 📚 Spec file common .md 📋 (65.9KB)
+
+├── 📁 packages\core\src\common\access-control\guards
+├── 💻 license.guard.ts 🔥 (3.7KB)
+├── 💻 super-admin.guard.ts 🔥 (0.7KB)
+├── 💻 tenant-scoped.guard.ts 🔥 (5.0KB)
+├── 💻 tenant-throttler.guard.ts 🔥 (10.9KB)
+
+├── 📁 packages\core\src\common\access-control\services
+├── 💻 anomaly-detection.service.ts 🔥 (3.0KB)
+├── 💻 rate-limiter.service.ts 🔥 (6.8KB)
+
+├── 📁 packages\core\src\common\core
+├── ⚙️ config.service.ts 🔥 (3.2KB)
+├── 💻 env-validator.service.ts 🔥 (3.8KB)
+├── 💻 system-health.service.ts 🔥 (1.6KB)
+├── 💻 system-initialization.service.ts 🔥 (10.6KB)
+
+├── 📁 packages\core\src\common\decorators
+├── 💻 public.decorator.ts 🔥 (1.0KB)
+
+├── 📁 packages\core\src\common\filters
+├── 💻 all-exceptions.filter.ts 🔥 (1.8KB)
+
+├── 📁 packages\core\src\common\monitoring\audit
+├── 💻 audit-logger.interceptor.ts 🔥 (2.5KB)
+├── 💻 audit.controller.ts 🔥 (0.5KB)
+├── 💻 audit.module.ts 🔥 (0.6KB)
+├── 💻 audit.service.ts 🔥 (6.5KB)
+
+├── 📁 packages\core\src\common\presentation\filters
+├── 💻 all-exceptions.filter.ts 🔥 (4.1KB)
+
+├── 📁 packages\core\src\common\presentation\interceptors
+├── 💻 defense.interceptor.ts 🔥 (5.8KB)
+├── 💻 tenant-context.interceptor.ts 🔥 (0.6KB)
+
+├── 📁 packages\core\src\common\presentation\security-headers
+├── ⚙️ csp.config.ts 🔥 (6.4KB)
+├── ⚙️ helmet.config.ts 🔥 (3.0KB)
+
+├── 📁 packages\core\src\common\security
+├── 💻 security.context.module.ts 🔥 (1.3KB)
+├── 💻 security.context.ts 🔥 (5.5KB)
+
+├── 📁 packages\core\src\common\security\encryption
+├── 💻 encrypted-field.service.ts 🔥 (5.0KB)
+├── 💻 key-management.service.ts 🔥 (0.4KB)
+
+├── 📁 packages\core\src\common\security\session
+├── 💻 jwt.service.ts 🔥 (0.6KB)
+
+├── 📁 packages\core\src\common\security\tenant-context
+├── 💻 tenant-context.module.ts 🔥 (0.3KB)
+├── 💻 tenant-context.service.ts 🔥 (1.1KB)
+├── 💻 tenant.middleware.ts 🔥 (0.5KB)
+├── 💻 tenant.utils.ts 🔥 (4.1KB)
+
+├── 📁 packages\core\src\common\security\validation
+├── 💻 input-validator.service.ts 🔥 (3.0KB)
+├── 💻 sanitizer.service.ts 🔥 (1.2KB)
+├── 💻 validation.module.ts 🔥 (0.9KB)
+
+├── 📁 packages\core\src\common\security\validation\dto
+├── 💻 base.dto.ts 🔥 (4.0KB)
+├── 💻 product.dto.ts 🔥 (7.6KB)
+├── 💻 tenant.dto.ts 🔥 (10.5KB)
+
+├── 📁 packages\core\src\common\utils
+├── 💻 crypto.utils.ts 🔥 (1.4KB)
+├── 💻 security.utils.ts 🔥 (1.4KB)
+
+├── 📁 packages\core\src\events
+├── 💻 events.controller.ts 🔥 (1.0KB)
+├── 💻 events.module.ts 🔥 (2.8KB)
+├── 💻 events.service.ts 🔥 (2.4KB)
+
+├── 📁 packages\core\src\modules\storefront
+├── 💻 storefront.module.ts 🔥 (1.7KB)
+
+├── 📁 packages\core\src\modules\storefront\controllers
+├── 💻 dashboard.controller.ts 🔥 (9.4KB)
+├── 💻 payment.controller.ts 🔥 (9.8KB)
+├── 💻 shop.controller.ts 🔥 (13.6KB)
+
+├── 📁 packages\core\src\modules\storefront\dto
+├── 💻 cart-item.dto.ts 🔥 (0.1KB)
+├── 💻 checkout.dto.ts 🔥 (2.2KB)
+├── 💻 create-payment-intent.dto.ts 🔥 (1.2KB)
+├── 💻 customer-info.dto.ts 🔥 (0.1KB)
+├── 💻 date-range.dto.ts 🔥 (0.4KB)
+├── 💻 order-response.dto.ts 🔥 (0.5KB)
+├── 💻 process-webhook.dto.ts 🔥 (0.2KB)
+├── 💻 product-list.dto.ts 🔥 (0.3KB)
+├── 💻 shipping-address.dto.ts 🔥 (0.2KB)
+
+├── 📁 packages\core\src\modules\storefront\services
+├── 💻 dashboard.service.ts 🔥 (15.2KB)
+├── 💻 payment.service.ts 🔥 (17.9KB)
+├── 💻 shop.service.ts 🔥 (12.5KB)
+
+├── 📁 packages\core\src\modules\tenants
+├── 💻 tenants.controller.ts 🔥 (0.7KB)
+├── 💻 tenants.module.ts 🔥 (0.7KB)
+├── 💻 tenants.service.ts 🔥 (4.8KB)
+
+├── 📁 packages\core\src\modules\tenants\dto
+├── 💻 create-tenant.dto.ts 🔥 (1.4KB)
+
+├── 📁 packages\core\src\prisma
+├── 💻 prisma.module.ts 🔥 (2.0KB)
+├── 💻 prisma.service.ts 🔥 (2.7KB)
+
+├── 📁 packages\core\test
+├── 🧪 app.e2e-spec.ts 🔥 (6.0KB)
+├── 💻 jest-setup.ts 🔥 (0.5KB)
+├── 🧪 test-utils.ts 🔥 (5.4KB)
+
+├── 📁 packages\shared\types
+├── 💻 tenant.types.ts 🔥 (1.0KB)
+
+├── 📁 packages\storefront
+├── ⚙️ next.config.js 🔥 (1.5KB)
+├── ⚙️ postcss.config.js 🔥 (0.1KB)
+├── ⚙️ tailwind.config.js 🔥 (3.5KB)
+├── ⚙️ package.json ❗ (0.7KB)
+├── ⚙️ tsconfig.json ❗ (0.8KB)
+├── 📄 .env.local 📋 (0.1KB)
+├── 📄 .gitignore ▫️ (0.3KB)
+
+├── 📁 packages\storefront\src\app
+├── 💻 layout.tsx 🔥 (0.6KB)
+├── 💻 page.tsx 🔥 (2.6KB)
+├── 💻 globals.css ✅ (2.7KB)
+
+├── 📁 packages\storefront\src\app\[tenantSubdomain]
+├── 💻 layout.tsx 🔥 (3.1KB)
+├── 💻 page.tsx 🔥 (3.3KB)
+
+├── 📁 packages\storefront\src\app\[tenantSubdomain]\dashboard
+├── 💻 page.tsx 🔥 (2.6KB)
+
+├── 📁 packages\storefront\src\app\register
+├── 💻 page.tsx 🔥 (2.3KB)
+
+├── 📁 packages\storefront\src\app\register\components
+├── 💻 CreateTenantForm.tsx 🔥 (9.5KB)
+
+├── 📁 packages\storefront\src\components\cart
+├── 💻 cart-provider.tsx 🔥 (6.9KB)
+
+├── 📁 packages\storefront\src\components\categories
+├── 💻 category-filters.tsx 🔥 (1.8KB)
+
+├── 📁 packages\storefront\src\components\dashboard
+├── 💻 alert-banner.tsx 🔥 (1.2KB)
+├── 💻 breadcrumb.tsx 🔥 (1.0KB)
+├── 💻 dashboard-layout.tsx 🔥 (2.8KB)
+├── 💻 header.tsx 🔥 (1.4KB)
+├── 💻 sidebar.tsx 🔥 (2.0KB)
+
+├── 📁 packages\storefront\src\components\products
+├── 💻 product-card.tsx 🔥 (3.4KB)
+├── 💻 product-grid.tsx 🔥 (1.8KB)
+
+├── 📁 packages\storefront\src\components\search
+├── 💻 search-bar.tsx 🔥 (1.9KB)
+
+├── 📁 packages\storefront\src\components\ui
+├── 💻 loading-spinner.tsx 🔥 (0.6KB)
+├── 💻 pagination.tsx 🔥 (1.6KB)
+
+├── 📁 packages\storefront\src\lib\api
+├── 💻 products.ts 🔥 (1.8KB)
+├── 💻 tenants.ts 🔥 (0.7KB)
+
+├── 📁 packages\storefront\src\lib\utils
+├── 💻 error-handler.ts 🔥 (0.2KB)
+
+├── 📁 packages\storefront\src\providers
+├── 💻 tenant-provider.tsx 🔥 (1.9KB)
+
+└── 📁 packages\storefront\src\types
+├── 💻 product.types.ts 🔥 (0.5KB)
+└── 💻 tenant.types.ts 🔥 (0.4KB)
+
+==================================================
+📖 دليل الرموز:
+   📁 = مجلد
+   📄 = ملف عادي
+   💻 = ملف كود
+   ⚠️ = ملف حساس أو مهم
+   🔥 = ملف حرج
+
+
+📊 تحليل توزيع الملفات
+==================================================
+🎯 الأنواع الأكثر شيوعاً:
+   1. .ts: 84 ملف (54.9%)
+   2. .tsx: 20 ملف (13.1%)
+   3. .js: 10 ملف (6.5%)
+   4. .json: 8 ملف (5.2%)
+   5. .sh: 6 ملف (3.9%)
+
+📦 أكبر الملفات:
+   1. packages\core\package-lock.json: 526.2 KB
+   2. 11.txt: 124.4 KB
+   3. packages\core\src\file src.md: 76.5 KB
+   4. packages\core\src\common\Spec file common .md: 65.9 KB
+   5. doc\ASMP.md: 19.2 KB
+
+💻 توزيع الملفات البرمجية:
+   • الملفات البرمجية: 115 (75.2%)
+   • الملفات غير البرمجية: 38 (24.8%)
+
+🔥 الملفات الحرجة (الأولوية 1-2):
+   1. automation\verify-endpoints.js
+   2. automation\core-utils\inspect_db.js
+   3. automation\core-utils\isolation_test.js
+   4. automation\core-utils\seed-verify.js
+   5. automation\core-utils\verify_isolation.js
+   6. automation\core-utils\verify_real_isolation.ts
+   7. automation\core-utils\verify_security_fixes.ts
+   8. automation\nuclear\nuclear_protocol.spec.ts
+   9. doc\unified_verify_45.js
+   10. infra\init-db.sql
+   ... (+105 ملف آخر)

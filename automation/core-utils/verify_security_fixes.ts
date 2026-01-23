@@ -1,11 +1,11 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { VendureService } from './src/vendors/vendure.service';
-import { WishlistService } from './src/wishlists/wishlist.service';
-import { TenantsService } from './src/tenants/tenants.service';
-import { PrismaService } from './src/prisma/prisma.service';
-import { EventService } from './src/events/event.service';
-import { NotFoundException, HttpException } from '@nestjs/common';
+import { VendureService } from '../../packages/core/src/vendors/vendure.service';
+import { WishlistService } from '../../packages/core/src/wishlists/wishlist.service';
+import { TenantsService } from '../../packages/core/src/tenants/tenants.service';
+import { PrismaService } from '../../packages/core/src/prisma/prisma.service';
+import { EventService } from '../../packages/core/src/events/event.service';
+import { NotFoundException } from '@nestjs/common';
 
 // Mock Prisma
 const mockPrisma = {
@@ -61,7 +61,7 @@ async function verify() {
     try {
         await vendureService.getProducts('invalid-tenant');
         console.error('❌ VendureService: Failed to block invalid tenant');
-    } catch (e) {
+    } catch (e: any) {
         if (e instanceof NotFoundException) {
             console.log('✅ VendureService: invalid tenant blocked (NotFoundException)');
         } else {
@@ -73,8 +73,8 @@ async function verify() {
     try {
         await vendureService.getProducts('suspended-tenant');
         console.error('❌ VendureService: Failed to block suspended tenant');
-    } catch (e) {
-        if (e.message && e.message.includes('suspended')) {
+    } catch (e: any) {
+        if (e && e.message && e.message.includes('suspended')) {
             console.log('✅ VendureService: suspended tenant blocked (Forbidden)');
         } else {
             console.error('❌ VendureService: Unexpected error type:', e);
@@ -93,7 +93,7 @@ async function verify() {
     try {
         await wishlistService.getWishlist('invalid-tenant', 1);
         console.error('❌ WishlistService: Failed to block invalid tenant');
-    } catch (e) {
+    } catch (e: any) {
         if (e instanceof NotFoundException) {
             console.log('✅ WishlistService: invalid tenant blocked (NotFoundException)');
         } else {

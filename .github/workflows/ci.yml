@@ -30,9 +30,9 @@ jobs:
       env:
         DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/apex_db?schema=public"
 
-    - name: Run Unit Tests
+    - name: Run Unit Tests with Coverage
       working-directory: packages/core
-      run: npm run test
+      run: npm run test:cov
       env:
         DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/apex_db?schema=public"
         JWT_SECRET: "test_secret_for_ci"

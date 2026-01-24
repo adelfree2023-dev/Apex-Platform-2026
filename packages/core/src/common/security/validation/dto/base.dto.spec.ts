@@ -81,7 +81,7 @@ describe('BaseDTO Validation', () => {
             const tenantId = '123e4567-e89b-12d3-a456-426614174000';
             const userId = '123e4567-e89b-12d3-a456-426614174001';
             const requestId = '123e4567-e89b-12d3-a456-426614174002';
-            const timestamp = 123456789;
+            const timestamp = Date.now();
             const data = { tenantId, userId, requestId, timestamp };
 
             const result = secureValidate(BaseInputSchema, data);

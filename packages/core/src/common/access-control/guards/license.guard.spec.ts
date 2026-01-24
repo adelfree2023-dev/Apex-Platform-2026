@@ -31,7 +31,7 @@ describe('LicenseGuard', () => {
         expect(guard).toBeDefined();
     });
 
-    const createMockContext = (tenantId?: string, path?: string, handler?: any, clazz?: any): ExecutionContext => {
+    const createMockContext = (tenantId?: string, path: string = '/', handler?: any, clazz?: any): ExecutionContext => {
         return {
             switchToHttp: () => ({
                 getRequest: () => ({

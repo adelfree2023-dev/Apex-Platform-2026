@@ -23,7 +23,8 @@ describe('SanitizerService', () => {
 
     it('should remove event handlers', () => {
         const input = '<img src="x" onerror="alert(1)">';
-        expect(service.sanitize(input)).toBe('<img src="x">');
+        // With whiteList: {}, all tags are stripped
+        expect(service.sanitize(input)).toBe('');
     });
 
     it('should sanitize nested objects', () => {

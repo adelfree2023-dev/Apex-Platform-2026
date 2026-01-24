@@ -99,24 +99,24 @@ describe('SystemInitializationService', () => {
     it('should log failure after maximum retries', async () => {
         mockPrisma.$queryRaw.mockRejectedValue(new Error('Persistent failure'));
 
-        await (service as any).withRetry(async () => {
-            await mockPrisma.$queryRaw();
-        }, 2); // only 2 retries for speed
-
-        // Wait, the withRetry name in mockSecurityContext log might be anonymous
-    } catch (e) {
-        expect(mockSecurityContext.logSecurityEvent).toHaveBeenCalledWith('INITIALIZATION_FAILURE', expect.any(Object));
+        try {
+            await (service as any).withRetry(async () => {
+                await mockPrisma.$queryRaw();
+            }, 2);
+        } catch (e) {
+            expect(mockSecurityContext.logSecurityEvent).toHaveBeenCalledWith('INITIALIZATION_FAILURE', expect.any(Object));
+        }
     });
 
-it('should validate production secrets strength', async () => {
-    mockConfig.get.mockImplementation((key: string) => {
-        if (key === 'NODE_ENV') return 'production';
-        if (key === 'JWT_SECRET') return 'short'; // < 32
-        return 'valid';
-    });
+    it('should validate production secrets strength', async () => {
+        mockConfig.get.mockImplementation((key: string) => {
+            if (key === 'NODE_ENV') return 'production';
+            if (key === 'JWT_SECRET') return 'short'; // < 32
+            return 'valid';
+        });
 
-    // validateEnvironmentVariables is private, but called via onModuleInit
-    await service.onModuleInit();
-    // Logic will catch error and log it
-});
+        // validateEnvironmentVariables is private, but called via onModuleInit
+        await service.onModuleInit();
+        // Logic will catch error and log it
+    });
 });

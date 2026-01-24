@@ -72,7 +72,7 @@ export class AuthService {
 
             return this.generateTokens(users[0].id, tenantId, users[0].role);
         } catch (error) {
-            if (error instanceof UnauthorizedException || error instanceof ForbiddenException) throw error;
+            if (error.status === 401 || error.status === 403) throw error;
 
             await this.auditService.logSecurityEvent('AUTH_SYSTEM_ERROR', {
                 severity: 'CRITICAL',

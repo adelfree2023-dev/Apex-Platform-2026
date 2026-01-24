@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthModule } from './auth.module';
 import { AuthService } from './auth.service';
+import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { PrismaModule } from '../prisma/prisma.module';
@@ -38,24 +39,13 @@ describe('AuthModule', () => {
     expect(exported).toBeInstanceOf(AuthService);
   });
 
-  it('should contain JwtModule with secret', () => {
-    const jwt = module.select(JwtModule);
-    expect(jwt).toBeDefined();
+  it('should contain AuthController', () => {
+    const controller = module.get<AuthController>(AuthController);
+    expect(controller).toBeDefined();
   });
 
-  it('should import PrismaModule and PassportModule', () => {
-    // Check if services from modules are available through the AuthModule
-    const prismaService = module.get(PrismaService);
-    expect(prismaService).toBeDefined();
-
-    // PassportModule is internal, but we can check if AuthModule follows standard patterns
-    const imports = (module as any).container?.getModule(AuthModule)?.relatedModules;
-    if (imports) {
-      const names = Array.from(imports).map((m: any) => m.metatype?.name || m.constructor?.name);
-      expect(names.some(n => n.includes('PrismaModule') || n.includes('PassportModule'))).toBeTruthy();
-    } else {
-      // Fallback for different NestJS versions/environments
-      expect(true).toBeTruthy();
-    }
+  it('should contain all required core providers', () => {
+    expect(module.get(PrismaService)).toBeDefined();
+    expect(module.get(TenantContextService)).toBeDefined();
   });
 });

@@ -1,4 +1,4 @@
-import { ProductSchema, UpdateProductSchema, ProductSearchSchema } from './product.dto';
+import { ProductSchema, UpdateProductSchema, ProductSearchSchema, ProductVariantSchema } from './product.dto';
 
 describe('ProductDTO Validation', () => {
     const validProduct = {

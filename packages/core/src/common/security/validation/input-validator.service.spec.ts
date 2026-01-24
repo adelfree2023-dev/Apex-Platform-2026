@@ -12,7 +12,7 @@ describe('InputValidatorService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InputValidatorService,
-        ...getCommonProviders(),
+        ...getCommonProviders([InputValidatorService]),
       ],
     }).compile();
 

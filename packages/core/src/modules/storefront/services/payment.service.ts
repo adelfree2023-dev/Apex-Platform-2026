@@ -302,13 +302,13 @@ export class PaymentService {
                 status: 'CONFIRMED',
                 paymentMethod: checkoutDto.paymentMethod,
                 paymentDetails: {
-                    customerInfo: this.encryptionService.encryptSensitiveData(
+                    customerInfo: this.encryptionService.encrypt(
+                        checkoutDto.tenantId,
                         JSON.stringify(checkoutDto.customerInfo),
-                        checkoutDto.tenantId,
                     ),
-                    shippingAddress: this.encryptionService.encryptSensitiveData(
-                        JSON.stringify(checkoutDto.shippingAddress),
+                    shippingAddress: this.encryptionService.encrypt(
                         checkoutDto.tenantId,
+                        JSON.stringify(checkoutDto.shippingAddress),
                     ),
                 },
             },
@@ -336,9 +336,9 @@ export class PaymentService {
                 const paymentDetails = order.paymentDetails as any;
                 if (paymentDetails?.customerInfo) {
                     const customerInfo = JSON.parse(
-                        this.encryptionService.decryptSensitiveData(
-                            paymentDetails.customerInfo,
+                        this.encryptionService.decrypt(
                             tenantId,
+                            paymentDetails.customerInfo,
                         ),
                     );
                     customerEmail = customerInfo.email || customerEmail;
@@ -357,15 +357,15 @@ export class PaymentService {
                 estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
             };
 
-            await this.mailService.sendEmail({
+            await this.mailService.sendMail({
                 to: customerEmail,
                 subject: `تأكيد الدفع #${order.orderNumber} - ${tenant.storeName}`,
                 template: 'payment-confirmation',
                 context: {
-                    storeName: tenant.storeName,
+                    storeName: tenant.name,
                     customerName: customerEmail.split('@')[0],
                     orderDetails,
-                    supportEmail: tenant.supportEmail || 'support@apex-platform.com',
+                    supportEmail: 'support@apex-platform.com',
                 },
                 tenantId,
             });
@@ -411,9 +411,9 @@ export class PaymentService {
         try {
             // ✅ S7: إعادة المبلغ في Stripe
             const refund = await this.stripe.refunds.create({
-                payment_intent: order.payment.paymentId,
+                payment_intent: order.payment?.paymentId,
                 amount: Math.round(amount * 100), // تحويل إلى cents
-                reason: reason || 'requested_by_customer',
+                reason: (reason as Stripe.RefundCreateParams.Reason) || 'requested_by_customer',
                 metadata: {
                     orderId,
                     refundedBy: 'admin',

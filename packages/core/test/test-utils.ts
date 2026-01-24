@@ -16,9 +16,9 @@ export const mockPrisma: any = {
     product: { findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
     order: { findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
     $transaction: jest.fn().mockImplementation((cb) => cb(mockPrisma)),
-    $queryRaw: jest.fn(),
-    $executeRawUnsafe: jest.fn(),
-    $queryRawUnsafe: jest.fn(),
+    $queryRaw: jest.fn().mockResolvedValue([]),
+    $executeRawUnsafe: jest.fn().mockResolvedValue(1),
+    $queryRawUnsafe: jest.fn().mockResolvedValue([]),
 };
 
 export const mockAudit = {
@@ -36,13 +36,13 @@ export const mockSecurityContext = {
 };
 
 export const mockTenantContext = {
-    getTenantId: jest.fn().mockReturnValue('test-tenant-id'),
+    getTenantId: jest.fn().mockReturnValue('00000000-0000-0000-0000-000000000001'),
     getUserId: jest.fn().mockReturnValue('test-user-id'),
     getSchemaName: jest.fn().mockReturnValue('tenant_test'),
     getTenantSchema: jest.fn().mockResolvedValue('tenant_test'),
     setTenantId: jest.fn(),
     clearTenantId: jest.fn(),
-    getCurrentTenant: jest.fn().mockReturnValue({ id: 'test-tenant-id', schemaName: 'tenant_test' }),
+    getCurrentTenant: jest.fn().mockReturnValue({ id: '00000000-0000-0000-0000-000000000001', schemaName: 'tenant_test' }),
 };
 
 export const mockConfig = {
@@ -54,10 +54,12 @@ export const mockConfig = {
 
 export const mockRateLimiter = {
     consume: jest.fn().mockResolvedValue({ allowed: true }),
+    checkLimit: jest.fn().mockResolvedValue({ allowed: true, currentRequests: 1, maxRequests: 5 }),
 };
 
 export const mockMailService = {
     sendMail: jest.fn().mockResolvedValue(true),
+    sendEmail: jest.fn().mockResolvedValue(true),
 };
 
 export const mockAnomalyDetection = {

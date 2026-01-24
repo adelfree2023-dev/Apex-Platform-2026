@@ -11,7 +11,6 @@ import { z } from 'zod';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
-import { TenantContextService } from '../common/security/tenant-context/tenant-context.service';
 import { TenantScopedGuard } from '../common/access-control/guards/tenant-scoped.guard';
 import { LicenseGuard } from '../common/access-control/guards/license.guard';
 import { DefenseInterceptor } from '../common/presentation/interceptors/defense.interceptor';

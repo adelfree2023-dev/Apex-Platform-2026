@@ -42,7 +42,19 @@ export class AnomalyDetectionService {
             current.lastEvent = new Date();
             this.failedEvents.set(key, current);
 
-            if (context) {
+            // 🛡️ S3: إذا كان الفشل حرجاً (بدون سياق)، يتم تعليق المستأجر فوراً
+            if (!context) {
+                const expiry = new Date();
+                expiry.setHours(expiry.getHours() + 1); // تعليق لمدة ساعة
+                this.suspendedTenants.set(tenantId, {
+                    reason: 'CRITICAL_ANOMALY_DETECTED',
+                    expiry,
+                });
+                this.securityContext.logSecurityEvent('TENANT_SUSPENDED', {
+                    tenantId,
+                    reason: 'CRITICAL_ANOMALY',
+                });
+            } else {
                 this.securityContext.logSecurityEvent('ANOMALY_DETECTED', {
                     tenantId,
                     ...context,

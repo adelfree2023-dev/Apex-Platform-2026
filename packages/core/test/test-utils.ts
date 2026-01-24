@@ -82,10 +82,10 @@ export const createMockMailService = () => ({
     sendEmail: jest.fn().mockResolvedValue(true),
 });
 
-// Simplified mock for AnomalyDetectionService
-inspectFailedLogin: jest.fn(),
+export const createMockAnomalyDetection = () => ({
+    inspectFailedLogin: jest.fn(),
     inspectFailedEvent: jest.fn(),
-        inspectAnomalousRequest: jest.fn(),
+    inspectAnomalousRequest: jest.fn(),
 });
 
 

@@ -1,25 +1,23 @@
 /**
  * Jest Setup for Apex Core
  */
-import * as crypto from 'crypto';
 
 // Set environment variables for testing
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
 
 // 🛡️ Mock crypto globally for NestJS ModuleTokenFactory and other internals
-// We use Object.defineProperty to ensure we can override it if it exists or not
-if (typeof (crypto as any).createHash !== 'function') {
-    Object.defineProperty(crypto, 'createHash', {
-        value: () => ({
-            update: () => ({
-                digest: () => 'mocked-hash'
-            })
+// Using jest.mock ensures all imports of 'crypto' pick up the mock.
+jest.mock('crypto', () => {
+    const actual = jest.requireActual('crypto');
+    return {
+        ...actual,
+        createHash: (algorithm: string) => ({
+            update: jest.fn().mockReturnThis(),
+            digest: jest.fn().mockReturnValue('mocked-hash'),
         }),
-        writable: true,
-        configurable: true
-    });
-}
+    };
+}, { virtual: true });
 
 // Global mocks if necessary
 jest.setTimeout(15000); // Increased timeout for heavy tests

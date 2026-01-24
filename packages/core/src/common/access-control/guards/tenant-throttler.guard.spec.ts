@@ -37,6 +37,10 @@ describe('TenantThrottlerGuard', () => {
         guard = module.get<TenantThrottlerGuard>(TenantThrottlerGuard);
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('should be defined', () => {
         expect(guard).toBeDefined();
     });

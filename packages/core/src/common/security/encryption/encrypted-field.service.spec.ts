@@ -85,14 +85,40 @@ describe('EncryptedFieldService', () => {
         expect(result[0]).toBe('v1:definitely:not:valid'); // Decrypt will return failure, rotate returns original
     });
 
-    it('should throw error in production if key is missing', () => {
-        process.env.NODE_ENV = 'production';
-        const oldKey = process.env.ENCRYPTION_MASTER_KEY;
-        delete process.env.ENCRYPTION_MASTER_KEY;
+    it('should handle missing encryption key in production gracefully', () => {
+        const originalKey = process.env.ENCRYPTION_MASTER_KEY;
+        const originalEnv = process.env.NODE_ENV;
 
-        expect(() => new (require('./encrypted-field.service').EncryptedFieldService)()).toThrow();
+        try {
+            process.env.NODE_ENV = 'production';
+            delete process.env.ENCRYPTION_MASTER_KEY;
 
-        process.env.NODE_ENV = 'test';
-        process.env.ENCRYPTION_MASTER_KEY = oldKey;
+            // Clear module cache for the service to force re-instantiation if needed, 
+            // but here we just test the throw logic if it's in the constructor.
+            expect(() => new EncryptedFieldService()).toThrow(/security configuration error/i);
+        } finally {
+            process.env.ENCRYPTION_MASTER_KEY = originalKey;
+            process.env.NODE_ENV = originalEnv;
+        }
+    });
+
+    it('should fallback to [ENCRYPTION_ERROR] when key is missing after startup in production', () => {
+        const originalKey = process.env.ENCRYPTION_MASTER_KEY;
+        const originalEnv = process.env.NODE_ENV;
+
+        try {
+            const serviceProd = new EncryptedFieldService();
+            process.env.NODE_ENV = 'production';
+            delete process.env.ENCRYPTION_MASTER_KEY;
+
+            const encrypted = serviceProd.encrypt(tenantId, plainText);
+            expect(encrypted).toBe('[ENCRYPTION_ERROR]');
+
+            const decrypted = serviceProd.decrypt(tenantId, 'any-data');
+            expect(decrypted).toBe('[ENCRYPTED_FAILURE]');
+        } finally {
+            process.env.ENCRYPTION_MASTER_KEY = originalKey;
+            process.env.NODE_ENV = originalEnv;
+        }
     });
 });

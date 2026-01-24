@@ -1,7 +1,7 @@
 import { Module, Global, Provider, forwardRef } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SecurityContext } from './security.context';
-import { AuditModule } from '../monitoring/audit/audit.module';
+import { AuditService } from '../monitoring/audit/audit.service';
 
 /**
 * 🏰 Digital Fortress: SecurityContext Module (S5)
@@ -14,24 +14,32 @@ import { AuditModule } from '../monitoring/audit/audit.module';
 @Module({
     imports: [
         ConfigModule,
-        forwardRef(() => AuditModule), // للحصول على AuditService
     ],
     providers: [
         SecurityContext,
         {
-            provide: 'SECURITY_CONTEXT_FACTORY',
-            useFactory: (configService: ConfigService) => {
+            provide: 'SECURITY_LOGGER_FACTORY',
+            useFactory: (configService: ConfigService, auditService?: AuditService) => {
                 return {
-                    validateEnvironment: () => SecurityContext.validateEnvironment(configService),
-                    create: () => new SecurityContext(undefined, configService),
+                    createLogger: (context: string) => {
+                        return {
+                            logEvent: (event: string, details: any) => {
+                                if (auditService) {
+                                    auditService.logSecurityEvent(event, { ...details, context });
+                                } else {
+                                    console.log(`[FALLBACK_LOG] ${context}: ${event}`, details);
+                                }
+                            }
+                        };
+                    }
                 };
             },
-            inject: [ConfigService],
+            inject: [ConfigService, { token: AuditService, optional: true }],
         },
     ],
     exports: [
         SecurityContext,
-        'SECURITY_CONTEXT_FACTORY',
+        'SECURITY_LOGGER_FACTORY',
     ],
 })
 export class SecurityContextModule { }

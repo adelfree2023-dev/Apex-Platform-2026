@@ -421,14 +421,56 @@ export class DashboardService {
         }
     }
 
-    // ✅ S2: الحصول على التقارير (Placeholder methods needed for Controller)
-    async getSalesReport(tenantId: string, period?: string, startDate?: string, endDate?: string): Promise<any> {
-        return { message: "Sales report not implemented yet", tenantId, period };
+    // ✅ S10: الحصول على التقارير برؤى واقعية
+    async getSalesReport(tenantId: string, period: 'DAY' | 'WEEK' | 'MONTH' | 'YEAR' = 'MONTH'): Promise<any> {
+        try {
+            const now = new Date();
+            const startDate = this.getStartDateForPeriod(now, period);
+
+            // الحصول على المبيعات حسب الفترة
+            const salesData = await this.prisma.$queryRaw`
+                SELECT 
+                    DATE_TRUNC(${period.toLowerCase()}, "createdAt") as period,
+                    SUM("totalAmount") as total_sales,
+                    COUNT(*) as order_count
+                FROM "Order"
+                WHERE "tenantId" = ${tenantId}
+                    AND "status" = 'PAID'
+                    AND "createdAt" >= ${startDate}
+                GROUP BY period
+                ORDER BY period ASC
+            `;
+
+            return {
+                period,
+                startDate: startDate.toISOString(),
+                endDate: now.toISOString(),
+                salesData,
+                updatedAt: new Date().toISOString()
+            };
+        } catch (error) {
+            this.logger.error('فشل في توليد تقرير المبيعات', error);
+            return { error: 'فشل في توليد التقرير', period, data: [] };
+        }
     }
-    async getProductsReport(tenantId: string, sortBy?: string, limit?: number): Promise<any> {
-        return { message: "Products report not implemented yet", tenantId, sortBy };
+
+    private getStartDateForPeriod(date: Date, period: string): Date {
+        const d = new Date(date);
+        switch (period) {
+            case 'DAY': d.setDate(d.getDate() - 7); break;
+            case 'WEEK': d.setDate(d.getDate() - 28); break;
+            case 'MONTH': d.setMonth(d.getMonth() - 6); break;
+            case 'YEAR': d.setFullYear(d.getFullYear() - 2); break;
+            default: d.setMonth(d.getMonth() - 1);
+        }
+        return d;
     }
+
+    async getProductsReport(tenantId: string, sortBy?: string, limit: number = 20): Promise<any> {
+        return this.getProductsPerformance(tenantId);
+    }
+
     async getCustomersReport(tenantId: string, segment?: string): Promise<any> {
-        return { message: "Customers report not implemented yet", tenantId, segment };
+        return this.getCustomersPerformance(tenantId);
     }
 }

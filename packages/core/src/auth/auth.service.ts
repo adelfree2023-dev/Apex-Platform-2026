@@ -12,6 +12,8 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { z } from 'zod';
 import { generateSecureHash, verifySecureHash } from '../common/utils/crypto.utils';
+import { CacheService } from '../common/caching/cache.service';
+import * as crypto from 'crypto';
 
 const LoginSchema = z.object({ email: z.string().email(), password: z.string().min(8) });
 const RegisterSchema = z.object({ email: z.string().email(), password: z.string().min(8).max(128), name: z.string().min(2) });
@@ -29,7 +31,27 @@ export class AuthService {
         private readonly auditService: AuditService,
         private readonly securityContext: SecurityContext,
         private readonly inputValidator: InputValidatorService,
+        private readonly cacheService: CacheService,
     ) { }
+
+    async revokeToken(jwtToken: string, tenantId: string): Promise<void> {
+        try {
+            // S10: الحصول على معرّف الرمز (hash) لتوفير المساحة وتجنب تسريب الرمز الكامل في الذاكرة
+            const tokenId = crypto.createHash('sha256').update(jwtToken).digest('hex');
+
+            // S10: حفظ الرمز في قائمة الإبطال (Default 15m as per generateTokens)
+            await this.cacheService.set(`revoked_token:${tenantId}:${tokenId}`, 'revoked', 900);
+
+            await this.auditService.logSecurityEvent('TOKEN_REVOKED', {
+                tenantId,
+                tokenId: tokenId.substring(0, 10), // Log only prefix for security
+                timestamp: new Date().toISOString()
+            });
+        } catch (error) {
+            this.logger.error('فشل في إبطال الرمز المميز', error);
+            throw error;
+        }
+    }
 
     async login(data: LoginDto, tenantId: string, ip: string) {
         const validated = await this.inputValidator.secureValidate<z.infer<typeof LoginSchema>>(LoginSchema, data, 'auth.login');

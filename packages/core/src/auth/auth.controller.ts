@@ -11,6 +11,8 @@ import { InputValidatorService } from '../common/security/validation/input-valid
 import { constantTimeDelay } from '../common/utils/security.utils';
 import { Action } from '../common/decorators/action.decorator';
 import { RateLimiterService } from '../common/access-control/services/rate-limiter.service';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import { z } from 'zod';
 
 const LoginRequestSchema = z.object({
@@ -40,7 +42,8 @@ export class AuthController {
     @Post('login')
     @ApiSecurity('X-Request-ID')
     @ApiOperation({ summary: 'تسجيل الدخول' })
-    async login(@Body() body: any, @Req() request: Request, @Res() response: Response, @Ip() ip: string) {
+    async login(@Body() loginDto: LoginDto, @Req() request: Request, @Res() response: Response, @Ip() ip: string) {
+        const body = loginDto;
         const tenantId = (request as any).tenant?.id || (request as any).tenantId;
 
         // ✅ S6: تطبيق حدود المعدل على مستوى المستخدم والمستأجر
@@ -77,7 +80,8 @@ export class AuthController {
     @Post('register')
     @ApiSecurity('X-Request-ID')
     @ApiOperation({ summary: 'إنشاء حساب جديد' })
-    async register(@Body() body: any, @Req() request: Request, @Res() response: Response, @Ip() ip: string) {
+    async register(@Body() registerDto: RegisterDto, @Req() request: Request, @Res() response: Response, @Ip() ip: string) {
+        const body = registerDto;
         const tenantId = (request as any).tenant?.id || (request as any).tenantId;
 
         // ✅ S6: حماية ضد هجمات إنشاء الحسابات

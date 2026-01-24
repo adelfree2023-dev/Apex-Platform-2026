@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException, ForbiddenException, InternalServerErrorException, Logger } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService } from '../common/security/session/jwt.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { TenantContextService } from '../common/security/tenant-context/tenant-context.service';
 import { EncryptedFieldService } from '../common/security/encryption/encrypted-field.service';

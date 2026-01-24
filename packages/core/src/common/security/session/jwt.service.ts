@@ -15,17 +15,17 @@ export class JwtService {
     private readonly cacheService: CacheService,
   ) { }
 
-  async generateToken(payload: any): Promise<string> {
-    return this.nestJwt.sign(payload);
+  async sign(payload: any, options?: any): Promise<string> {
+    return this.nestJwt.sign(payload, options);
   }
 
-  async verifyToken(token: string): Promise<any> {
-    return this.nestJwt.verify(token);
+  async verify(token: string, options?: any): Promise<any> {
+    return this.nestJwt.verify(token, options);
   }
 
-  async verifyTokenWithRevocation(token: string, tenantId: string): Promise<any> {
+  async verifyWithRevocation(token: string, tenantId: string): Promise<any> {
     try {
-      const payload = await this.verifyToken(token);
+      const payload = await this.verify(token);
 
       // S10: التحقق من القائمة السوداء باستخدام البصمة (hash)
       const tokenId = crypto.createHash('sha256').update(token).digest('hex');

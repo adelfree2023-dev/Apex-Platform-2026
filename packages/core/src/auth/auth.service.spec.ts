@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService } from '../common/security/session/jwt.service';
 import { TenantContextService } from '../common/security/tenant-context/tenant-context.service';
 import { EncryptedFieldService } from '../common/security/encryption/encrypted-field.service';
 import { AnomalyDetectionService } from '../common/access-control/services/anomaly-detection.service';
@@ -13,6 +13,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { UnauthorizedException, ForbiddenException, InternalServerErrorException } from '@nestjs/common';
 import { generateSecureHash, verifySecureHash } from '../common/utils/crypto.utils';
+import { CacheService } from '../common/caching/cache.service';
 
 jest.mock('../common/utils/crypto.utils', () => ({
   generateSecureHash: jest.fn().mockResolvedValue('hashed-password'),
@@ -56,6 +57,11 @@ describe('AuthService', () => {
   const mockInputValidator = {
     secureValidate: jest.fn().mockImplementation(async (_, data) => data),
   };
+  const mockCache = {
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -70,6 +76,7 @@ describe('AuthService', () => {
         { provide: AuditService, useValue: mockAudit },
         { provide: SecurityContext, useValue: mockSecurity },
         { provide: InputValidatorService, useValue: mockInputValidator },
+        { provide: CacheService, useValue: mockCache },
       ],
     }).compile();
 

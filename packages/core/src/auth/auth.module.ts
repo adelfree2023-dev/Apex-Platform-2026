@@ -11,6 +11,8 @@ import { RateLimiterService } from '../common/access-control/services/rate-limit
 import { AuditService } from '../common/monitoring/audit/audit.service';
 import { SecurityContext } from '../common/security/security.context';
 import { InputValidatorService } from '../common/security/validation/input-validator.service';
+import { CacheModule } from '../common/caching/cache.module';
+import { JwtService } from '../common/security/session/jwt.service';
 
 /**
  * 🏰 Digital Fortress: Auth Module
@@ -22,6 +24,7 @@ import { InputValidatorService } from '../common/security/validation/input-valid
 @Module({
     imports: [
         PrismaModule,
+        CacheModule,
         PassportModule.register({ defaultStrategy: 'jwt' }),
         JwtModule.registerAsync({
             useFactory: () => ({
@@ -36,6 +39,7 @@ import { InputValidatorService } from '../common/security/validation/input-valid
     controllers: [AuthController],
     providers: [
         AuthService,
+        JwtService,
         TenantContextService,
         EncryptedFieldService,
         AnomalyDetectionService,

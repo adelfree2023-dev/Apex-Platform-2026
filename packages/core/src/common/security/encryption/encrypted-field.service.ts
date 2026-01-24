@@ -45,7 +45,7 @@ export class EncryptedFieldService implements OnModuleInit {
   private verifyCryptoImplementation(): void {
     try {
       crypto.randomBytes(16);
-      crypto.hkdfSync('sha256', this.masterKey, Buffer.from('test-salt'), Buffer.from('info'), 32);
+      crypto.hkdfSync('sha256', this.masterKey as any, Buffer.from('test-salt') as any, Buffer.from('info') as any, 32);
       this.logger.log('✅ Cryptographic implementation verified');
     } catch (error) {
       this.logger.error('❌ Cryptographic verification failed', error);
@@ -56,7 +56,7 @@ export class EncryptedFieldService implements OnModuleInit {
   private deriveTenantKey(tenantId: string, version: string): Buffer {
     const salt = crypto.createHash('sha256').update(tenantId).digest();
     const info = Buffer.from(`tenant-key-${version}`, 'utf8');
-    return Buffer.from(crypto.hkdfSync('sha256', this.masterKey, salt, info, this.KEY_LENGTH));
+    return Buffer.from(crypto.hkdfSync('sha256', this.masterKey as any, salt as any, info as any, this.KEY_LENGTH));
   }
 
   encrypt(tenantId: string, text: string, version: string = 'v1'): string {

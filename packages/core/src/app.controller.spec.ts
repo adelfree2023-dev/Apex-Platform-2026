@@ -9,17 +9,17 @@ import request from 'supertest';
 import { commonProviders } from '../test/test-utils';
 
 describe('AppController (e2e)', () => {
-  let app: INestApplication;
-  const mockAppService = {
-    getHealth: jest.fn().mockResolvedValue({ status: 'ok', service: 'apex-core' }),
-    verifyDatabaseConnection: jest.fn().mockResolvedValue(true),
-  };
-  const mockSecurity = {
-    logSecurityEvent: jest.fn(),
-  };
-  const { mockAudit } = require('../test/test-utils');
-
   beforeAll(async () => {
+    const { mockPrisma } = require('../test/test-utils');
+    mockPrisma.tenant.findUnique.mockResolvedValue({
+      id: '00000000-0000-0000-0000-000000000001',
+      status: 'ACTIVE',
+      name: 'Test Tenant',
+      plan: 'FREE',
+      subdomain: 'test'
+    });
+    mockPrisma.$queryRaw.mockResolvedValue([{ schema_name: 'tenant_00000000_0000_0000_0000_000000000001' }]);
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
       providers: [
@@ -91,6 +91,7 @@ describe('AppController (e2e)', () => {
       mockAppService.verifyDatabaseConnection.mockResolvedValueOnce(false);
       const resp = await request(app.getHttpServer())
         .get('/api/infra/prisma/health')
+        .set('x-tenant-id', '00000000-0000-0000-0000-000000000001')
         .expect(HttpStatus.OK);
 
       expect(resp.body).toEqual({ status: 'degraded', module: 'prisma-layer' });
@@ -102,6 +103,7 @@ describe('AppController (e2e)', () => {
     it('valid module', async () => {
       const resp = await request(app.getHttpServer())
         .get('/api/modules/auth-system/health')
+        .set('x-tenant-id', '00000000-0000-0000-0000-000000000001')
         .expect(HttpStatus.OK);
 
       expect(resp.body).toMatchObject({ status: 'ok', module: 'auth-system' });
@@ -110,6 +112,7 @@ describe('AppController (e2e)', () => {
     it('invalid module name', async () => {
       await request(app.getHttpServer())
         .get('/api/modules/invalid_name/health')
+        .set('x-tenant-id', '00000000-0000-0000-0000-000000000001')
         .expect(HttpStatus.BAD_REQUEST);
     });
 
@@ -118,6 +121,7 @@ describe('AppController (e2e)', () => {
 
       const resp = await request(app.getHttpServer())
         .get('/api/modules/shop/health')
+        .set('x-tenant-id', '00000000-0000-0000-0000-000000000001')
         .expect(HttpStatus.OK);
 
       expect(resp.body).toEqual({ status: 'error', module: 'shop' });

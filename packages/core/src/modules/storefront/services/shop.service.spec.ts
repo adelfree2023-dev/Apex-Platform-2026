@@ -13,7 +13,7 @@ import { ShippingAddressDto } from '../dto/shipping-address.dto';
 
 describe('ShopService', () => {
   let service: ShopService;
-  const mockPrisma = {
+  const mockPrisma: any = {
     product: {
       findFirst: jest.fn(),
       update: jest.fn(),

@@ -90,7 +90,7 @@ export class DashboardService {
         });
 
         // ✅ S2: متوسط قيمة الطلب
-        const averageOrderValue = orderCount > 0 ? totalSales._sum.totalAmount / orderCount : 0;
+        const averageOrderValue = orderCount > 0 ? (totalSales._sum.totalAmount || 0) / orderCount : 0;
 
         // ✅ S2: المبيعات حسب الفئة
         const salesByCategory = await this.prisma.$queryRaw`

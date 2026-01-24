@@ -178,7 +178,7 @@ export class PaymentController {
                 currency: order.currency,
                 status: order.status,
                 estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-                items: order.items,
+                items: (order as any).items,
             };
         } catch (error) {
             this.logger.error('Payment confirmation failed:', error);

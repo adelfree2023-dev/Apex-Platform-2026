@@ -190,7 +190,7 @@ describe('PaymentController (e2e)', () => {
           country: 'Egypt',
           postalCode: '12345'
         },
-        paymentMethod: 'CARD'
+        paymentMethod: 'CREDIT_CARD'
       };
 
       const response = await request(app.getHttpServer())

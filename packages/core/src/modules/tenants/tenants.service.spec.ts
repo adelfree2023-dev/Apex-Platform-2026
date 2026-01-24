@@ -11,7 +11,7 @@ import {
 
 describe('TenantsService', () => {
     let service: TenantsService;
-    const mockPrisma = {
+    const mockPrisma: any = {
         tenant: {
             create: jest.fn(),
             findFirst: jest.fn(),

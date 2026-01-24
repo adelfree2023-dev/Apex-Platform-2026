@@ -21,7 +21,7 @@ describe('PaymentService', () => {
   let service: PaymentService;
   let stripeMock: any;
 
-  const mockPrisma = {
+  const mockPrisma: any = {
     payment: {
       create: jest.fn(),
       findFirst: jest.fn(),

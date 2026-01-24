@@ -149,6 +149,87 @@ describe('PaymentService', () => {
       const tooHighDto = { ...validDto, amount: 20000000 }; // > 10,000,000
       await expect(service.createPaymentIntent(tooHighDto, ipAddress)).rejects.toThrow(HttpException);
     });
+
+    it('should log security event and throw on Stripe error', async () => {
+      stripeMock.paymentIntents.create.mockRejectedValueOnce(new Error('Stripe API Down'));
+      await expect(service.createPaymentIntent(validDto, ipAddress)).rejects.toThrow(HttpException);
+      expect(mockAudit.logSecurityEvent).toHaveBeenCalledWith('PAYMENT_INTENT_CREATION_FAILED', expect.any(Object));
+    });
+  });
+
+  describe('validateWebhookSignature', () => {
+    it('should throw if signature is missing', async () => {
+      await expect(service.validateWebhookSignature({} as any, undefined, Buffer.from(''))).rejects.toThrow(HttpException);
+    });
+
+    it('should validate signature successfully in dev', async () => {
+      mockConfig.get.mockImplementation((key) => key === 'NODE_ENV' ? 'development' : null);
+      await expect(service.validateWebhookSignature({} as any, 'sig', Buffer.from(''))).resolves.not.toThrow();
+    });
+
+    it('should throw if secret is missing in production', async () => {
+      mockConfig.get.mockImplementation((key) => key === 'NODE_ENV' ? 'production' : null);
+      await expect(service.validateWebhookSignature({} as any, 'sig', Buffer.from(''))).rejects.toThrow(HttpException);
+    });
+
+    it('should validate signature using Stripe in prod', async () => {
+      mockConfig.get.mockImplementation((key) => {
+        if (key === 'NODE_ENV') return 'production';
+        if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';
+        return null;
+      });
+      await expect(service.validateWebhookSignature({} as any, 'sig', Buffer.from(''))).resolves.not.toThrow();
+      expect(stripeMock.webhooks.constructEvent).toHaveBeenCalled();
+    });
+
+    it('should log security event and throw on invalid signature', async () => {
+      mockConfig.get.mockImplementation((key) => {
+        if (key === 'NODE_ENV') return 'production';
+        if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';
+        return null;
+      });
+      stripeMock.webhooks.constructEvent.mockImplementationOnce(() => { throw new Error('Invalid sig'); });
+      await expect(service.validateWebhookSignature({} as any, 'sig', Buffer.from(''))).rejects.toThrow(HttpException);
+      expect(mockAudit.logSecurityEvent).toHaveBeenCalledWith('INVALID_WEBHOOK_SIGNATURE', expect.any(Object));
+    });
+  });
+
+  describe('handleWebhookEvent', () => {
+    it('should dispatch succeeded event', async () => {
+      const spy = jest.spyOn(service as any, 'handlePaymentSuccess').mockResolvedValue(undefined);
+      await service.handleWebhookEvent({ type: 'payment_intent.succeeded' } as any, '1.2.3.4');
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it('should log unhandled event types', async () => {
+      const loggerSpy = jest.spyOn((service as any).logger, 'log');
+      await service.handleWebhookEvent({ type: 'unknown' } as any, '1.2.3.4');
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('Unhandled event type: unknown'));
+    });
+  });
+
+  describe('handlePaymentSuccess', () => {
+    it('should update payment and order on success', async () => {
+      const payment = { id: 'p1', paymentId: 'pi_123', orderId: 'o1', tenantId: 't1', amount: 100, paymentMethod: 'CARD', metadata: {} };
+      mockPrisma.payment.findFirst.mockResolvedValue(payment);
+
+      const event = { id: 'evt_1', type: 'payment_intent.succeeded', data: { object: { id: 'pi_123' } } };
+      await (service as any).handlePaymentSuccess(event, '1.2.3.4');
+
+      expect(mockPrisma.payment.update).toHaveBeenCalled();
+      expect(mockPrisma.order.update).toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: 'o1' },
+        data: expect.objectContaining({ status: 'PAID' })
+      }));
+      expect(mockAudit.logActivity).toHaveBeenCalledWith(expect.objectContaining({ action: 'PAYMENT_SUCCEEDED' }));
+    });
+
+    it('should warn if payment not found', async () => {
+      mockPrisma.payment.findFirst.mockResolvedValue(null);
+      const loggerSpy = jest.spyOn((service as any).logger, 'warn');
+      await (service as any).handlePaymentSuccess({ data: { object: { id: 'pi_none' } } }, '1.2.3.4');
+      expect(loggerSpy).toHaveBeenCalled();
+    });
   });
 
   describe('confirmPayment', () => {
@@ -166,6 +247,11 @@ describe('PaymentService', () => {
 
       const result = await service.confirmPayment(validCheckout, '1.2.3.4');
       expect(result.status).toBe('CONFIRMED');
+    });
+
+    it('should throw if order not found', async () => {
+      mockPrisma.order.findFirst.mockResolvedValue(null);
+      await expect(service.confirmPayment(validCheckout, '1.2.3.4')).rejects.toThrow(HttpException);
     });
   });
 
@@ -193,6 +279,22 @@ describe('PaymentService', () => {
         })
       );
     });
+
+    it('should handle missing tenant gracefully', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue(null);
+      const loggerSpy = jest.spyOn((service as any).logger, 'warn');
+      await service.sendPaymentConfirmation({}, 't-none');
+      expect(loggerSpy).toHaveBeenCalled();
+    });
+
+    it('should handle decryption failure gracefully', async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({ id: 't1', name: 'S' });
+      mockEncryption.decrypt.mockImplementationOnce(() => { throw new Error('Fail'); });
+      const loggerSpy = jest.spyOn((service as any).logger, 'warn');
+
+      await service.sendPaymentConfirmation({ paymentDetails: { customerInfo: 'bad' } }, 't1');
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to decrypt customer info'));
+    });
   });
 
   describe('refundPayment', () => {
@@ -210,6 +312,31 @@ describe('PaymentService', () => {
         reason: 'duplicate',
         metadata: expect.objectContaining({ orderId: 'o1' })
       });
+      expect(mockPrisma.order.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: 'REFUNDED' }) }));
+    });
+
+    it('should throw if order not found', async () => {
+      mockPrisma.order.findUnique.mockResolvedValue(null);
+      await expect(service.refundPayment('o1', 50)).rejects.toThrow(HttpException);
+    });
+
+    it('should throw if order not paid', async () => {
+      mockPrisma.order.findUnique.mockResolvedValue({ id: 'o1', status: 'PENDING' });
+      await expect(service.refundPayment('o1', 50)).rejects.toThrow(HttpException);
+    });
+
+    it('should throw if amount too high', async () => {
+      mockPrisma.order.findUnique.mockResolvedValue({ id: 'o1', status: 'PAID', totalAmount: 100 });
+      await expect(service.refundPayment('o1', 150)).rejects.toThrow(HttpException);
+    });
+
+    it('should throw if Stripe refund fails', async () => {
+      mockPrisma.order.findUnique.mockResolvedValue({
+        id: 'o1', status: 'PAID', totalAmount: 100, payment: { paymentId: 'pi_1' }
+      });
+      stripeMock.refunds.create.mockRejectedValueOnce(new Error('Stripe Fail'));
+      await expect(service.refundPayment('o1', 50)).rejects.toThrow(HttpException);
+      expect(mockAudit.logSecurityEvent).toHaveBeenCalledWith('REFUND_FAILED', expect.any(Object));
     });
   });
 });

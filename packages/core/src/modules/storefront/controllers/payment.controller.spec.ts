@@ -84,4 +84,48 @@ describe('PaymentController (e2e)', () => {
       expect(response.body).toMatchObject({ id: 'order-1' });
     });
   });
+
+  describe('POST /create-intent', () => {
+    it('should create intent successfully', async () => {
+      const dto = {
+        tenantId: validTenantId,
+        orderId: 'o1',
+        amount: 150,
+        currency: 'USD',
+        paymentMethod: 'CARD'
+      };
+
+      await request(app.getHttpServer())
+        .post(`/api/shop/${tenantSub}/payments/create-intent`)
+        .send(dto)
+        .expect(HttpStatus.CREATED);
+
+      expect(mockPaymentService.createPaymentIntent).toHaveBeenCalled();
+    });
+  });
+
+  describe('POST /webhook', () => {
+    it('should process webhook successfully', async () => {
+      const body = { type: 'payment_intent.succeeded', data: { object: { id: 'pi_1' } } };
+      await request(app.getHttpServer())
+        .post(`/api/shop/${tenantSub}/payments/webhook`)
+        .set('stripe-signature', 'sig')
+        .send(body)
+        .expect(HttpStatus.CREATED);
+
+      expect(mockPaymentService.validateWebhookSignature).toHaveBeenCalled();
+    });
+  });
+
+  describe('POST /refund', () => {
+    it('should process refund successfully', async () => {
+      const body = { orderId: '00000000-0000-0000-0000-000000000001', amount: 50, reason: 'test' };
+      await request(app.getHttpServer())
+        .post(`/api/shop/${tenantSub}/payments/refund`)
+        .send(body)
+        .expect(HttpStatus.CREATED);
+
+      expect(mockPaymentService.refundPayment).toHaveBeenCalled();
+    });
+  });
 });

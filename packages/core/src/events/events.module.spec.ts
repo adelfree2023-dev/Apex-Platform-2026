@@ -4,13 +4,17 @@ import { EventsService } from './events.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { TenantContextService } from '../common/security/tenant-context/tenant-context.service';
 
+import { commonProviders } from '../../test/test-utils';
+
 describe('EventsModule', () => {
   let module: TestingModule;
 
   beforeAll(async () => {
     module = await Test.createTestingModule({
       imports: [EventsModule],
-    }).compile();
+    })
+      .overrideProvider(PrismaModule).useValue({ providers: commonProviders })
+      .compile();
   });
 
   it('should provide EventsService', () => {

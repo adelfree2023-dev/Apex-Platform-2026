@@ -6,22 +6,21 @@ import { SecurityContext } from './common/security/security.context';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
+import { commonProviders } from '../test/test-utils';
+
 describe('AppController (e2e)', () => {
   let app: INestApplication;
   const mockAppService = {
     getHealth: jest.fn().mockResolvedValue({ status: 'ok', service: 'apex-core' }),
     verifyDatabaseConnection: jest.fn().mockResolvedValue(true),
   };
-  const mockAuditService = { logOperation: jest.fn() };
-  const mockSecurityContext = { logSecurityEvent: jest.fn() };
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
       providers: [
         { provide: AppService, useValue: mockAppService },
-        { provide: AuditService, useValue: mockAuditService },
-        { provide: SecurityContext, useValue: mockSecurityContext },
+        ...commonProviders,
       ],
     }).compile();
 

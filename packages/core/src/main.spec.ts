@@ -5,9 +5,10 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from '@nestjs/common';
 
+import { commonProviders, mockConfig } from '../test/test-utils';
+
 describe('Bootstrap (main)', () => {
   let app: INestApplication;
-  const mockConfig = { get: jest.fn().mockReturnValue('test') };
   const mockLogger = { log: jest.fn(), error: jest.fn() };
 
   beforeAll(async () => {
@@ -17,10 +18,18 @@ describe('Bootstrap (main)', () => {
       .overrideProvider(ConfigService)
       .useValue(mockConfig)
       .overrideProvider(Logger)
-      .useValue(mockLogger)
-      .compile();
+      .useValue(mockLogger);
 
-    app = module.createNestApplication();
+    // Apply common providers to overwrite any missing dependencies in AppModule deep hierarchy
+    commonProviders.forEach(p => {
+      if ('provide' in p) {
+        module.overrideProvider(p.provide).useValue((p as any).useValue);
+      }
+    });
+
+    const compiled = await module.compile();
+
+    app = compiled.createNestApplication();
     await app.init();
   });
 

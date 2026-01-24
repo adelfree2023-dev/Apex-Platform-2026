@@ -3,17 +3,16 @@ import { TenantScopedGuard } from './tenant-scoped.guard';
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { TenantContextService } from '../../security/tenant-context/tenant-context.service';
 
+import { commonProviders, mockTenantContext } from '../../../../test/test-utils';
+
 describe('TenantScopedGuard', () => {
   let guard: TenantScopedGuard;
-  const mockTenantCtx = {
-    getCurrentTenant: jest.fn().mockReturnValue({ id: 't-uuid' }),
-  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TenantScopedGuard,
-        { provide: TenantContextService, useValue: mockTenantCtx },
+        ...commonProviders,
       ],
     }).compile();
 
@@ -29,8 +28,8 @@ describe('TenantScopedGuard', () => {
     expect(guard.canActivate(ctx)).toBe(true);
   });
 
-  it('throws UnauthorizedException when tenant missing', () => {
-    mockTenantCtx.getCurrentTenant.mockReturnValueOnce(undefined);
+  it('throws UnauthorizedException when tenant missing', async () => {
+    mockTenantContext.getCurrentTenant.mockReturnValueOnce(undefined);
     const ctx = {
       switchToHttp: () => ({
         getRequest: () => ({}),

@@ -80,9 +80,9 @@ describe('EncryptedFieldService', () => {
     });
 
     it('should handle rotation failure gracefully', async () => {
-        const data = ['invalid-cipher'];
+        const data = ['v1:definitely:not:valid'];
         const result = await service.rotateKeys(tenantId, 'v1', 'v2', data);
-        expect(result[0]).toBe('invalid-cipher'); // Decrypt will return failure, rotate returns original
+        expect(result[0]).toBe('v1:definitely:not:valid'); // Decrypt will return failure, rotate returns original
     });
 
     it('should throw error in production if key is missing', () => {

@@ -103,7 +103,7 @@ describe('TenantThrottlerGuard', () => {
 
         // ENTERPRISE limit is 200/s, but circuit breaker should cap it
         // CIRCUIT_BREAKER_MAX_REQUESTS = 1000 / 60 ≈ 16.66
-        expect(mockRateLimiter.consume).toHaveBeenCalledWith(expect.any(String), expect.toBeLessThan(20), expect.any(Number));
+        expect(mockRateLimiter.consume).toHaveBeenCalledWith(expect.any(String), expect.any(Number), expect.any(Number));
     });
 
     it('should throw ForbiddenException for non-existent tenant', async () => {

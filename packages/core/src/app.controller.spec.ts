@@ -25,7 +25,12 @@ describe('AppController (e2e)', () => {
       providers: [
         { provide: AppService, useValue: mockAppService },
         { provide: SecurityContext, useValue: mockSecurity },
-        ...commonProviders.filter(p => (p as any).provide !== SecurityContext),
+        ...commonProviders.filter(p => {
+          if (typeof p === 'object' && p !== null && 'provide' in p) {
+            return (p as any).provide !== SecurityContext;
+          }
+          return p !== SecurityContext;
+        }),
       ],
     }).compile();
 

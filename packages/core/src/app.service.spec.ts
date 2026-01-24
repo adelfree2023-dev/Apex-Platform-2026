@@ -19,7 +19,12 @@ describe('AppService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AppService,
-        ...getCommonProviders([AppService]).filter(p => (p as any).provide !== SecurityContext),
+        ...getCommonProviders([AppService]).filter(p => {
+          if (typeof p === 'object' && p !== null && 'provide' in p) {
+            return (p as any).provide !== SecurityContext;
+          }
+          return p !== SecurityContext;
+        }),
         { provide: PrismaService, useValue: mockPrisma },
         { provide: SecurityContext, useValue: mockSecurity },
       ],

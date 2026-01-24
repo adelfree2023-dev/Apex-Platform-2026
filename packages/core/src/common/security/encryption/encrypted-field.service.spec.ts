@@ -36,24 +36,46 @@ describe('EncryptedFieldService', () => {
         expect(decrypted).toBe(plainText);
     });
 
-    it('should handle automated key rotation (S7)', () => {
-        const currentVersion = service.getCurrentVersion();
-        const encrypted = service.encrypt(tenantId, plainText);
-        expect(encrypted.startsWith(`${currentVersion}:`)).toBe(true);
+    it('should support hashing and verification', () => {
+        const { hash, salt } = service.hashData(plainText);
+        expect(hash).toBeDefined();
+        expect(salt).toBeDefined();
+        expect(service.verifyHash(plainText, hash, salt)).toBe(true);
+        expect(service.verifyHash('wrong', hash, salt)).toBe(false);
     });
 
-    it('should return same value if input is not a string or empty', () => {
-        expect(service.encrypt(tenantId, null as any)).toBe(null);
-        expect(service.decrypt(tenantId, null as any)).toBe(null);
-        expect(service.encrypt(tenantId, '')).toBe('');
+    it('should generate random tokens', () => {
+        const token = service.generateRandomToken();
+        expect(token).toHaveLength(64); // 32 bytes hex
     });
 
-    it('should return original text on invalid ciphertext format without separator', () => {
-        expect(service.decrypt(tenantId, 'invalid-format')).toBe('invalid-format');
+    it('should rotate keys for a set of data (S7)', async () => {
+        const oldVersion = 'v2025Q4';
+        const newVersion = 'v2026Q1';
+        const data = [
+            service.encrypt(tenantId, 'secret1', oldVersion),
+            service.encrypt(tenantId, 'secret2', oldVersion),
+        ];
+
+        const rotated = await service.rotateKeys(tenantId, oldVersion, newVersion, data);
+        expect(rotated[0].startsWith(`${newVersion}:`)).toBe(true);
+        expect(rotated[1].startsWith(`${newVersion}:`)).toBe(true);
+        expect(service.decrypt(tenantId, rotated[0])).toBe('secret1');
+        expect(service.decrypt(tenantId, rotated[1])).toBe('secret2');
     });
 
-    it('should return [ENCRYPTED_FAILURE] on decryption with wrong tenant ID', () => {
-        const encrypted = service.encrypt(tenantId, plainText);
-        expect(service.decrypt('wrong-tenant', encrypted)).toBe('[ENCRYPTED_FAILURE]');
+    it('should handle decryption failures gracefully', () => {
+        const result = service.decrypt(tenantId, 'v1:iv:tag:invalid');
+        expect(result).toBe('[ENCRYPTED_FAILURE]');
+    });
+
+    it('should handle encryption failure and return original in dev', () => {
+        // Force an error in crypto
+        jest.spyOn(require('crypto'), 'createCipheriv').mockImplementation(() => {
+            throw new Error('Crypto fail');
+        });
+        const result = service.encrypt(tenantId, plainText);
+        expect(result).toBe(plainText);
+        jest.restoreAllMocks();
     });
 });

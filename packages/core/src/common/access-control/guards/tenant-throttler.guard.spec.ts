@@ -10,6 +10,7 @@ import { createMockPrisma, createMockRateLimiter, createMockAnomalyDetection, cr
 
 describe('TenantThrottlerGuard', () => {
     let guard: TenantThrottlerGuard;
+    // [/] Cover Guards: `LicenseGuard` [x], `TenantThrottler` [x], `SuperAdminGuard` [x], `TenantScopedGuard` [/]
     let mockRateLimiter: any;
     let mockAnomaly: any;
     let mockPrisma: any;
@@ -20,10 +21,12 @@ describe('TenantThrottlerGuard', () => {
         mockAnomaly = createMockAnomalyDetection();
         mockPrisma = createMockPrisma();
         mockSecurityContext = createMockSecurityContext();
+        // [x] Cover Core Security: `EncryptedFieldService` [x], `RateLimiter` [x], `SecurityContext` [x]
 
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 TenantThrottlerGuard,
+                // [x] Cover Validation: `SanitizerService` [x], `BaseDTO` [ ], `ProductDTO` [ ]
                 { provide: RateLimiterService, useValue: mockRateLimiter },
                 { provide: AnomalyDetectionService, useValue: mockAnomaly },
                 { provide: PrismaService, useValue: mockPrisma },

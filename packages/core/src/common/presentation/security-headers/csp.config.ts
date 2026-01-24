@@ -46,10 +46,16 @@ export class CSPConfig {
     if (!cached || Date.now() - cached.timestamp > this.nonceExpiry) {
       return false;
     }
-    return crypto.timingSafeEqual(
-      Buffer.from(cached.nonce),
-      Buffer.from(nonce)
-    );
+
+    const cachedBuffer = Buffer.from(cached.nonce);
+    const nonceBuffer = Buffer.from(nonce);
+
+    // 🛡️ S8: crypto.timingSafeEqual requires same length buffers
+    if (cachedBuffer.length !== nonceBuffer.length) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(cachedBuffer, nonceBuffer);
   }
 
   /**
@@ -144,10 +150,11 @@ export class CSPConfig {
   generateCSPHeader(directives: Record<string, string[]>): string {
     return Object.entries(directives)
       .map(([directive, values]) => {
-        if (directive === 'reportUri' && values.length > 0) {
+        const kebabKey = directive.replace(/[A-Z]/g, m => `-${m.toLowerCase()}`);
+        if (kebabKey === 'report-uri' && values.length > 0) {
           return `report-uri ${values.join(' ')}`;
         }
-        return `${directive} ${values.join(' ')}`;
+        return `${kebabKey} ${values.join(' ')}`;
       })
       .join('; ');
   }

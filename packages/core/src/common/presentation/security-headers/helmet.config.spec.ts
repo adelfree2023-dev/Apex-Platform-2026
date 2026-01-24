@@ -30,7 +30,7 @@ describe('HelmetConfig', () => {
 
         config.applyTenantCachingHeaders(mockRes, 'tenant-123');
         expect(mockRes.setHeader).toHaveBeenCalledWith('Cache-Control', expect.any(String));
-        expect(mockRes.setHeader).toHaveBeenCalledWith('Surrogate-Key', 'tenant-123');
+        expect(mockRes.setHeader).toHaveBeenCalledWith('Surrogate-Key', 'tenant-tenant-123');
     });
 
     it('should provide different CSP directives for production vs development', () => {

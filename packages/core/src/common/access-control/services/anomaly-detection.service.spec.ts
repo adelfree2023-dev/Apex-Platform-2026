@@ -1,16 +1,25 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AnomalyDetectionService } from './anomaly-detection.service';
-import { AuditService } from '../../monitoring/audit/audit.service';
-import { mockAudit } from '../../../../test/test-utils';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { SecurityContext } from '../../security/security.context';
+import { createMockPrisma } from '../../../../test/test-utils';
 
 describe('AnomalyDetectionService', () => {
     let service: AnomalyDetectionService;
+    let mockPrisma: any;
+    let mockSecurityContext: any;
 
     beforeEach(async () => {
+        mockPrisma = createMockPrisma();
+        mockSecurityContext = {
+            logSecurityEvent: jest.fn(),
+        };
+
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 AnomalyDetectionService,
-                { provide: AuditService, useValue: mockAudit },
+                { provide: PrismaService, useValue: mockPrisma },
+                { provide: SecurityContext, useValue: mockSecurityContext },
             ],
         }).compile();
 
@@ -47,7 +56,7 @@ describe('AnomalyDetectionService', () => {
     it('should handle failed logins separately', () => {
         const tenantId = 'login-brute-forcer';
         service.inspectFailedLogin(tenantId, 'user1', '127.0.0.1');
-        expect(mockAudit.logSecurityEvent).toHaveBeenCalledWith('FAILED_LOGIN_ANOMALY', expect.any(Object));
+        expect(mockSecurityContext.logSecurityEvent).toHaveBeenCalledWith('ANOMALY_LOGIN_FAILURE', expect.any(Object));
     });
 
     it('should handle generic inspect signals', () => {

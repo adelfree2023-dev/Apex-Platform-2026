@@ -8,6 +8,7 @@ import { RateLimiterService } from '../../access-control/services/rate-limiter.s
 
 describe('DefenseInterceptor', () => {
   let interceptor: DefenseInterceptor;
+  let testingModule: TestingModule;
   const mockContext = {
     switchToHttp: () => ({
       getRequest: () => ({
@@ -31,14 +32,14 @@ describe('DefenseInterceptor', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    testingModule = await Test.createTestingModule({
       providers: [
         DefenseInterceptor,
         ...getCommonProviders([DefenseInterceptor]),
       ],
     }).compile();
 
-    interceptor = module.get<DefenseInterceptor>(DefenseInterceptor);
+    interceptor = testingModule.get<DefenseInterceptor>(DefenseInterceptor);
   });
 
   it('should pass through if tenantId is missing but log event', (done) => {
@@ -56,7 +57,7 @@ describe('DefenseInterceptor', () => {
   });
 
   it('should block suspended tenants', (done) => {
-    const anomaly = module.get(AnomalyDetectionService);
+    const anomaly = testingModule.get(AnomalyDetectionService);
     jest.spyOn(anomaly, 'isSuspended').mockReturnValue(true);
 
     interceptor.intercept(mockContext, mockCallHandler).subscribe({
@@ -69,7 +70,7 @@ describe('DefenseInterceptor', () => {
   });
 
   it('should block throttled tenants during system overload', (done) => {
-    const anomaly = module.get(AnomalyDetectionService);
+    const anomaly = testingModule.get(AnomalyDetectionService);
     jest.spyOn(anomaly, 'isThrottled').mockReturnValue(true);
     // Force overload by mocking process.memoryUsage if needed, or just mock isSystemOverloaded
     jest.spyOn(interceptor as any, 'isSystemOverloaded').mockReturnValue(true);
@@ -84,7 +85,7 @@ describe('DefenseInterceptor', () => {
   });
 
   it('should block when rate limit is exceeded', (done) => {
-    const rateLimiter = module.get(RateLimiterService);
+    const rateLimiter = testingModule.get(RateLimiterService);
     jest.spyOn(rateLimiter, 'consume').mockResolvedValue({ allowed: false, remaining: 0, reset: 10 });
 
     interceptor.intercept(mockContext, mockCallHandler).subscribe({

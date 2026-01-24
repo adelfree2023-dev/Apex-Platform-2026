@@ -151,12 +151,16 @@ export class AuditService {
     /**
      * 🛡️ ASMP: Security Event Logging Wrapper
      */
-    async logSecurityEvent(event: string, details: any): Promise<void> {
+    async logSecurityEvent(event: string, details: any & { requestId?: string; ip?: string }): Promise<void> {
         const tenantId = this.tenantContext.getTenantId() || 'SYSTEM';
+        const { requestId, ip, ...restOfDetails } = details || {};
+
         return this.log(tenantId, {
             action: event,
             severity: 'critical',
-            details: details,
+            details: restOfDetails,
+            requestId,
+            ip,
         });
     }
 
@@ -186,17 +190,21 @@ export class AuditService {
     /**
      * 🛡️ ASMP: Generic Activity Logging
      */
-    async logActivity(dataOrAction: string | { action: string; details?: any; tenantId?: string; userId?: string }, details?: any): Promise<void> {
+    async logActivity(dataOrAction: string | { action: string; details?: any; tenantId?: string; userId?: string; requestId?: string; ip?: string }, details?: any): Promise<void> {
         let action: string;
         let finalDetails: any;
         let tenantId: string;
         let userId: string;
+        let requestId: string;
+        let ip: string;
 
         if (typeof dataOrAction === 'object') {
             action = dataOrAction.action;
             finalDetails = dataOrAction.details;
             tenantId = dataOrAction.tenantId || this.tenantContext.getTenantId() || 'SYSTEM';
             userId = dataOrAction.userId || 'anonymous';
+            requestId = dataOrAction.requestId;
+            ip = dataOrAction.ip;
         } else {
             action = dataOrAction;
             finalDetails = details;
@@ -207,6 +215,8 @@ export class AuditService {
         return this.log(tenantId, {
             action,
             userId,
+            requestId,
+            ip,
             severity: 'info',
             details: finalDetails
         });

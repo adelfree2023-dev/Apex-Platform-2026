@@ -18,11 +18,16 @@ export function generateRequestId(): string {
  * 🔒 S2: Extract tenant and user context from request
  */
 export function extractContext(req: any) {
+    // 🛡️ S5: Prioritize X-Forwarded-For if present (common for proxies)
+    const ip = req.headers?.['x-forwarded-for']
+        ? (req.headers['x-forwarded-for'] as string).split(',')[0].trim()
+        : (req.ip || req.socket?.remoteAddress || '0.0.0.0');
+
     return {
         tenantId: req.tenantId || req.headers?.['x-tenant-id'],
         userId: req.userId || 'anonymous',
-        requestId: req.requestId || generateRequestId(),
-        ip: req.ip || req.headers?.['x-forwarded-for'] || '0.0.0.0'
+        requestId: req.requestId || req.headers?.['x-request-id'] || generateRequestId(),
+        ip: ip.replace(/[^a-z0-9\.:]/gi, '').substring(0, 50)
     };
 }
 

@@ -40,6 +40,7 @@ describe('AuthService', () => {
   };
   const mockAnomaly = {
     detect: jest.fn(),
+    inspectFailedLogin: jest.fn(),
   };
   const mockRateLimiter = {
     consume: jest.fn().mockResolvedValue({ allowed: true }),

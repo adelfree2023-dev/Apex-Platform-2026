@@ -14,10 +14,8 @@ export class AuditLoggerInterceptor implements NestInterceptor {
 
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         const request = context.switchToHttp().getRequest<Request>();
-        const { method, url, body, ip, headers } = request;
-        const tenantId = (request as any)['tenantId'] || headers['x-tenant-id'];
-        const userId = (request as any)['userId'] || 'anonymous';
-        const requestId = (request as any)['requestId'] || crypto.randomUUID();
+        const { method, url, body } = request;
+        const { tenantId, userId, requestId, ip } = require('../../utils/security.utils').extractContext(request);
 
         if (!tenantId || !this.AUDITED_METHODS.includes(method.toUpperCase())) return next.handle();
 

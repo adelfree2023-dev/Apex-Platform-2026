@@ -108,15 +108,11 @@ export function secureValidate<T>(schema: z.ZodType<T>, data: any): T {
   try {
     // ✅ S3: إضافة معلومات إضافية للسياق إذا لم تكن موجودة
     if (!data.timestamp) data.timestamp = Date.now();
+    // ✅ S3: إضافة معلومات إضافية للسياق إذا لم تكن موجودة
+    if (!data.timestamp) data.timestamp = Date.now();
     if (!data.requestId) {
-      try {
-        data.requestId = require('crypto').randomUUID();
-      } catch {
-        // Fallback for older node versions or environments
-        data.requestId = '00000000-0000-4000-8000-000000000000'.replace(/[08]/g, (c: any) =>
-          (c ^ require('crypto').randomBytes(1).readUInt8(0) & 15 >> c / 4).toString(16)
-        );
-      }
+      const { generateRequestId } = require('../../../utils/security.utils');
+      data.requestId = generateRequestId();
     }
 
     return schema.parse(data);

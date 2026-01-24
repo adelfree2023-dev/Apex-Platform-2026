@@ -1,6 +1,30 @@
-import { Logger } from '@nestjs/common';
+import * as crypto from 'crypto';
 
-const logger = new Logger('SecurityUtils');
+/**
+ * 🔒 S3: Generate a secure, unique request ID
+ */
+export function generateRequestId(): string {
+    try {
+        return crypto.randomUUID();
+    } catch {
+        // Fallback for environments where randomUUID might not be available
+        return '00000000-0000-4000-8000-000000000000'.replace(/[08]/g, (c: any) =>
+            (c ^ crypto.randomBytes(1).readUInt8(0) & 15 >> c / 4).toString(16)
+        );
+    }
+}
+
+/**
+ * 🔒 S2: Extract tenant and user context from request
+ */
+export function extractContext(req: any) {
+    return {
+        tenantId: req.tenantId || req.headers?.['x-tenant-id'],
+        userId: req.userId || 'anonymous',
+        requestId: req.requestId || generateRequestId(),
+        ip: req.ip || req.headers?.['x-forwarded-for'] || '0.0.0.0'
+    };
+}
 
 /**
  * 🔒 S6: Constant-time delay to prevent timing attacks

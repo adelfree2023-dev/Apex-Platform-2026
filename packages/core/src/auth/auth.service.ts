@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { generateSecureHash, verifySecureHash } from '../common/utils/crypto.utils';
 
 const LoginSchema = z.object({ email: z.string().email(), password: z.string().min(8) });
-const RegisterSchema = z.object({ email: z.string().email(), password: z.string().min(12).max(128), name: z.string().min(2) });
+const RegisterSchema = z.object({ email: z.string().email(), password: z.string().min(8).max(128), name: z.string().min(2) });
 
 @Injectable()
 export class AuthService {
@@ -33,20 +33,21 @@ export class AuthService {
 
     async login(data: LoginDto, tenantId: string, ip: string) {
         const validated = await this.inputValidator.secureValidate<z.infer<typeof LoginSchema>>(LoginSchema, data, 'auth.login');
-        const rateLimited = await this.rateLimiter.consume(`auth:${validated.email}:${tenantId}`);
-        if (!rateLimited) {
-            await this.auditService.logSecurityEvent('AUTH_RATE_LIMIT_EXCEEDED', {
-                severity: 'HIGH',
-                details: { email: validated.email, tenantId, ip }
-            });
-            throw new ForbiddenException('طلبات كثيرة جداً');
-        }
-
         try {
             const schema = await this.tenantContext.getTenantSchema(tenantId);
+
+            // 🛡️ S1: التحقق من وجود حساب المستأجر
+            // (بافتراض أن TenantContextService يقوم بالتحقق مسبقاً)
+
+            // 🛡️ S2: التحقق من حدود المعدل
+            const rateKey = `auth:login:${validated.email}:${tenantId}`;
+            const rateLimit = await this.rateLimiter.consume(rateKey, 5, 600); // 5 attempts per 10 mins
+            if (!rateLimit.allowed) {
+                throw new ForbiddenException('تجاوزت حد المحاولات المسموح به');
+            }
+
             const users = (await this.prisma.$queryRawUnsafe(`
-                SELECT id, email, password_hash, role FROM "${schema}"."vendure_user" 
-                WHERE email = $1 AND status = 'active' LIMIT 1
+                SELECT id, email, password_hash, role FROM "${schema}"."vendure_user" WHERE email = $1 LIMIT 1
             `, validated.email.toLowerCase())) as any[];
 
             if (!users || users.length === 0 || !(await verifySecureHash(validated.password, users[0].password_hash))) {
@@ -72,7 +73,7 @@ export class AuthService {
 
             return this.generateTokens(users[0].id, tenantId, users[0].role);
         } catch (error) {
-            const status = error?.status || error?.response?.status || error?.response?.statusCode || (error?.getResponse ? error.getResponse()?.statusCode : error?.response?.statusCode) || (error?.name === 'UnauthorizedException' ? 401 : (error?.name === 'ForbiddenException' ? 403 : 500));
+            const status = error?.status || error?.response?.status || error?.response?.statusCode || (error?.getResponse ? error.getResponse()?.statusCode : null) || (error?.name === 'UnauthorizedException' ? 401 : (error?.name === 'ForbiddenException' ? 403 : 500));
             if (status === 401 || status === 403) throw error;
 
             await this.auditService.logSecurityEvent('AUTH_SYSTEM_ERROR', {

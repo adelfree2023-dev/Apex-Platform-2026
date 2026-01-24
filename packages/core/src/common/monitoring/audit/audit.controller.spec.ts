@@ -22,8 +22,11 @@ describe('AuditController', () => {
         const module: TestingModule = await Test.createTestingModule({
             controllers: [AuditController],
             providers: [
+                ...commonProviders.filter((p: any) => {
+                    const token = p.provide || p;
+                    return token !== AuditService;
+                }),
                 { provide: AuditService, useValue: auditService },
-                ...commonProviders,
             ],
         })
             .overrideGuard(TenantScopedGuard).useValue({ canActivate: () => true })

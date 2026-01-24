@@ -69,7 +69,7 @@ export function ensureValidTenantId(tenantId: any): string {
 
   // 🛡️ التحقق من تنسيق UUID البسيط
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(tenantId) && tenantId.length !== 36) {
+  if (!uuidRegex.test(tenantId)) {
     throw new BadRequestException('معرف المستأجر يجب أن يكون بصيغة UUID صالحة');
   }
 

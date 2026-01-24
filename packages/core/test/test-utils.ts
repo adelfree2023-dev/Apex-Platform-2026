@@ -1,5 +1,14 @@
 import { Provider } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
+
+// 🛡️ Mock crypto for environments where it might be missing/partial during testing
+if (!crypto.createHash) {
+    (crypto as any).createHash = jest.fn().mockReturnValue({
+        update: jest.fn().mockReturnThis(),
+        digest: jest.fn().mockReturnValue('mocked-hash'),
+    });
+}
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { AuditService } from '../src/common/monitoring/audit/audit.service';

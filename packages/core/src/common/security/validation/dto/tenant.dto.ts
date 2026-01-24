@@ -60,25 +60,21 @@ export const CreateTenantSchema = z.object({
   fulfillmentRadius: z.number()
     .min(0, 'نصف قطر التوصيل لا يمكن أن يكون سالباً')
     .max(1000, 'نصف قطر التوصيل كبير جداً')
-    .default(10)
-    .optional(),
+    .optional().default(10),
 
   // التكوين
   currency: z.string()
     .length(3, 'رمز العملة يجب أن يكون 3 أحرف')
     .regex(/^[A-Z]{3}$/, 'رمز العملة غير صالح')
-    .default('EGP')
-    .optional(),
+    .optional().default('EGP'),
   language: z.string()
     .length(2, 'رمز اللغة يجب أن يكون حرفين')
     .regex(/^[a-z]{2}$/, 'رمز اللغة غير صالح')
-    .default('ar')
-    .optional(),
+    .optional().default('ar'),
   timeZone: z.string()
     .min(3, 'المنطقة الزمنية قصيرة جداً')
     .max(50, 'المنطقة الزمنية طويلة جداً')
-    .default('Africa/Cairo')
-    .optional(),
+    .optional().default('Africa/Cairo'),
 
   // الأمان
   allowedOrigins: z.array(z.string().url())

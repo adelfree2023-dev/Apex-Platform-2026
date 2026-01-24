@@ -13,9 +13,13 @@ import { ProcessWebhookDto } from '../dto/process-webhook.dto';
 import { CheckoutDto } from '../dto/checkout.dto';
 
 jest.mock('stripe');
-jest.mock('crypto', () => ({
-  randomBytes: () => ({ toString: () => 'test_secret_key' }),
-}));
+jest.mock('crypto', () => {
+  const actual = jest.requireActual('crypto');
+  return {
+    ...actual,
+    randomBytes: jest.fn().mockImplementation((size) => actual.randomBytes(size)),
+  };
+});
 
 describe('PaymentService', () => {
   let service: PaymentService;

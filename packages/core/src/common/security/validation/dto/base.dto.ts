@@ -47,11 +47,9 @@ export const BaseSchema = {
 
   // ✅ S3: رقم هاتف آمن
   phoneNumber: z.preprocess(
-    val => typeof val === 'string' ? val.replace(/\s+/g, '') : val,
+    val => typeof val === 'string' ? val.replace(/[\s\-\.\(\)]/g, '') : val,
     z.string()
-      .regex(/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/, 'صيغة رقم الهاتف غير صالحة')
-      .min(10, 'رقم الهاتف قصير جداً')
-      .max(20, 'رقم الهاتف طويل جداً')
+      .regex(/^\+?[0-9]{10,15}$/, 'صيغة رقم الهاتف غير صالحة')
       .transform(phone => phone.replace(/\D/g, ''))
   ),
 

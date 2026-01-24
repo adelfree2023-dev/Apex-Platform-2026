@@ -113,10 +113,33 @@ export class RateLimiterService {
         }
     }
 
+    private readonly GENERIC_LIMITS: Map<string, { count: number; expiresAt: number }> = new Map();
+
+    async checkLimit(key: string, options: { maxRequests: number; windowMs: number }): Promise<{ allowed: boolean; currentRequests: number; maxRequests: number }> {
+        const now = Date.now();
+        let record = this.GENERIC_LIMITS.get(key);
+
+        if (!record || now > record.expiresAt) {
+            record = { count: 0, expiresAt: now + options.windowMs };
+            this.GENERIC_LIMITS.set(key, record);
+        }
+
+        record.count++;
+
+        if (record.count > options.maxRequests) {
+            return { allowed: false, currentRequests: record.count, maxRequests: options.maxRequests };
+        }
+
+        return { allowed: true, currentRequests: record.count, maxRequests: options.maxRequests };
+    }
+
     private cleanupBuckets(): void {
         const now = Date.now();
         for (const [tenantId, bucket] of this.TOKEN_BUCKETS.entries()) {
             if (now - bucket.lastRefill > 86400000) this.TOKEN_BUCKETS.delete(tenantId);
+        }
+        for (const [key, record] of this.GENERIC_LIMITS.entries()) {
+            if (now > record.expiresAt) this.GENERIC_LIMITS.delete(key);
         }
     }
 }

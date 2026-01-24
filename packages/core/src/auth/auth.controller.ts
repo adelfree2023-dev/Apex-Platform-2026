@@ -62,12 +62,23 @@ export class AuthController {
 
         try {
             // ✅ S3: التحقق والتطهير من المدخلات
+            const ctx = require('../common/utils/security.utils').extractContext(request);
             const validated = await this.inputValidator.secureValidate(LoginRequestSchema, body, 'auth.login');
-            this.securityContext.logSecurityEvent('LOGIN_ATTEMPT', { email: validated.email, tenantId, ip });
-            const result = await this.authService.login(validated, tenantId, ip);
+
+            this.securityContext.logSecurityEvent('LOGIN_ATTEMPT', {
+                email: validated.email,
+                ...ctx
+            });
+
+            const result = await this.authService.login(validated, tenantId, ctx.ip);
             return response.status(HttpStatus.OK).json(result);
         } catch (error) {
-            this.securityContext.logSecurityEvent('LOGIN_FAILURE', { email: body?.email || '[REDACTED]', tenantId, ip, errorType: error.name });
+            const ctx = require('../common/utils/security.utils').extractContext(request);
+            this.securityContext.logSecurityEvent('LOGIN_FAILURE', {
+                email: body?.email || '[REDACTED]',
+                errorType: error.name,
+                ...ctx
+            });
             await constantTimeDelay(1500);
             return response.status(HttpStatus.UNAUTHORIZED).json({
                 statusCode: HttpStatus.UNAUTHORIZED,

@@ -18,6 +18,7 @@ const AuditLogSchema = z.object({
     action: z.string().min(1),
     userId: z.union([z.string(), z.number(), z.null()]).optional(),
     ip: z.string().ip().optional(),
+    requestId: z.string().optional(),
     severity: z.enum(['info', 'warning', 'error', 'critical']).default('info'),
     details: z.record(z.any()).optional(),
 });
@@ -93,13 +94,14 @@ export class AuditService {
 
             await this.prisma.$executeRawUnsafe(`
         INSERT INTO "${schemaName}"."vendure_audit_log" (
-          id, action, user_id, ip_address, details, severity, created_at
-        ) VALUES ($1, $2, $3, $4, $5::jsonb, $6, NOW())
+          id, action, user_id, ip_address, request_id, details, severity, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, NOW())
       `,
                 uuidv4(),
                 validated.action,
                 validated.userId?.toString() || null,
                 validated.ip || null,
+                validated.requestId || null,
                 validated.details ? JSON.stringify(validated.details) : null,
                 validated.severity
             );

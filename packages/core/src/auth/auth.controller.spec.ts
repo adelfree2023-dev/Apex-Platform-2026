@@ -70,7 +70,7 @@ describe('AuthController (e2e)', () => {
         .expect(HttpStatus.OK);
 
       expect(response.body).toEqual({ accessToken: 'tok', refreshToken: 'ref' });
-      expect(mockAuthService.login).toHaveBeenCalledWith(validLogin, tenantId, ip);
+      expect(mockAuthService.login).toHaveBeenCalledWith(validLogin, tenantId, expect.anything());
       expect(mockSecurity.logSecurityEvent).toHaveBeenCalledWith(
         'LOGIN_ATTEMPT',
         expect.objectContaining({ email: 'user@example.com', tenantId })

@@ -7,6 +7,13 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { PrismaService } from '../prisma/prisma.service';
 
 import { ConfigService } from '@nestjs/config';
+import { SecurityContext } from '../common/security/security.context';
+import { AnomalyDetectionService } from '../common/access-control/services/anomaly-detection.service';
+import { RateLimiterService } from '../common/access-control/services/rate-limiter.service';
+import { AuditService } from '../common/monitoring/audit/audit.service';
+import { EncryptedFieldService } from '../common/security/encryption/encrypted-field.service';
+import { InputValidatorService } from '../common/security/validation/input-validator.service';
+import { TenantContextService } from '../common/security/tenant-context/tenant-context.service';
 
 describe('AuthModule', () => {
   let module: TestingModule;

@@ -114,8 +114,8 @@ export class EncryptedFieldService implements OnModuleInit {
   hashData(data: string, salt?: string): { hash: string; salt: string } {
     const generatedSalt = salt || crypto.randomBytes(16).toString('hex');
     const hash = crypto.pbkdf2Sync(
-      Buffer.from(data),
-      Buffer.from(generatedSalt),
+      Buffer.from(data) as any,
+      Buffer.from(generatedSalt) as any,
       100000,
       64,
       'sha512'

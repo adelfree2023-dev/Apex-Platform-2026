@@ -82,7 +82,7 @@ export class EncryptedFieldService implements OnModuleInit {
       encrypted += cipher.final('hex');
       const authTag = cipher.getAuthTag().toString('hex');
 
-      return `${version}:${iv.toString('hex')}:${authTag}:${encrypted}`;
+      return `${v}:${iv.toString('hex')}:${authTag}:${encrypted}`;
     } catch (error) {
       this.logger.error(`[S7] Encryption Failure: ${error.message}`);
       return this.isProduction ? '[ENCRYPTION_ERROR]' : text;

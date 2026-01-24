@@ -110,13 +110,12 @@ describe('SecurityContext', () => {
     it('should verify database connection', async () => {
       const mockPrisma = {
         $queryRaw: jest.fn().mockResolvedValue([1]),
-        $connect: jest.fn(),
+        $connect: jest.fn().mockResolvedValue(undefined),
       };
       const mockApp = {} as INestApplication;
 
       await expect(SecurityContext.verifyDatabaseConnection(mockPrisma as any, mockApp)).resolves.not.toThrow();
     });
-
     it('should throw if database reconnection fails', async () => {
       const mockPrisma = {
         $queryRaw: jest.fn().mockRejectedValue(new Error('Fail')),
@@ -143,9 +142,13 @@ describe('SecurityContext', () => {
         providers: [
           SecurityContext,
           { provide: AuditService, useValue: mockAuditService },
+          { provide: ConfigService, useValue: mockConfigService },
         ],
       }).compile();
       const standalone = await module.resolve<SecurityContext>(SecurityContext);
+      // Manually set config service to null for this test if needed, 
+      // but the original test logic was different.
+      (standalone as any).configService = null;
       const loggerSpy = jest.spyOn((standalone as any).logger, 'warn');
 
       standalone.onModuleInit();
@@ -155,7 +158,7 @@ describe('SecurityContext', () => {
 
   describe('error handling in logging', () => {
     it('should catch errors in logSecurityEvent gracefully', () => {
-      mockAuditService.logSecurityEvent.mockImplementation(() => { throw new Error('Log Fail'); });
+      mockAuditService.logSecurityEvent.mockImplementationOnce(() => { throw new Error('Log Fail'); });
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
       expect(() => service.logSecurityEvent('FAIL_EVENT', {})).not.toThrow();
@@ -164,7 +167,7 @@ describe('SecurityContext', () => {
     });
 
     it('should catch errors in logCriticalSecurityEvent gracefully', () => {
-      mockAuditService.logSecurityEvent.mockImplementation(() => { throw new Error('Critical Log Fail'); });
+      mockAuditService.logSecurityEvent.mockImplementationOnce(() => { throw new Error('Critical Log Fail'); });
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
       expect(() => service.logCriticalSecurityEvent('CRITICAL_FAIL', {})).not.toThrow();

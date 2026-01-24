@@ -109,7 +109,10 @@ describe('EncryptedFieldService', () => {
         try {
             const serviceProd = new EncryptedFieldService();
             process.env.NODE_ENV = 'production';
-            delete process.env.ENCRYPTION_MASTER_KEY;
+
+            // Force failure in crypto to test fallback
+            const crypto = require('crypto');
+            jest.spyOn(crypto, 'hkdfSync').mockImplementationOnce(() => { throw new Error('Crypto error'); });
 
             const encrypted = serviceProd.encrypt(tenantId, plainText);
             expect(encrypted).toBe('[ENCRYPTION_ERROR]');

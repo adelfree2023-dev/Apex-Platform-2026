@@ -32,7 +32,7 @@ describe('DefenseInterceptor', () => {
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
     testingModule = await Test.createTestingModule({
       providers: [
         DefenseInterceptor,

@@ -52,7 +52,7 @@ describe('PaymentService', () => {
     sendMail: jest.fn().mockResolvedValue(undefined)
   };
   const mockConfig = {
-    get: jest.fn((key) => {
+    get: jest.fn().mockImplementation((key) => {
       if (key === 'STRIPE_SECRET_KEY') return 'sk_test_dummy';
       if (key === 'NODE_ENV') return 'development';
       return null;

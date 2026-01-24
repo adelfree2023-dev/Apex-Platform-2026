@@ -110,14 +110,14 @@ export class PaymentService {
                     paymentMethod: createPaymentIntentDto.paymentMethod,
                     ipAddress,
                     metadata: {
-                        clientSecret: paymentIntent.client_secret,
+                        clientSecret: paymentIntent.client_secret || '',
                         createdAt: new Date().toISOString(),
                     },
                 },
             });
 
             return {
-                clientSecret: paymentIntent.client_secret,
+                clientSecret: paymentIntent.client_secret || '',
                 paymentId: paymentIntent.id,
             };
         } catch (error) {

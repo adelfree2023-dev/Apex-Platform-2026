@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DefenseInterceptor } from './defense.interceptor';
 import { CallHandler, ExecutionContext } from '@nestjs/common';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { getCommonProviders, createMockAnomalyDetection } from '../../../../test/test-utils';
 import { AnomalyDetectionService } from '../../access-control/services/anomaly-detection.service';
 

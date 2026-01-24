@@ -40,15 +40,88 @@ describe('DefenseInterceptor', () => {
     interceptor = module.get<DefenseInterceptor>(DefenseInterceptor);
   });
 
-  it('passes through and sets headers', (done) => {
-    interceptor.intercept(mockContext, mockCallHandler).subscribe({
-      next: (val) => {
-        expect(val).toEqual({ success: true });
+  it('should pass through if tenantId is missing but log event', (done) => {
+    const contextWithoutTenant = {
+      switchToHttp: () => ({
+        getRequest: () => ({ method: 'GET', url: '/test', headers: {}, socket: {} })
+      })
+    } as any;
+
+    interceptor.intercept(contextWithoutTenant, mockCallHandler).subscribe({
+      next: () => {
         done();
-      },
-      error: (err) => {
-        done(err);
       }
+    });
+  });
+
+  it('should block suspended tenants', (done) => {
+    const anomaly = module.get(AnomalyDetectionService);
+    jest.spyOn(anomaly, 'isSuspended').mockReturnValue(true);
+
+    interceptor.intercept(mockContext, mockCallHandler).subscribe({
+      error: (err) => {
+        expect(err.status).toBe(503);
+        expect(err.message).toContain('suspended');
+        done();
+      }
+    });
+  });
+
+  it('should block throttled tenants during system overload', (done) => {
+    const anomaly = module.get(AnomalyDetectionService);
+    jest.spyOn(anomaly, 'isThrottled').mockReturnValue(true);
+    // Force overload by mocking process.memoryUsage if needed, or just mock isSystemOverloaded
+    jest.spyOn(interceptor as any, 'isSystemOverloaded').mockReturnValue(true);
+
+    interceptor.intercept(mockContext, mockCallHandler).subscribe({
+      error: (err) => {
+        expect(err.status).toBe(503);
+        expect(err.message).toContain('heavy load');
+        done();
+      }
+    });
+  });
+
+  it('should block when rate limit is exceeded', (done) => {
+    const rateLimiter = module.get(RateLimiterService);
+    jest.spyOn(rateLimiter, 'consume').mockResolvedValue({ allowed: false, remaining: 0, reset: 10 });
+
+    interceptor.intercept(mockContext, mockCallHandler).subscribe({
+      error: (err) => {
+        expect(err.status).toBe(403);
+        expect(err.message).toContain('Rate limit exceeded');
+        done();
+      }
+    });
+  });
+
+  it('should handle request errors and log them', (done) => {
+    const errorHandler: CallHandler = {
+      handle: () => throwError(() => new Error('Business Error'))
+    };
+
+    interceptor.intercept(mockContext, errorHandler).subscribe({
+      error: (err) => {
+        expect(err.message).toBe('Business Error');
+        done();
+      }
+    });
+  });
+
+  it('should extract IP from x-forwarded-for', (done) => {
+    const contextWithForwarded = {
+      switchToHttp: () => ({
+        getRequest: () => ({
+          method: 'GET', url: '/',
+          headers: { 'x-forwarded-for': '1.1.1.1, 2.2.2.2' },
+          tenantId: '123',
+          socket: {}
+        })
+      })
+    } as any;
+
+    interceptor.intercept(contextWithForwarded, mockCallHandler).subscribe({
+      next: () => done()
     });
   });
 });

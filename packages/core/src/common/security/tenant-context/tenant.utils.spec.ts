@@ -22,6 +22,26 @@ describe('TenantUtils', () => {
             expect(TenantUtils.getTenantIdFromRequest(mockReq)).toBe('tenant-uuid-long');
         });
 
+        it('should extract tenantId from query', () => {
+            const mockReq = { headers: {}, query: { tenantId: 'q-tenant' }, body: {} };
+            expect(TenantUtils.getTenantIdFromRequest(mockReq as any)).toBe('q-tenant');
+        });
+
+        it('should extract tenantId from body', () => {
+            const mockReq = { headers: {}, query: {}, body: { tenantId: 'b-tenant' } };
+            expect(TenantUtils.getTenantIdFromRequest(mockReq as any)).toBe('b-tenant');
+        });
+
+        it('should throw if tenantId is not a string', () => {
+            const mockReq = { headers: { 'x-tenant-id': 123 } };
+            expect(() => TenantUtils.getTenantIdFromRequest(mockReq as any)).toThrow();
+        });
+
+        it('should throw if tenantId is too short', () => {
+            const mockReq = { headers: { 'x-tenant-id': 'shrt' } };
+            expect(() => TenantUtils.getTenantIdFromRequest(mockReq as any)).toThrow();
+        });
+
         it('should throw BadRequestException if missing', () => {
             const mockReq: any = { headers: {}, query: {}, body: {} };
             expect(() => TenantUtils.getTenantIdFromRequest(mockReq)).toThrow(BadRequestException);

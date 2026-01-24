@@ -100,4 +100,66 @@ describe('TenantScopedGuard', () => {
 
     expect(await guard.canActivate(context)).toBe(true);
   });
+
+  describe('Branch Coverage: Database Isolation', () => {
+    const originalEnv = process.env.NODE_ENV;
+
+    it('should attempt schema creation in development mode if missing', async () => {
+      process.env.NODE_ENV = 'development';
+      const context = createMockContext({ 'x-tenant-id': tenantId });
+      mockPrisma.tenant.findUnique.mockResolvedValue({ id: tenantId, status: 'ACTIVE' });
+      mockPrisma.$queryRaw.mockResolvedValue([]); // Schema missing
+      mockPrisma.$executeRawUnsafe.mockResolvedValue(1);
+
+      expect(await guard.canActivate(context)).toBe(true);
+      expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalled();
+      process.env.NODE_ENV = originalEnv;
+    });
+
+    it('should return false if schema creation fails in development', async () => {
+      process.env.NODE_ENV = 'development';
+      const context = createMockContext({ 'x-tenant-id': tenantId });
+      mockPrisma.tenant.findUnique.mockResolvedValue({ id: tenantId, status: 'ACTIVE' });
+      mockPrisma.$queryRaw.mockResolvedValue([]); // Schema missing
+      mockPrisma.$executeRawUnsafe.mockRejectedValue(new Error('DDL Fail'));
+
+      await expect(guard.canActivate(context)).rejects.toThrow();
+      process.env.NODE_ENV = originalEnv;
+    });
+  });
+
+  describe('Branch Coverage: Logging & Sanitization', () => {
+    it('should redact sensitive headers in unauthorized logs', async () => {
+      const context = createMockContext({
+        'x-tenant-id': 'invalid',
+        'authorization': 'Bearer secret',
+        'cookie': 'session=123'
+      });
+
+      await expect(guard.canActivate(context)).rejects.toThrow();
+
+      expect(mockAudit.logSecurityEvent).toHaveBeenCalledWith(
+        'UNAUTHORIZED_TENANT_ACCESS',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            authorization: '[REDACTED]',
+            cookie: '[REDACTED]'
+          })
+        })
+      );
+    });
+
+    it('should handle missing audit service without crashing', async () => {
+      const guardWithoutAudit = new TenantScopedGuard(mockReflector, mockTenantContext, mockPrisma);
+      const context = createMockContext({ 'x-tenant-id': 'invalid' });
+      await expect(guardWithoutAudit.canActivate(context)).rejects.toThrow();
+    });
+  });
+
+  it('should handle general errors in catch block', async () => {
+    const context = createMockContext({ 'x-tenant-id': tenantId });
+    mockPrisma.tenant.findUnique.mockRejectedValue(new Error('Unexpected DB Error'));
+
+    await expect(guard.canActivate(context)).rejects.toThrow('فشل التحقق من الهوية');
+  });
 });

@@ -129,7 +129,7 @@ export class AppController {
         return { status: 'degraded', module: 'prisma-layer' };
       }
       return { status: 'ok', module: 'prisma-layer' };
-    } catch (error) {
+    } catch (error: any) {
       this.securityContext?.logSecurityEvent?.('DATABASE_HEALTH_ERROR', {
         error: error.message,
         ip: ip,
@@ -146,17 +146,32 @@ export class AppController {
     @Ip() ip: string,
     @Req() request: Request
   ) {
-    const tenantId = (request as any)['tenantId'];
+    // 🛡️ S3: التحقق من صحة معلمات المسار (Zod)
+    const moduleSchema = z.object({
+      moduleName: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/i),
+      tenantId: z.string().uuid().optional(),
+    });
+
+    const validation = moduleSchema.safeParse({
+      moduleName,
+      tenantId: (request as any).tenant?.id
+    });
+
+    if (!validation.success) {
+      this.logger.warn(`محاولة فحص صحة وحدة غير صالحة: ${moduleName}`);
+      throw new BadRequestException('اسم الوحدة غير صالح');
+    }
+
     try {
       await this.auditService.logOperation({
-        tenantId: tenantId || 'system',
+        tenantId: validation.data.tenantId || 'system',
         userId: (request as any)['user']?.id || 'anonymous',
         action: 'module_health_check',
-        target: moduleName,
+        target: validation.data.moduleName,
         ip: ip
       });
-      return { status: 'ok', module: moduleName, timestamp: new Date().toISOString() };
-    } catch (error) {
+      return { status: 'ok', module: validation.data.moduleName, timestamp: new Date().toISOString() };
+    } catch (error: any) {
       this.securityContext?.logSecurityEvent?.('MODULE_HEALTH_FAILURE', {
         module: moduleName,
         error: error.message,

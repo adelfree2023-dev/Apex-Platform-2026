@@ -11,6 +11,8 @@ import { SecurityContext } from '../../security/security.context';
 import { InputValidatorService } from '../../security/validation/input-validator.service';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const AuditLogSchema = z.object({
     action: z.string().min(1),
@@ -115,12 +117,32 @@ export class AuditService {
             code: error.code || 'UNKNOWN',
         };
 
-        // الحل الجزري: منع الحلقات اللانهائية بتسجيل الفشل في الكونسول فقط
         this.logger.error(`[AUDIT_FAILURE] Tenant: ${tenantId}, Action: ${event.action}, Error: ${safeError.message}`);
+
+        // 🛡️ S4: Fallback to local file logging
+        this.logToFallback(tenantId, event);
 
         if (safeError.code === '42P01') {
             this.logger.warn(`[AUDIT_RECOVERY] Schema or table missing. Setting isSystemReady to false.`);
             this.isSystemReady = false;
+        }
+    }
+
+    private logToFallback(tenantId: string, event: any): void {
+        try {
+            const logDir = path.join(process.cwd(), 'logs', 'audit');
+            if (!fs.existsSync(logDir)) {
+                fs.mkdirSync(logDir, { recursive: true });
+            }
+            const logFile = path.join(logDir, `fallback-${new Date().toISOString().split('T')[0]}.log`);
+            const logEntry = JSON.stringify({
+                timestamp: new Date().toISOString(),
+                tenantId,
+                ...event
+            }) + '\n';
+            fs.appendFileSync(logFile, logEntry);
+        } catch (e) {
+            this.logger.error(`CRITICAL: Audit fallback logger failed: ${e.message}`);
         }
     }
 

@@ -57,9 +57,11 @@ export class TenantScopedGuard implements CanActivate {
         throw new ForbiddenException('المستأجر غير نشط أو غير موجود');
       }
 
-      // ✅ S2: التحقق من عزل البيانات على مستوى قاعدة البيانات
+      // ✅ S2: التحقق من عزل البيانات على مستوى قاعدة البيانات (ثغرة أمنية حرجة تم إصلاحها)
       if (!await this.verifyDatabaseIsolation(tenantId)) {
-        this.logger.warn(`Potential isolation failure for tenant ${tenantId}`);
+        this.logger.error(`فشل التحقق من عزل المخطط للمستأجر: ${tenantId}`);
+        this.logUnauthorizedAccess(request, 'SCHEMA_ISOLATION_FAILURE');
+        throw new ForbiddenException('فشل عزل بيانات المستأجر');
       }
 
       // ✅ S2: تعيين سياق المستأجر (S7: تطبيق التشفير على البيانات الحساسة إذا لزم الأمر في الطبقات التالية)

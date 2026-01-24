@@ -11,6 +11,7 @@ import { CSPConfig } from './common/presentation/security-headers/csp.config';
 import { SystemInitializationService } from './common/core/system-initialization.service';
 import { AuditService } from './common/monitoring/audit/audit.service';
 import rateLimit from 'express-rate-limit';
+import { SystemHealthService } from './common/core/system-health.service';
 
 // ✅ S8: تحسين معالجة الأخطاء النهائية
 process.on('uncaughtException', (error) => {
@@ -137,6 +138,24 @@ function applySecurityHeaders(app: any, cspConfig: CSPConfig) {
   // ✅ S8: CSP with Dynamic Nonce
   app.use((req: any, res: any, next: any) => {
     res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
+    next();
+  });
+
+  // 🛡️ S6: Circuit Breaker Middleware
+  const systemHealth = app.get(SystemHealthService);
+  const audit = app.get(AuditService);
+  app.use((req: any, res: any, next: any) => {
+    if (systemHealth?.isOverloaded?.()) {
+      audit?.logSecurityEvent?.('SYSTEM_OVERLOAD_PROTECTION', {
+        path: req.url,
+        ip: req.ip
+      });
+      return res.status(503).json({
+        statusCode: 503,
+        message: 'System is currently overloaded. Please try again later.',
+        retryAfter: 30
+      });
+    }
     next();
   });
 

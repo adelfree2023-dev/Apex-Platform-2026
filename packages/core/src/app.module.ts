@@ -20,6 +20,7 @@ import { EncryptedFieldService } from './common/security/encryption/encrypted-fi
 import { AnomalyDetectionService } from './common/access-control/services/anomaly-detection.service';
 import { RateLimiterService } from './common/access-control/services/rate-limiter.service';
 import { StorefrontModule } from './modules/storefront/storefront.module';
+import { SystemHealthService } from './common/core/system-health.service';
 
 /**
 * 🏰 Digital Fortress: Root AppModule
@@ -78,8 +79,9 @@ import { StorefrontModule } from './modules/storefront/storefront.module';
     EncryptedFieldService,
     AnomalyDetectionService,
     RateLimiterService,
+    SystemHealthService,
     // Add other guards/interceptors if the classes exist
   ],
-  exports: [AppService, SystemInitializationService]
+  exports: [AppService, SystemInitializationService, SystemHealthService]
 })
 export class AppModule { }

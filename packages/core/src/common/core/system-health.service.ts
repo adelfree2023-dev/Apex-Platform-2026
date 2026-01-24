@@ -38,7 +38,22 @@ export class SystemHealthService {
         }
     }
 
-    private async checkSecurity(): Promise<any> {
+    async checkSecurity(): Promise<any> {
         return { status: 'up' };
+    }
+
+    /**
+     * 🛡️ S6: Circuit Breaker - اكتشاف الضغط العالي على النظام
+     */
+    isOverloaded(): boolean {
+        const memoryUsage = process.memoryUsage();
+        const heapUsed = memoryUsage.heapUsed / memoryUsage.heapTotal;
+
+        // إذا زاد استهلاك الـ Heap عن 90%، نعتبر النظام في حالة ضغط
+        if (heapUsed > 0.9) {
+            this.logger.error(`Critical Memory Pressure: ${(heapUsed * 100).toFixed(2)}%`);
+            return true;
+        }
+        return false;
     }
 }

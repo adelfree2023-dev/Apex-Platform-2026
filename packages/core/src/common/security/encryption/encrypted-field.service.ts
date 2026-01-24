@@ -59,10 +59,22 @@ export class EncryptedFieldService implements OnModuleInit {
     return Buffer.from(crypto.hkdfSync('sha256', this.masterKey as any, salt as any, info as any, this.KEY_LENGTH));
   }
 
-  encrypt(tenantId: string, text: string, version: string = 'v1'): string {
+  /**
+   * 🛡️ S7: الحصول على الإصدار الحالي للمفاتيح بناءً على التاريخ
+   * يضمن هذا النمط تدوير المفاتيح بشكل دوري تلقائياً
+   */
+  getCurrentVersion(): string {
+    const date = new Date();
+    // تدوير كل ربع سنة (Quarterly rotation)
+    const quarter = Math.floor(date.getMonth() / 3) + 1;
+    return `v${date.getFullYear()}Q${quarter}`;
+  }
+
+  encrypt(tenantId: string, text: string, version?: string): string {
     if (!text || typeof text !== 'string') return text;
+    const v = version || this.getCurrentVersion();
     try {
-      const key = this.deriveTenantKey(tenantId, version);
+      const key = this.deriveTenantKey(tenantId, v);
       const iv = crypto.randomBytes(this.IV_LENGTH);
       const cipher = crypto.createCipheriv(this.algorithm, key as any, iv as any);
 

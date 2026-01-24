@@ -146,7 +146,6 @@ describe('AuthService', () => {
       expect(result).toEqual({ success: true });
       expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO'),
-        expect.anything(),
         validRegisterDto.email.toLowerCase(),
         'hashed-password',
         validRegisterDto.name,

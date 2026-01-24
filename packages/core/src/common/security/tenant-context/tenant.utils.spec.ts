@@ -23,13 +23,13 @@ describe('TenantUtils', () => {
         });
 
         it('should extract tenantId from query', () => {
-            const mockReq = { headers: {}, query: { tenantId: 'q-tenant' }, body: {} };
-            expect(TenantUtils.getTenantIdFromRequest(mockReq as any)).toBe('q-tenant');
+            const mockReq = { headers: {}, query: { tenantId: 'q-tenant-long-id' }, body: {} };
+            expect(TenantUtils.getTenantIdFromRequest(mockReq as any)).toBe('q-tenant-long-id');
         });
 
         it('should extract tenantId from body', () => {
-            const mockReq = { headers: {}, query: {}, body: { tenantId: 'b-tenant' } };
-            expect(TenantUtils.getTenantIdFromRequest(mockReq as any)).toBe('b-tenant');
+            const mockReq = { headers: {}, query: {}, body: { tenantId: 'b-tenant-long-id' } };
+            expect(TenantUtils.getTenantIdFromRequest(mockReq as any)).toBe('b-tenant-long-id');
         });
 
         it('should throw if tenantId is not a string', () => {

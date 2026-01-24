@@ -121,7 +121,8 @@ describe('DefenseInterceptor', () => {
     } as any;
 
     interceptor.intercept(contextWithForwarded, mockCallHandler).subscribe({
-      next: () => done()
+      next: () => done(),
+      error: (err) => done(err)
     });
   });
 });

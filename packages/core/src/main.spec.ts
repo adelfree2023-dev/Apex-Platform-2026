@@ -34,7 +34,9 @@ describe('Bootstrap (main)', () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   it('/health (root) returns ok', async () => {

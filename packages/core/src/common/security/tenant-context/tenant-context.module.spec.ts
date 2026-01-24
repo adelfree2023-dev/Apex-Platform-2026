@@ -11,8 +11,8 @@ describe('TenantContextModule', () => {
     }).compile();
   });
 
-  it('exports TenantContextService', () => {
-    const svc = module.get<TenantContextService>(TenantContextService);
+  it('exports TenantContextService', async () => {
+    const svc = await module.resolve<TenantContextService>(TenantContextService);
     expect(svc).toBeInstanceOf(TenantContextService);
   });
 });

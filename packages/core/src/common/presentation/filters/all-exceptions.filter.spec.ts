@@ -11,6 +11,9 @@ describe('AllExceptionsFilter', () => {
   };
   const mockRequest = {
     url: '/test',
+    method: 'GET',
+    headers: {},
+    socket: { remoteAddress: '127.0.0.1' },
   };
   const mockHost = {
     switchToHttp: () => ({
@@ -34,5 +37,6 @@ describe('AllExceptionsFilter', () => {
     const exception = new HttpException('Bad', HttpStatus.BAD_REQUEST);
     filter.catch(exception, mockHost);
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
+    expect(mockResponse.json).toHaveBeenCalled();
   });
 });

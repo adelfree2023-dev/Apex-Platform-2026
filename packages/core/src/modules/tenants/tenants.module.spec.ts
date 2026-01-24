@@ -1,9 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TenantsModule } from './tenants.module';
-import { prismaMock } from '../../../prisma/prisma.service.mock';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { AuditService } from '../../../common/monitoring/audit/audit.service';
-import { createMockAudit } from '../../../../test/test-utils';
+import { PrismaService } from '../../prisma/prisma.service';
+import { AuditService } from '../../common/monitoring/audit/audit.service';
+import { createMockAudit, createMockPrisma } from '../../../test/test-utils';
 
 describe('TenantsModule', () => {
   let module: TestingModule;
@@ -12,7 +11,7 @@ describe('TenantsModule', () => {
     module = await Test.createTestingModule({
       imports: [TenantsModule],
     })
-      .overrideProvider(PrismaService).useValue(prismaMock)
+      .overrideProvider(PrismaService).useValue(createMockPrisma())
       .overrideProvider(AuditService).useValue(createMockAudit())
       .compile();
   });

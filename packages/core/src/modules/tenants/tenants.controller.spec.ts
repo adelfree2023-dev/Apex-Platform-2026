@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TenantsController } from './tenants.controller';
-import { TenantsService } from '../services/tenants.service';
-import { getCommonProviders } from '../../../../test/test-utils';
+import { TenantsService } from './tenants.service';
+import { getCommonProviders } from '../../../test/test-utils';
 
 describe('TenantsController (e2e)', () => {
   let controller: TenantsController;

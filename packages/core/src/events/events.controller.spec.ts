@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EventsController } from './events.controller';
 import { EventsService } from './events.service';
-import { getCommonProviders } from '../../../test/test-utils';
+import { getCommonProviders } from '../../test/test-utils';
 
 describe('EventsController (e2e)', () => {
   let controller: EventsController;

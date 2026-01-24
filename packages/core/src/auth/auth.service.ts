@@ -64,7 +64,7 @@ export class AuthService {
             }
 
             // 🛡️ S4: تسجيل نجاح الدخول
-            await this.auditService.logActivity({
+            await this.auditService.logOperation({
                 tenantId,
                 userId: users[0].id.toString(),
                 action: 'USER_LOGIN',
@@ -73,7 +73,7 @@ export class AuthService {
 
             return this.generateTokens(users[0].id, tenantId, users[0].role);
         } catch (error) {
-            const status = error?.status || error?.response?.status || error?.response?.statusCode || (error?.getResponse ? error.getResponse()?.statusCode : null) || (error?.name?.includes('Unauthorized') ? 401 : (error?.name?.includes('Forbidden') ? 403 : 500));
+            const status = error?.status || error?.response?.status || error?.response?.statusCode || (error?.getResponse ? error.getResponse()?.statusCode : null) || (error?.name?.toLowerCase().includes('unauthorized') ? 401 : (error?.name?.toLowerCase().includes('forbidden') ? 403 : 500));
             if (status === 401 || status === 403) throw error;
 
             await this.auditService.logSecurityEvent('AUTH_SYSTEM_ERROR', {

@@ -10,7 +10,7 @@ import { MailService } from '../src/common/communication/mail.service';
 import { AnomalyDetectionService } from '../src/common/access-control/services/anomaly-detection.service';
 import { InputValidatorService } from '../src/common/security/validation/input-validator.service';
 import { SanitizerService } from '../src/common/security/validation/sanitizer.service';
-import { EncryptedFieldService as EncryptionService } from '../src/common/security/encryption/encrypted-field.service';
+import { EncryptedFieldService } from '../src/common/security/encryption/encrypted-field.service';
 
 export const createMockPrisma = () => {
     const mock: any = {
@@ -91,39 +91,24 @@ export const createMockEncryption = () => ({
     decryptSensitiveData: jest.fn((data) => data?.replace('encrypted:', '') || data),
 });
 
-// Providers list for TestingModule
-export const getCommonProviders = (): Provider[] => {
-    const mockPrisma = createMockPrisma();
-    const mockAudit = createMockAudit();
-    const mockSecurityContext = createMockSecurityContext();
-    const mockTenantContext = createMockTenantContext();
-    const mockConfig = createMockConfig();
-    const mockRateLimiter = createMockRateLimiter();
-    const mockMailService = createMockMailService();
-    const mockAnomalyDetection = createMockAnomalyDetection();
-    const mockInputValidator = createMockInputValidator();
-    const mockSanitizer = createMockSanitizer();
-    const mockEncryption = createMockEncryption();
+export const getCommonProviders = (): Provider[] => [
+    { provide: PrismaService, useValue: createMockPrisma() },
+    { provide: AuditService, useValue: createMockAudit() },
+    { provide: SecurityContext, useValue: createMockSecurityContext() },
+    { provide: TenantContextService, useValue: createMockTenantContext() },
+    { provide: ConfigService, useValue: createMockConfig() },
+    { provide: RateLimiterService, useValue: createMockRateLimiter() },
+    { provide: MailService, useValue: createMockMailService() },
+    { provide: AnomalyDetectionService, useValue: createMockAnomalyDetection() },
+    { provide: InputValidatorService, useValue: createMockInputValidator() },
+    { provide: SanitizerService, useValue: createMockSanitizer() },
+    { provide: EncryptedFieldService, useValue: createMockEncryption() },
+    Reflector,
+    { provide: 'SECURITY_LOGGER', useValue: { logEvent: jest.fn() } },
+    { provide: 'CACHE_MANAGER', useValue: { get: jest.fn(), set: jest.fn() } },
+];
 
-    return [
-        { provide: PrismaService, useValue: mockPrisma },
-        { provide: AuditService, useValue: mockAudit },
-        { provide: SecurityContext, useValue: mockSecurityContext },
-        { provide: TenantContextService, useValue: mockTenantContext },
-        { provide: ConfigService, useValue: mockConfig },
-        { provide: RateLimiterService, useValue: mockRateLimiter },
-        { provide: MailService, useValue: mockMailService },
-        { provide: AnomalyDetectionService, useValue: mockAnomalyDetection },
-        { provide: InputValidatorService, useValue: mockInputValidator },
-        { provide: SanitizerService, useValue: mockSanitizer },
-        { provide: EncryptionService, useValue: mockEncryption },
-        Reflector,
-        { provide: 'SECURITY_LOGGER', useValue: { logEvent: jest.fn() } },
-        { provide: 'CACHE_MANAGER', useValue: { get: jest.fn(), set: jest.fn() } },
-    ];
-};
-
-// Legacy constants for backward compatibility (lazy init)
+// Singletons for simple tests (Backward compatibility)
 export const mockPrisma = createMockPrisma();
 export const mockAudit = createMockAudit();
 export const mockSecurityContext = createMockSecurityContext();
@@ -147,7 +132,7 @@ export const commonProviders: Provider[] = [
     { provide: AnomalyDetectionService, useValue: mockAnomalyDetection },
     { provide: InputValidatorService, useValue: mockInputValidator },
     { provide: SanitizerService, useValue: mockSanitizer },
-    { provide: EncryptionService, useValue: mockEncryption },
+    { provide: EncryptedFieldService, useValue: mockEncryption },
     Reflector,
     { provide: 'SECURITY_LOGGER', useValue: { logEvent: jest.fn() } },
     { provide: 'CACHE_MANAGER', useValue: { get: jest.fn(), set: jest.fn() } },

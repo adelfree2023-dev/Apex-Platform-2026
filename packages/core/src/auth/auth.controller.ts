@@ -108,10 +108,25 @@ export class AuthController {
         }
 
         try {
+            const ctx = require('../common/utils/security.utils').extractContext(request);
             const validated = await this.inputValidator.secureValidate(RegisterRequestSchema, body, 'auth.register');
+
+            this.securityContext.logSecurityEvent('REGISTRATION_ATTEMPT', {
+                email: validated.email,
+                tenantId,
+                ...ctx
+            });
+
             const result = await this.authService.register(validated, tenantId, ip);
             return response.status(HttpStatus.CREATED).json(result);
         } catch (error) {
+            const ctx = require('../common/utils/security.utils').extractContext(request);
+            this.securityContext.logSecurityEvent('REGISTRATION_FAILURE', {
+                email: body?.email || '[REDACTED]',
+                errorType: error.name,
+                tenantId,
+                ...ctx
+            });
             await constantTimeDelay(1000);
             return response.status(HttpStatus.BAD_REQUEST).json({
                 statusCode: HttpStatus.BAD_REQUEST,

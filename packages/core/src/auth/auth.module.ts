@@ -9,6 +9,8 @@ import { EncryptedFieldService } from '../common/security/encryption/encrypted-f
 import { AnomalyDetectionService } from '../common/access-control/services/anomaly-detection.service';
 import { RateLimiterService } from '../common/access-control/services/rate-limiter.service';
 import { AuditService } from '../common/monitoring/audit/audit.service';
+import { SecurityContext } from '../common/security/security.context';
+import { InputValidatorService } from '../common/security/validation/input-validator.service';
 
 /**
  * 🏰 Digital Fortress: Auth Module
@@ -39,6 +41,8 @@ import { AuditService } from '../common/monitoring/audit/audit.service';
         AnomalyDetectionService,
         RateLimiterService,
         AuditService,
+        SecurityContext,
+        InputValidatorService,
     ],
     exports: [AuthService],
 })

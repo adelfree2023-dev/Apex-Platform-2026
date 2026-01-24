@@ -17,6 +17,12 @@ describe('AuthModule', () => {
     })
       .overrideProvider(PrismaService).useValue({ $connect: jest.fn(), $disconnect: jest.fn() })
       .overrideProvider(ConfigService).useValue({ get: jest.fn() })
+      .overrideProvider('SecurityContext').useValue({ logSecurityEvent: jest.fn() })
+      .overrideProvider('AnomalyDetectionService').useValue({ detect: jest.fn() })
+      .overrideProvider('RateLimiterService').useValue({ consume: jest.fn() })
+      .overrideProvider('AuditService').useValue({ logActivity: jest.fn() })
+      .overrideProvider('EncryptedFieldService').useValue({ encrypt: jest.fn() })
+      .overrideProvider('InputValidatorService').useValue({ secureValidate: jest.fn() })
       .compile();
   });
 

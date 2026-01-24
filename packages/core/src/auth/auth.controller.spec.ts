@@ -40,8 +40,8 @@ describe('AuthController (e2e)', () => {
     })
       .overrideGuard(TenantScopedGuard).useValue({ canActivate: () => true })
       .overrideGuard(LicenseGuard).useValue({ canActivate: () => true })
-      .overrideInterceptor(DefenseInterceptor).useValue({ intercept: (ctx, next) => next.handle() })
-      .overrideInterceptor(AuditLoggerInterceptor).useValue({ intercept: (ctx, next) => next.handle() })
+      .overrideInterceptor(DefenseInterceptor).useValue({ intercept: (_: any, next: any) => next.handle() })
+      .overrideInterceptor(AuditLoggerInterceptor).useValue({ intercept: (_: any, next: any) => next.handle() })
       .compile();
 
     app = module.createNestApplication();

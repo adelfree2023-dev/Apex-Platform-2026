@@ -238,7 +238,7 @@ export class PaymentService {
             data: {
                 status: 'SUCCEEDED',
                 metadata: {
-                    ...payment.metadata,
+                    ...(payment.metadata as any),
                     stripeEventId: event.id,
                     succeededAt: new Date().toISOString(),
                 },
@@ -316,7 +316,7 @@ export class PaymentService {
     }
 
     // ✅ S5: إرسال تأكيد الدفع
-    async sendPaymentConfirmation(order: Order, tenantId: string): Promise<void> {
+    async sendPaymentConfirmation(order: any, tenantId: string): Promise<void> {
         try {
             const tenant = await this.prisma.tenant.findUnique({
                 where: { id: tenantId },
@@ -356,7 +356,7 @@ export class PaymentService {
 
             await this.mailService.sendMail({
                 to: customerEmail,
-                subject: `تأكيد الدفع #${order.orderNumber} - ${tenant.storeName}`,
+                subject: `تأكيد الدفع #${order.orderNumber} - ${tenant.name}`,
                 template: 'payment-confirmation',
                 context: {
                     storeName: tenant.name,

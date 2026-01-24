@@ -6,41 +6,68 @@ import { RateLimiterService } from '../../../common/access-control/services/rate
 import { EncryptedFieldService as EncryptionService } from '../../../common/security/encryption/encrypted-field.service';
 import { AuditService } from '../../../common/monitoring/audit/audit.service';
 import { MailService } from '../../../common/communication/mail.service';
+import { AnomalyDetectionService } from '../../../common/access-control/services/anomaly-detection.service';
+import { InputValidatorService } from '../../../common/security/validation/input-validator.service';
+import { ConfigService } from '@nestjs/config';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { CartItemDto } from '../dto/cart-item.dto';
 import { CustomerInfoDto } from '../dto/customer-info.dto';
 import { ShippingAddressDto } from '../dto/shipping-address.dto';
-import { commonProviders, mockPrisma, mockAudit, mockMailService, mockRateLimiter, mockTenantContext } from '../../../../test/test-utils';
+import {
+  createMockPrisma,
+  createMockAudit,
+  createMockMailService,
+  createMockRateLimiter,
+  createMockTenantContext,
+  createMockConfig,
+  createMockAnomalyDetection,
+  createMockInputValidator
+} from '../../../../test/test-utils';
 
 describe('ShopService', () => {
   let service: ShopService;
-
-  const mockEncryption = {
-    encrypt: jest.fn((_, data) => `encrypted:${data}`),
-    decrypt: jest.fn((_, data) => data.replace('encrypted:', ''))
-  };
+  let mockPrisma: any;
+  let mockAudit: any;
+  let mockMailService: any;
+  let mockRateLimiter: any;
+  let mockEncryption: any;
 
   beforeEach(async () => {
+    mockPrisma = createMockPrisma();
+    mockAudit = createMockAudit();
+    mockMailService = createMockMailService();
+    mockRateLimiter = createMockRateLimiter();
+    mockEncryption = {
+      encrypt: jest.fn((_, data) => `encrypted:${data}`),
+      decrypt: jest.fn((_, data) => data.replace('encrypted:', ''))
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ShopService,
-        ...commonProviders,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: AuditService, useValue: mockAudit },
+        { provide: MailService, useValue: mockMailService },
+        { provide: RateLimiterService, useValue: mockRateLimiter },
+        { provide: TenantContextService, useValue: createMockTenantContext() },
+        { provide: ConfigService, useValue: createMockConfig() },
+        { provide: AnomalyDetectionService, useValue: createMockAnomalyDetection() },
+        { provide: InputValidatorService, useValue: createMockInputValidator() },
         { provide: EncryptionService, useValue: mockEncryption },
       ],
     }).compile();
 
     service = module.get<ShopService>(ShopService);
-    jest.clearAllMocks();
   });
 
   describe('checkRateLimit', () => {
     it('should not throw when within limits', async () => {
-      mockRateLimiter.checkLimit = jest.fn().mockResolvedValue({ allowed: true });
+      mockRateLimiter.checkLimit.mockResolvedValue({ allowed: true });
       await expect(service.checkRateLimit('t-uuid', '1.2.3.4')).resolves.not.toThrow();
     });
 
     it('should throw HttpException when limit exceeded', async () => {
-      mockRateLimiter.checkLimit = jest.fn().mockResolvedValue({
+      mockRateLimiter.checkLimit.mockResolvedValue({
         allowed: false,
         currentRequests: 6,
         maxRequests: 5
@@ -68,7 +95,7 @@ describe('ShopService', () => {
       await expect(service.validateCartItems('t-uuid', [])).rejects.toThrow(HttpException);
       expect(mockAudit.logSecurityEvent).toHaveBeenCalledWith(
         'EMPTY_CART_ATTEMPT',
-        expect.objectContaining({ tenantId: 't-uuid' })
+        expect.objectContaining({ details: expect.objectContaining({ tenantId: 't-uuid' }) })
       );
     });
 
@@ -82,7 +109,7 @@ describe('ShopService', () => {
       await expect(service.validateCartItems('t-uuid', [validItems[0]])).rejects.toThrow(HttpException);
       expect(mockAudit.logSecurityEvent).toHaveBeenCalledWith(
         'PRODUCT_UNAVAILABLE',
-        expect.objectContaining({ tenantId: 't-uuid' })
+        expect.objectContaining({ details: expect.objectContaining({ tenantId: 't-uuid' }) })
       );
     });
 
@@ -112,7 +139,7 @@ describe('ShopService', () => {
       await expect(service.validateCartItems('t-uuid', items)).rejects.toThrow(HttpException);
       expect(mockAudit.logSecurityEvent).toHaveBeenCalledWith(
         'HIGH_VALUE_ORDER_ATTEMPT',
-        expect.objectContaining({ tenantId: 't-uuid', totalAmount: 200000 })
+        expect.objectContaining({ details: expect.objectContaining({ tenantId: 't-uuid', totalAmount: 200000 }) })
       );
     });
 
@@ -214,7 +241,7 @@ describe('ShopService', () => {
         'ORDER_CREATION_FAILED',
         expect.objectContaining({
           severity: 'CRITICAL',
-          tenantId: 't-uuid'
+          details: expect.objectContaining({ tenantId: 't-uuid' })
         })
       );
     });

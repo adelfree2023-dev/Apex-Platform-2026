@@ -25,9 +25,105 @@ describe('DashboardService', () => {
       mockPrisma.order.aggregate.mockResolvedValue({ _sum: { totalAmount: 1000 } });
       mockPrisma.order.count.mockResolvedValue(20);
       mockPrisma.order.groupBy.mockResolvedValue([]);
+      mockPrisma.product.findMany.mockResolvedValue([]);
+      mockPrisma.product.count.mockResolvedValue(100);
+      mockPrisma.customer.count.mockResolvedValue(50);
+      mockPrisma.$queryRaw.mockResolvedValue([]);
+
+      const result = await service.getOverview('t1', '2026-01-01', '2026-01-31');
+      expect(result.sales.totalSales).toBe(1000);
+      expect(result.inventory.totalProducts).toBe(100);
+    });
+
+    it('should return cached data if available', async () => {
+      const cached = { sales: { totalSales: 5000 } };
+      const cacheService = (service as any).cacheService;
+      jest.spyOn(cacheService, 'get').mockResolvedValue(cached);
 
       const result = await service.getOverview('t1');
-      expect(result.sales.totalSales).toBe(1000);
+      expect(result).toEqual(cached);
+    });
+
+    it('should log and throw error on failure', async () => {
+      mockPrisma.order.aggregate.mockRejectedValue(new Error('DB Fail'));
+      await expect(service.getOverview('t1')).rejects.toThrow('DB Fail');
+    });
+  });
+
+  describe('getInventoryStatus', () => {
+    it('should return correct inventory metrics', async () => {
+      mockPrisma.product.findMany.mockResolvedValue([{ id: 'p1', stock: 5 }]);
+      mockPrisma.product.count.mockResolvedValueOnce(100).mockResolvedValueOnce(5);
+
+      const result = await (service as any).getInventoryStatus('t1');
+      expect(result.totalProducts).toBe(100);
+      expect(result.lowStockProducts).toHaveLength(1);
+      expect(result.lowStockPercentage).toBe(1);
+    });
+  });
+
+  describe('getDashboardAlerts', () => {
+    it('should generate alerts for low stock and pending orders', async () => {
+      // Low stock count > 0
+      mockPrisma.product.count.mockResolvedValue(10);
+      // Pending orders count > 0
+      mockPrisma.order.count.mockResolvedValueOnce(5).mockResolvedValueOnce(0);
+      // Sales comparison (stable)
+      mockPrisma.order.aggregate.mockResolvedValue({ _sum: { totalAmount: 100 } });
+
+      const alerts = await service.getDashboardAlerts('t1');
+      expect(alerts).toEqual(expect.arrayContaining([
+        expect.objectContaining({ title: 'مخزون منخفض' }),
+        expect.objectContaining({ title: 'طلبات متأخرة' })
+      ]));
+    });
+
+    it('should generate alert for sales decline', async () => {
+      mockPrisma.product.count.mockResolvedValue(0);
+      mockPrisma.order.count.mockResolvedValue(0);
+      // Last week: 50, Previous week: 100 (50% decline > 30% threshold)
+      mockPrisma.order.aggregate
+        .mockResolvedValueOnce({ _sum: { totalAmount: 50 } })
+        .mockResolvedValueOnce({ _sum: { totalAmount: 100 } });
+
+      const alerts = await service.getDashboardAlerts('t1');
+      expect(alerts).toEqual(expect.arrayContaining([
+        expect.objectContaining({ title: 'انخفاض المبيعات' })
+      ]));
+    });
+
+    it('should generate alert for cancelled orders', async () => {
+      mockPrisma.product.count.mockResolvedValue(0);
+      mockPrisma.order.count.mockResolvedValueOnce(0).mockResolvedValueOnce(10); // cancelled count
+      mockPrisma.order.aggregate.mockResolvedValue({ _sum: { totalAmount: 0 } });
+
+      const alerts = await service.getDashboardAlerts('t1');
+      expect(alerts).toEqual(expect.arrayContaining([
+        expect.objectContaining({ title: 'طلبات ملغاة' })
+      ]));
+    });
+
+    it('should handle errors gracefully and return empty array', async () => {
+      mockPrisma.product.count.mockRejectedValue(new Error('Fail'));
+      const alerts = await service.getDashboardAlerts('t1');
+      expect(alerts).toEqual([]);
+    });
+  });
+
+  describe('Placeholder reports', () => {
+    it('should return placeholder for sales report', async () => {
+      const result = await service.getSalesReport('t1');
+      expect(result.message).toContain('not implemented');
+    });
+
+    it('should return placeholder for products report', async () => {
+      const result = await service.getProductsReport('t1');
+      expect(result.message).toContain('not implemented');
+    });
+
+    it('should return placeholder for customers report', async () => {
+      const result = await service.getCustomersReport('t1');
+      expect(result.message).toContain('not implemented');
     });
   });
 });

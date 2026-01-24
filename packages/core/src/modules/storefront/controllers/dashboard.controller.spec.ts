@@ -72,4 +72,48 @@ describe('DashboardController (e2e)', () => {
       });
     });
   });
+
+  describe('GET /alerts', () => {
+    it('should return dashboard alerts', async () => {
+      await request(app.getHttpServer())
+        .get(`/api/shop/${tenantSub}/dashboard/alerts`)
+        .set('x-tenant-id', validTenantId)
+        .expect(HttpStatus.OK);
+
+      expect(mockDashboard.getDashboardAlerts).toHaveBeenCalled();
+    });
+  });
+
+  describe('GET /reports/sales', () => {
+    it('should return sales report', async () => {
+      await request(app.getHttpServer())
+        .get(`/api/shop/${tenantSub}/dashboard/reports/sales`)
+        .set('x-tenant-id', validTenantId)
+        .expect(HttpStatus.OK);
+
+      expect(mockDashboard.getSalesReport).toHaveBeenCalled();
+    });
+  });
+
+  describe('GET /reports/products', () => {
+    it('should return products report', async () => {
+      await request(app.getHttpServer())
+        .get(`/api/shop/${tenantSub}/dashboard/reports/products`)
+        .set('x-tenant-id', validTenantId)
+        .expect(HttpStatus.OK);
+
+      expect(mockDashboard.getProductsReport).toHaveBeenCalled();
+    });
+  });
+
+  describe('GET /reports/customers', () => {
+    it('should return customers report', async () => {
+      await request(app.getHttpServer())
+        .get(`/api/shop/${tenantSub}/dashboard/reports/customers`)
+        .set('x-tenant-id', validTenantId)
+        .expect(HttpStatus.OK);
+
+      expect(mockDashboard.getCustomersReport).toHaveBeenCalled();
+    });
+  });
 });

@@ -23,9 +23,9 @@ export class TenantsService {
         private readonly auditService: AuditService,
     ) { }
 
-    async createTenantWithStore(data: CreateTenantDto) {
+    async createTenantWithStore(data: any, ctx?: any) {
         // S3: Validate inputs
-        await this.validateTenantCreation(data);
+        await this.validateTenantCreation(data, ctx);
 
         // S7: Hash password
         const hashedPassword = await bcrypt.hash(data.password, 12);
@@ -72,6 +72,8 @@ export class TenantsService {
             await this.auditService.logActivity({
                 tenantId: tenant.id,
                 userId: 'system',
+                requestId: ctx?.requestId,
+                ip: ctx?.ip,
                 action: 'TENANT_STORE_CREATED',
                 details: {
                     subdomain: tenant.subdomain,
@@ -93,6 +95,8 @@ export class TenantsService {
             // 🛡️ S4: تسجيل فشل إنشاء المتجر
             await this.auditService.logSecurityEvent('TENANT_CREATION_FAILED', {
                 severity: 'HIGH',
+                requestId: ctx?.requestId,
+                ip: ctx?.ip,
                 details: {
                     error: error.message,
                     subdomain: data.subdomain,
@@ -107,10 +111,12 @@ export class TenantsService {
         });
     }
 
-    private async validateTenantCreation(data: CreateTenantDto) {
+    private async validateTenantCreation(data: any, ctx?: any) {
         if (this.RESERVED_SUBDOMAINS.includes(data.subdomain.toLowerCase())) {
             await this.auditService.logSecurityEvent('RESERVED_SUBDOMAIN_ATTEMPT', {
                 severity: 'MEDIUM',
+                requestId: ctx?.requestId,
+                ip: ctx?.ip,
                 details: { subdomain: data.subdomain, email: data.email }
             });
             throw new BadRequestException(`Subdomain "${data.subdomain}" is reserved`);

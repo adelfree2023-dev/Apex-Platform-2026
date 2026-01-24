@@ -32,7 +32,7 @@ describe('DefenseInterceptor', () => {
   };
 
   beforeEach(async () => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     testingModule = await Test.createTestingModule({
       providers: [
         DefenseInterceptor,
@@ -59,7 +59,7 @@ describe('DefenseInterceptor', () => {
 
   it('should block suspended tenants', (done) => {
     const anomaly = testingModule.get(AnomalyDetectionService);
-    jest.spyOn(anomaly, 'isSuspended').mockReturnValue(true);
+    jest.spyOn(anomaly, 'isSuspended').mockReturnValueOnce(true);
 
     interceptor.intercept(mockContext, mockCallHandler).subscribe({
       error: (err) => {
@@ -72,9 +72,9 @@ describe('DefenseInterceptor', () => {
 
   it('should block throttled tenants during system overload', (done) => {
     const anomaly = testingModule.get(AnomalyDetectionService);
-    jest.spyOn(anomaly, 'isThrottled').mockReturnValue(true);
+    jest.spyOn(anomaly, 'isThrottled').mockReturnValueOnce(true);
     // Force overload by mocking process.memoryUsage if needed, or just mock isSystemOverloaded
-    jest.spyOn(interceptor as any, 'isSystemOverloaded').mockReturnValue(true);
+    jest.spyOn(interceptor as any, 'isSystemOverloaded').mockReturnValueOnce(true);
 
     interceptor.intercept(mockContext, mockCallHandler).subscribe({
       error: (err) => {
@@ -87,7 +87,7 @@ describe('DefenseInterceptor', () => {
 
   it('should block when rate limit is exceeded', (done) => {
     const rateLimiter = testingModule.get(RateLimiterService);
-    jest.spyOn(rateLimiter, 'consume').mockResolvedValue({ allowed: false, remaining: 0, reset: 10 });
+    jest.spyOn(rateLimiter, 'consume').mockResolvedValueOnce({ allowed: false, remaining: 0, reset: 10 });
 
     interceptor.intercept(mockContext, mockCallHandler).subscribe({
       error: (err) => {

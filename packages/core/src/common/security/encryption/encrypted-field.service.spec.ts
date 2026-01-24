@@ -117,7 +117,7 @@ describe('EncryptedFieldService', () => {
             const encrypted = serviceProd.encrypt(tenantId, plainText);
             expect(encrypted).toBe('[ENCRYPTION_ERROR]');
 
-            const decrypted = serviceProd.decrypt(tenantId, 'any-data');
+            const decrypted = serviceProd.decrypt(tenantId, 'v1:bad:iv:data');
             expect(decrypted).toBe('[ENCRYPTED_FAILURE]');
         } finally {
             process.env.ENCRYPTION_MASTER_KEY = originalKey;

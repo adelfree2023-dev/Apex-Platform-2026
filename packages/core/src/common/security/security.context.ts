@@ -129,14 +129,7 @@ export class SecurityContext implements OnModuleInit {
     * 🛡️ S5: Safe method to get IP address from request
     */
     getIpFromRequest(request: Request | any): string {
-        try {
-            let ip = request.ip || request.socket.remoteAddress || 'unknown';
-            if (request.headers['x-forwarded-for']) {
-                ip = (request.headers['x-forwarded-for'] as string).split(',')[0].trim();
-            }
-            return ip.replace(/[^a-z0-9\.:]/gi, '').substring(0, 50);
-        } catch (error) {
-            return 'unknown';
-        }
+        const { extractContext } = require('../utils/security.utils');
+        return extractContext(request).ip;
     }
 }

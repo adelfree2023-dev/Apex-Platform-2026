@@ -58,9 +58,12 @@ export class PaymentController {
             );
 
             // ✅ S4: تسجيل التدقيق
-            await this.auditService.logActivity({
-                tenantId: createPaymentIntentDto.tenantId,
-                userId: 'anonymous',
+            const { tenantId, userId, requestId, ip } = require('../../../common/utils/security.utils').extractContext(request);
+            this.auditService.logActivity({
+                tenantId: tenantId || createPaymentIntentDto.tenantId,
+                userId,
+                requestId,
+                ip,
                 action: 'PAYMENT_INTENT_CREATED',
                 details: {
                     amount: createPaymentIntentDto.amount,

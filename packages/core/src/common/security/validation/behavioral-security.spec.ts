@@ -18,11 +18,14 @@ describe('Behavioral Security Tests (ASMP S3)', () => {
         it('should strip or neutralize all XSS payloads in SafeTextSchema', () => {
             xssPayloads.forEach(payload => {
                 const result = SafeTextSchema.parse(payload);
-                // Result should NOT contain script tags or event handlers
+                // Result should NOT contain script tags or event handlers, or should be [removed]
                 expect(result).not.toContain('<script');
                 expect(result).not.toContain('onerror');
                 expect(result).not.toContain('onload');
-                expect(result).not.toContain('javascript:');
+
+                if (payload.includes('javascript:')) {
+                    expect(result).toContain('[removed]');
+                }
             });
         });
     });

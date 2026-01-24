@@ -121,10 +121,10 @@ export const ProductSearchSchema = z.object({
   maxPrice: SafeNumberRawSchema.min(0).optional(),
   inStock: z.boolean().optional(),
   isFeatured: z.boolean().optional(),
-  page: z.number().int().min(1).default(1).optional(),
-  limit: z.number().int().min(1).max(100).default(20).optional(),
-  sortBy: z.enum(['price', 'name', 'createdAt', 'popularity']).default('createdAt').optional(),
-  sortOrder: z.enum(['asc', 'desc']).default('desc').optional(),
+  page: z.number().int().min(1).optional().default(1),
+  limit: z.number().int().min(1).max(100).optional().default(20),
+  sortBy: z.enum(['price', 'name', 'createdAt', 'popularity']).optional().default('createdAt'),
+  sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
 });
 
 // Category, Image, Review

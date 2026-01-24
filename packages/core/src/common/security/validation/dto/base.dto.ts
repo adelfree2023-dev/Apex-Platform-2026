@@ -25,24 +25,35 @@ export const BaseSchema = {
     .min(1, 'النص مطلوب')
     .max(500, 'النص طويل جداً')
     .trim()
-    .transform(text => sanitizeHtml(text, {
-      allowedTags: [],
-      allowedAttributes: {}
-    })),
+    .transform(text => {
+      const sanitized = sanitizeHtml(text, {
+        allowedTags: [],
+        allowedAttributes: {}
+      });
+      // ✅ S3: حماية إضافية ضد الروابط المشبوهة والبروتوكولات
+      return sanitized
+        .replace(/javascript:/gi, '[removed]')
+        .replace(/data:/gi, '[removed]')
+        .replace(/vbscript:/gi, '[removed]');
+    }),
 
   // ✅ S3: بريد إلكتروني آمن
-  emailAddress: z.string()
-    .email('صيغة البريد الإلكتروني غير صالحة')
-    .min(5, 'البريد الإلكتروني قصير جداً')
-    .max(255, 'البريد الإلكتروني طويل جداً')
-    .transform(email => email.toLowerCase().trim()),
+  emailAddress: z.preprocess(
+    val => typeof val === 'string' ? val.trim().toLowerCase() : val,
+    z.string().email('صيغة البريد الإلكتروني غير صالحة')
+      .min(5, 'البريد الإلكتروني قصير جداً')
+      .max(255, 'البريد الإلكتروني طويل جداً')
+  ),
 
   // ✅ S3: رقم هاتف آمن
-  phoneNumber: z.string()
-    .regex(/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/, 'صيغة رقم الهاتف غير صالحة')
-    .min(10, 'رقم الهاتف قصير جداً')
-    .max(20, 'رقم الهاتف طويل جداً')
-    .transform(phone => phone.replace(/\D/g, '')),
+  phoneNumber: z.preprocess(
+    val => typeof val === 'string' ? val.replace(/\s+/g, '') : val,
+    z.string()
+      .regex(/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/, 'صيغة رقم الهاتف غير صالحة')
+      .min(10, 'رقم الهاتف قصير جداً')
+      .max(20, 'رقم الهاتف طويل جداً')
+      .transform(phone => phone.replace(/\D/g, ''))
+  ),
 
   // ✅ S3: اسم آمن
   name: z.string()
@@ -79,7 +90,7 @@ export const BaseInputSchema = z.object({
     .min(36, 'معرف الطلب قصير جداً')
     .max(36, 'معرف الطلب طويل جداً')
     .trim().optional()
-}).transform(data => {
+}).passthrough().transform(data => {
   // تنقية جميع الحقول النصية (Extra Safety Layer)
   return Object.keys(data).reduce((cleanData: any, key: string) => {
     if (typeof (data as any)[key] === 'string') {

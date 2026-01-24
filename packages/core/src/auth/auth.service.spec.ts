@@ -120,9 +120,11 @@ describe('AuthService', () => {
       (verifySecureHash as jest.Mock).mockResolvedValueOnce(false);
 
       await expect(service.login(validLoginDto, tenantId, ip)).rejects.toThrow(UnauthorizedException);
-      expect(mockSecurity.logSecurityEvent).toHaveBeenCalledWith(
-        'LOGIN_FAILURE',
-        expect.objectContaining({ email: 'user@example.com', tenantId })
+      expect(mockAudit.logSecurityEvent).toHaveBeenCalledWith(
+        'LOGIN_FAILED',
+        expect.objectContaining({
+          details: expect.objectContaining({ email: 'user@example.com', tenantId })
+        })
       );
     });
 

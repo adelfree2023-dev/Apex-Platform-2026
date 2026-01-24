@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import * as sanitizeHtml from 'sanitize-html';
+import sanitizeHtml from 'sanitize-html';
 
 /*** ✅ S3: المخطط الأساسي لجميع المدخلات - النسخة المطورة*/
 export const BaseSchema = {

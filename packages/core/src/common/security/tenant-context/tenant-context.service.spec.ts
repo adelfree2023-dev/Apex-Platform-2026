@@ -14,9 +14,9 @@ describe('TenantContextService', () => {
   });
 
   it('stores and retrieves tenant per async context', async () => {
-    service.setCurrentTenant(mockTenant);
+    service.setTenantId(mockTenant.id);
     expect(service.getCurrentTenant()).toBe(mockTenant);
-    service.clearCurrentTenant();
+    service.clearTenantId();
     expect(service.getCurrentTenant()).toBeUndefined();
   });
 });

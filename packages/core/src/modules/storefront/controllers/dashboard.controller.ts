@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Param, Query, UseGuards, Req, Logger, HttpStatus, HttpException } from '@nestjs/common';
 import { DashboardService } from '../services/dashboard.service';
-import { TenantScopedGuard } from '../../../common/security/guards/tenant-scoped.guard';
+import { TenantScopedGuard } from '../../../common/access-control/guards/tenant-scoped.guard';
 import { AuditService } from '../../../common/monitoring/audit/audit.service';
 import { InputValidatorService } from '../../../common/security/validation/input-validator.service';
 import { DateRangeDto } from '../dto/date-range.dto';

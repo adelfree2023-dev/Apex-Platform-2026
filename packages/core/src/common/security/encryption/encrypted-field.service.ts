@@ -64,7 +64,7 @@ export class EncryptedFieldService implements OnModuleInit {
     try {
       const key = this.deriveTenantKey(tenantId, version);
       const iv = crypto.randomBytes(this.IV_LENGTH);
-      const cipher = crypto.createCipheriv(this.algorithm, key as any, iv);
+      const cipher = crypto.createCipheriv(this.algorithm, key as any, iv as any);
 
       let encrypted = cipher.update(text, 'utf8', 'hex');
       encrypted += cipher.final('hex');
@@ -82,8 +82,8 @@ export class EncryptedFieldService implements OnModuleInit {
     try {
       const [version, ivHex, authTagHex, encryptedData] = cipherText.split(':');
       const key = this.deriveTenantKey(tenantId, version);
-      const decipher = crypto.createDecipheriv(this.algorithm, key as any, Buffer.from(ivHex, 'hex'));
-      decipher.setAuthTag(Buffer.from(authTagHex, 'hex'));
+      const decipher = crypto.createDecipheriv(this.algorithm, key as any, Buffer.from(ivHex, 'hex') as any);
+      decipher.setAuthTag(Buffer.from(authTagHex, 'hex') as any);
 
       let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
@@ -126,8 +126,8 @@ export class EncryptedFieldService implements OnModuleInit {
   verifyHash(data: string, hash: string, salt: string): boolean {
     const { hash: newHash } = this.hashData(data, salt);
     return crypto.timingSafeEqual(
-      Buffer.from(newHash, 'hex'),
-      Buffer.from(hash, 'hex')
+      Buffer.from(newHash, 'hex') as any,
+      Buffer.from(hash, 'hex') as any
     );
   }
 

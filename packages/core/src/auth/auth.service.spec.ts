@@ -34,7 +34,10 @@ describe('AuthService', () => {
   const mockTenantContext = {
     getTenantSchema: jest.fn().mockResolvedValue('tenant_schema'),
   };
-  const mockEncryption = {};
+  const mockEncryption = {
+    encrypt: jest.fn().mockReturnValue('encrypted-data'),
+    decrypt: jest.fn().mockReturnValue('decrypted-data'),
+  };
   const mockAnomaly = {
     detect: jest.fn(),
   };

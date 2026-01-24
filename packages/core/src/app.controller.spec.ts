@@ -9,8 +9,22 @@ import request from 'supertest';
 import { commonProviders } from '../test/test-utils';
 
 describe('AppController (e2e)', () => {
+  let app: INestApplication;
+  let mockAppService: any;
+  let mockSecurity: any;
+  let mockAudit: any;
+
   beforeAll(async () => {
-    const { mockPrisma } = require('../test/test-utils');
+    const { mockPrisma, mockAudit: ma } = require('../test/test-utils');
+    mockAudit = ma;
+    mockAppService = {
+      getHealth: jest.fn().mockResolvedValue({ status: 'ok', service: 'apex-core' }),
+      verifyDatabaseConnection: jest.fn().mockResolvedValue(true),
+    };
+    mockSecurity = {
+      logSecurityEvent: jest.fn(),
+    };
+
     mockPrisma.tenant.findUnique.mockResolvedValue({
       id: '00000000-0000-0000-0000-000000000001',
       status: 'ACTIVE',
@@ -25,6 +39,7 @@ describe('AppController (e2e)', () => {
       providers: [
         { provide: AppService, useValue: mockAppService },
         { provide: SecurityContext, useValue: mockSecurity },
+        { provide: AuditService, useValue: mockAudit },
         ...commonProviders.filter(p => {
           if (typeof p === 'object' && p !== null && 'provide' in p) {
             return (p as any).provide !== SecurityContext;

@@ -12,7 +12,7 @@ describe('AuditController', () => {
             getAuditLogs: jest.fn().mockResolvedValue([]),
         };
 
-        const { mockPrisma, commonProviders } = require('../../test/test-utils');
+        const { mockPrisma, commonProviders } = require('../../../../test/test-utils');
         mockPrisma.tenant.findUnique.mockResolvedValue({
             id: '00000000-0000-0000-0000-000000000001',
             status: 'ACTIVE'

@@ -11,15 +11,8 @@ import { AnomalyDetectionService } from '../src/common/access-control/services/a
 import { InputValidatorService } from '../src/common/security/validation/input-validator.service';
 import { SanitizerService } from '../src/common/security/validation/sanitizer.service';
 import { EncryptedFieldService } from '../src/common/security/encryption/encrypted-field.service';
-import * as crypto from 'crypto';
 
-// 🛡️ Mock crypto globally for NestJS ModuleTokenFactory and other internals
-if (!crypto.createHash) {
-    (crypto as any).createHash = jest.fn().mockReturnValue({
-        update: jest.fn().mockReturnThis(),
-        digest: jest.fn().mockReturnValue('mocked-hash'),
-    });
-}
+/** 🛡️ ASMP: Unified Test Utilities */
 
 export const createMockPrisma = () => {
     const mock: any = {
@@ -33,6 +26,8 @@ export const createMockPrisma = () => {
         $queryRaw: jest.fn().mockResolvedValue([]),
         $executeRawUnsafe: jest.fn().mockResolvedValue(1),
         $queryRawUnsafe: jest.fn().mockResolvedValue([]),
+        $connect: jest.fn().mockResolvedValue(undefined),
+        $disconnect: jest.fn().mockResolvedValue(undefined),
     };
     return mock;
 };
@@ -89,8 +84,6 @@ export const createMockAnomalyDetection = () => ({
     isSuspended: jest.fn().mockReturnValue(false),
 });
 
-
-
 export const createMockInputValidator = () => ({
     secureValidate: jest.fn().mockImplementation(async (_, data) => data),
     getTenantIdSchema: jest.fn().mockReturnValue({ parse: jest.fn() }),
@@ -108,6 +101,12 @@ export const createMockEncryption = () => ({
     decryptSensitiveData: jest.fn((data) => data?.replace('encrypted:', '') || data),
 });
 
+export const createMockCache = () => ({
+    get: jest.fn().mockResolvedValue(undefined),
+    set: jest.fn().mockResolvedValue(undefined),
+    del: jest.fn().mockResolvedValue(undefined),
+});
+
 export const getCommonProviders = (exclude: any[] = []): Provider[] => {
     const providers: Provider[] = [
         { provide: PrismaService, useValue: createMockPrisma() },
@@ -123,7 +122,7 @@ export const getCommonProviders = (exclude: any[] = []): Provider[] => {
         { provide: EncryptedFieldService, useValue: createMockEncryption() },
         Reflector,
         { provide: 'SECURITY_LOGGER', useValue: { logEvent: jest.fn() } },
-        { provide: 'CACHE_MANAGER', useValue: { get: jest.fn(), set: jest.fn() } },
+        { provide: 'CACHE_MANAGER', useValue: createMockCache() },
     ];
 
     return providers.filter(p => {
@@ -146,5 +145,6 @@ export const mockAnomalyDetection = createMockAnomalyDetection();
 export const mockInputValidator = createMockInputValidator();
 export const mockSanitizer = createMockSanitizer();
 export const mockEncryption = createMockEncryption();
+export const mockCache = createMockCache();
 
 export const commonProviders: Provider[] = getCommonProviders();

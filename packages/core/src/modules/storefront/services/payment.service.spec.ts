@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PaymentService } from './payment.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { RateLimiterService } from '../../../common/access-control/services/rate-limiter.service';
-import { EncryptionService } from '../../../common/security/encryption/encryption.service';
+import { EncryptedFieldService as EncryptionService } from '../../../common/security/encryption/encrypted-field.service';
 import { AuditService } from '../../../common/monitoring/audit/audit.service';
 import { MailService } from '../../../common/communication/mail.service';
 import { ConfigService } from '@nestjs/config';
@@ -137,7 +137,7 @@ describe('PaymentService', () => {
       orderId: 'order-uuid',
       amount: 150,
       currency: 'USD',
-      paymentMethod: 'CARD',
+      paymentMethod: 'CREDIT_CARD',
       customerEmail: 'customer@example.com'
     };
     const ipAddress = '1.2.3.4';
@@ -168,7 +168,7 @@ describe('PaymentService', () => {
           amount: 150,
           currency: 'USD',
           status: 'CREATED',
-          paymentMethod: 'CARD',
+          paymentMethod: 'CREDIT_CARD',
           ipAddress: '1.2.3.4'
         })
       });
@@ -328,7 +328,7 @@ describe('PaymentService', () => {
       mockPrisma.order.update.mockResolvedValue({
         id: 'order-1',
         status: 'CONFIRMED',
-        paymentMethod: 'CARD',
+        paymentMethod: 'CREDIT_CARD',
         paymentDetails: {}
       });
 

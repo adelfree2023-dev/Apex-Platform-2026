@@ -6,8 +6,8 @@ import {
     HttpStatus,
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { RateLimiterService } from '../../../common/security/rate-limiter/rate-limiter.service';
-import { EncryptionService } from '../../../common/security/encryption/encryption.service';
+import { RateLimiterService } from '../../../common/access-control/services/rate-limiter.service';
+import { EncryptedFieldService as EncryptionService } from '../../../common/security/encryption/encrypted-field.service';
 import { AuditService } from '../../../common/monitoring/audit/audit.service';
 import { MailService } from '../../../common/communication/mail.service';
 import { CreatePaymentIntentDto } from '../dto/create-payment-intent.dto';

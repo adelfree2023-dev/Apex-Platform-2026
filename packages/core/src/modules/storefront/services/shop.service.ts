@@ -8,8 +8,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { TenantContextService } from '../../../common/security/tenant-context/tenant-context.service';
-import { RateLimiterService } from '../../../common/security/rate-limiter/rate-limiter.service';
-import { EncryptionService } from '../../../common/security/encryption/encryption.service';
+import { RateLimiterService } from '../../../common/access-control/services/rate-limiter.service';
+import { EncryptedFieldService as EncryptionService } from '../../../common/security/encryption/encrypted-field.service';
 import { AuditService } from '../../../common/monitoring/audit/audit.service';
 import { MailService } from '../../../common/communication/mail.service';
 import { CartItemDto } from '../dto/cart-item.dto';
@@ -149,7 +149,6 @@ export class ShopService implements OnModuleInit {
         return validatedItems;
     }
 
-    // ✅ S7: إنشاء الطلب
     async createOrder(
         tenantId: string,
         items: CartItemDto[],
@@ -157,16 +156,15 @@ export class ShopService implements OnModuleInit {
         shippingAddress: ShippingAddressDto,
         paymentMethod: string,
         ipAddress: string,
-    ): Promise<Order> {
-        // ✅ S7: تشفير البيانات الحساسة
-        const encryptedCustomerInfo = this.encryptionService.encryptSensitiveData(
-            JSON.stringify(customerInfo),
+    ): Promise<any> {
+        const encryptedCustomerInfo = this.encryptionService.encrypt(
             tenantId,
+            JSON.stringify(customerInfo),
         );
 
-        const encryptedShippingAddress = this.encryptionService.encryptSensitiveData(
-            JSON.stringify(shippingAddress),
+        const encryptedShippingAddress = this.encryptionService.encrypt(
             tenantId,
+            JSON.stringify(shippingAddress),
         );
 
         let order;
@@ -263,7 +261,7 @@ export class ShopService implements OnModuleInit {
     }
 
     // ✅ S4: إرسال إشعار تأكيد الطلب
-    async sendOrderConfirmation(order: Order, tenant: any): Promise<void> {
+    async sendOrderConfirmation(order: any, tenant: any): Promise<void> {
         try {
             const orderDetails = {
                 orderNumber: order.orderNumber,
@@ -279,9 +277,9 @@ export class ShopService implements OnModuleInit {
             let customerEmail = 'unknown@example.com';
             try {
                 const customerInfo = JSON.parse(
-                    this.encryptionService.decryptSensitiveData(
-                        order.customerInfo,
+                    this.encryptionService.decrypt(
                         tenant.id,
+                        order.customerInfo,
                     ),
                 );
                 customerEmail = customerInfo.email || customerEmail;
@@ -289,11 +287,11 @@ export class ShopService implements OnModuleInit {
                 this.logger.warn('Failed to decrypt customer info for notification');
             }
 
-            await this.mailService.sendEmail({
+            await this.mailService.sendMail({
                 to: customerEmail,
                 subject: `تأكيد طلبك #${order.orderNumber} - ${tenant.storeName}`,
                 template: 'order-confirmation',
-                data: {
+                context: {
                     storeName: tenant.storeName,
                     customerName: customerEmail.split('@')[0],
                     orderDetails,
@@ -314,7 +312,7 @@ export class ShopService implements OnModuleInit {
     }
 
     // ✅ S2: الحصول على طلب حسب المستأجر
-    async getOrderById(tenantId: string, orderId: string): Promise<Order | null> {
+    async getOrderById(tenantId: string, orderId: string): Promise<any> {
         return this.prisma.order.findFirst({
             where: {
                 id: orderId,

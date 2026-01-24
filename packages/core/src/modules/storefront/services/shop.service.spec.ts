@@ -3,7 +3,7 @@ import { ShopService } from './shop.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { TenantContextService } from '../../../common/security/tenant-context/tenant-context.service';
 import { RateLimiterService } from '../../../common/access-control/services/rate-limiter.service';
-import { EncryptionService } from '../../../common/security/encryption/encryption.service';
+import { EncryptedFieldService as EncryptionService } from '../../../common/security/encryption/encrypted-field.service';
 import { AuditService } from '../../../common/monitoring/audit/audit.service';
 import { MailService } from '../../../common/communication/mail.service';
 import { HttpException, HttpStatus } from '@nestjs/common';
@@ -194,7 +194,7 @@ describe('ShopService', () => {
         items: [{ id: 'item-1', productId: 'p1', quantity: 2, price: 10 }],
         customerInfo: 'encrypted:customer-info',
         shippingAddress: 'encrypted:shipping-address',
-        paymentMethod: 'CARD',
+        paymentMethod: 'CREDIT_CARD',
         ipAddress: '1.2.3.4'
       });
 

@@ -8,7 +8,7 @@ import { Cache } from 'cache-manager';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 
-const EmitEventSchema = z.object({
+export const EmitEventSchema = z.object({
     type: z.string().min(3),
     territory: z.string().min(2).max(100),
     businessType: z.enum(['RETAIL', 'WHOLESALE', 'SERVICES', 'RESTAURANT', 'MARKETPLACE']),

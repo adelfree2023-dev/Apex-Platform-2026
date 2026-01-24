@@ -60,7 +60,7 @@ describe('PaymentController (e2e)', () => {
         orderId: 'order-uuid',
         amount: 150,
         currency: 'USD',
-        paymentMethod: 'CARD',
+        paymentMethod: 'CREDIT_CARD',
         customerEmail: 'customer@example.com'
       };
 
@@ -87,7 +87,7 @@ describe('PaymentController (e2e)', () => {
         orderId: 'order-uuid',
         amount: 50, // Below minimum
         currency: 'USD',
-        paymentMethod: 'CARD',
+        paymentMethod: 'CREDIT_CARD',
       };
 
       await request(app.getHttpServer())
@@ -106,7 +106,7 @@ describe('PaymentController (e2e)', () => {
         orderId: 'order-uuid',
         amount: 150,
         currency: 'USD',
-        paymentMethod: 'CARD',
+        paymentMethod: 'CREDIT_CARD',
       } as any;
 
       await request(app.getHttpServer())

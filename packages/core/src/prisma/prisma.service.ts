@@ -29,15 +29,16 @@ export class PrismaService
       this.logger.log('Prisma connected to database successfully');
 
       // ✅ S2: إعداد مستمع للاستعلامات لتطبيق عزل المستأجرين
-      this.$on('query', async (event) => {
+      (this as any).$on('query', async (event: any) => {
         const currentTenant = this.tenantContextService.getCurrentTenant();
 
         if (currentTenant && event.query.includes('WHERE') && !event.query.includes('tenantId')) {
           this.logger.warn(`Potential tenant isolation violation: ${event.query}`);
 
           // ✅ S4: تسجيل محاولة الوصول بدون عزل المستأجر
-          if (this.tenantContextService.auditService) {
-            await this.tenantContextService.auditService.logSecurityEvent('TENANT_ISOLATION_VIOLATION', {
+          const auditService = (this.tenantContextService as any).auditService;
+          if (auditService) {
+            await auditService.logSecurityEvent('TENANT_ISOLATION_VIOLATION', {
               query: event.query.substring(0, 200) + '...',
               tenantId: currentTenant.id,
               severity: 'HIGH'

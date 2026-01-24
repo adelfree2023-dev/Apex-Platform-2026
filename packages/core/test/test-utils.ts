@@ -137,3 +137,19 @@ export const getCommonProviders = (exclude: any[] = []): Provider[] => {
         return !exclude.includes(p);
     });
 };
+
+// Singletons for simple tests (Backward compatibility)
+export const mockPrisma = createMockPrisma();
+export const mockAudit = createMockAudit();
+export const mockSecurityContext = createMockSecurityContext();
+export const mockTenantContext = createMockTenantContext();
+export const mockConfig = createMockConfig();
+export const mockRateLimiter = createMockRateLimiter();
+export const mockMailService = createMockMailService();
+export const mockAnomalyDetection = createMockAnomalyDetection();
+export const mockInputValidator = createMockInputValidator();
+export const mockSanitizer = createMockSanitizer();
+export const mockEncryption = createMockEncryption();
+export const mockCache = createMockCache();
+
+export const commonProviders: Provider[] = getCommonProviders();

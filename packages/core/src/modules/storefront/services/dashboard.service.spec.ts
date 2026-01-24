@@ -112,20 +112,27 @@ describe('DashboardService', () => {
     });
   });
 
-  describe('Placeholder reports', () => {
-    it('should return placeholder for sales report', async () => {
-      const result = await service.getSalesReport('t1');
-      expect(result.message).toContain('not implemented');
+  describe('Real reports (S10)', () => {
+    it('should return sales report with real data', async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([{ period: 'Jan', total_sales: 1000, order_count: 5 }]);
+      const result = await service.getSalesReport('t1', 'MONTH');
+      expect(result.period).toBe('MONTH');
+      expect(result.salesData).toBeDefined();
+      expect(result.salesData[0].total_sales).toBe(1000);
     });
 
-    it('should return placeholder for products report', async () => {
+    it('should return products report (using performance logic)', async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([{ id: 'p1', total_sold: 10 }]);
+      mockPrisma.product.findMany.mockResolvedValue([]);
       const result = await service.getProductsReport('t1');
-      expect(result.message).toContain('not implemented');
+      expect(result.topProducts).toBeDefined();
     });
 
-    it('should return placeholder for customers report', async () => {
+    it('should return customers report (using performance logic)', async () => {
+      mockPrisma.customer.count.mockResolvedValue(10);
+      mockPrisma.order.aggregate.mockResolvedValue({ _sum: { totalAmount: 500 } });
       const result = await service.getCustomersReport('t1');
-      expect(result.message).toContain('not implemented');
+      expect(result.newCustomers).toBeDefined();
     });
   });
 });

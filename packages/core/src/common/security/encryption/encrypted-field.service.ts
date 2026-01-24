@@ -20,15 +20,16 @@ export class EncryptedFieldService implements OnModuleInit {
 
   constructor() {
     const keyStr = process.env.ENCRYPTION_MASTER_KEY;
+    const isProd = process.env.NODE_ENV === 'production';
     if (!keyStr) {
-      if (this.isProduction) {
+      if (isProd) {
         throw new InternalServerErrorException('Critical security configuration error - encryption key missing');
       }
       this.logger.warn('⚠️ WARNING: Development mode - using temporary encryption key');
       this.masterKey = Buffer.from('apex-fortress-temporary-development-key-not-for-production-use-2026');
     } else {
       this.masterKey = Buffer.from(keyStr, 'utf8');
-      this.validateKeyStrength(keyStr);
+      this.validateKeyStrength(keyStr, isProd);
     }
   }
 
@@ -36,8 +37,8 @@ export class EncryptedFieldService implements OnModuleInit {
     this.verifyCryptoImplementation();
   }
 
-  private validateKeyStrength(keyStr: string): void {
-    if (this.isProduction && keyStr.length < 64) {
+  private validateKeyStrength(keyStr: string, isProd: boolean): void {
+    if (isProd && keyStr.length < 64) {
       throw new InternalServerErrorException('Critical security configuration error - encryption key too weak');
     }
   }

@@ -11,33 +11,39 @@ import { z } from 'zod';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
+import { TenantContextService } from '../common/security/tenant-context/tenant-context.service';
+import { TenantScopedGuard } from '../common/access-control/guards/tenant-scoped.guard';
+import { LicenseGuard } from '../common/access-control/guards/license.guard';
+import { DefenseInterceptor } from '../common/presentation/interceptors/defense.interceptor';
+import { AuditLoggerInterceptor } from '../common/monitoring/audit/audit-logger.interceptor';
+
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
   const mockAuthService = {
     login: jest.fn().mockResolvedValue({ accessToken: 'tok', refreshToken: 'ref' }),
     register: jest.fn().mockResolvedValue({ success: true }),
   };
-  const mockSecurity = {
-    logSecurityEvent: jest.fn(),
-  };
-  const mockValidator = {
-    secureValidate: jest.fn().mockImplementation(async (_, data) => data),
-  };
-  const mockRateLimiter = {
-    consume: jest.fn().mockResolvedValue({ allowed: true }),
-  };
+  const mockTenantContext = { setTenantId: jest.fn(), clearTenantId: jest.fn() };
+  const mockSecurity = { logSecurityEvent: jest.fn() };
+  const mockValidator = { secureValidate: jest.fn().mockImplementation(async (_, data) => data) };
+  const mockRateLimiter = { consume: jest.fn().mockResolvedValue({ allowed: true }) };
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
-        { provide: SecurityContext, useValue: mockSecurity },
+        { provide: TenantContextService, useValue: mockTenantContext },
         { provide: InputValidatorService, useValue: mockValidator },
         { provide: RateLimiterService, useValue: mockRateLimiter },
-        { provide: TenantContextService, useValue: { setTenantId: jest.fn(), clearTenantId: jest.fn() } },
+        { provide: SecurityContext, useValue: mockSecurity },
       ],
-    }).compile();
+    })
+      .overrideGuard(TenantScopedGuard).useValue({ canActivate: () => true })
+      .overrideGuard(LicenseGuard).useValue({ canActivate: () => true })
+      .overrideInterceptor(DefenseInterceptor).useValue({ intercept: (ctx, next) => next.handle() })
+      .overrideInterceptor(AuditLoggerInterceptor).useValue({ intercept: (ctx, next) => next.handle() })
+      .compile();
 
     app = module.createNestApplication();
     await app.init();

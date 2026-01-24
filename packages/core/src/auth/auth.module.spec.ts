@@ -5,13 +5,17 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { PrismaModule } from '../prisma/prisma.module';
 
+import { ConfigService } from '@nestjs/config';
+
 describe('AuthModule', () => {
   let module: TestingModule;
 
   beforeAll(async () => {
     module = await Test.createTestingModule({
       imports: [AuthModule],
-    }).compile();
+    })
+      .overrideProvider(ConfigService).useValue({ get: jest.fn() })
+      .compile();
   });
 
   it('should export AuthService', () => {

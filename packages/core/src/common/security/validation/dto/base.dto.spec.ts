@@ -76,5 +76,21 @@ describe('BaseDTO Validation', () => {
         it('should throw "فشل التحقق من صحة المدخلات" on validation error', () => {
             expect(() => secureValidate(BaseInputSchema, {})).toThrow('فشل التحقق من صحة المدخلات');
         });
+
+        it('should use fallback requestId generator if randomUUID fails', () => {
+            const crypto = require('crypto');
+            const originalRandomUUID = crypto.randomUUID;
+            crypto.randomUUID = jest.fn().mockImplementation(() => { throw new Error('Not supported'); });
+
+            const data = {
+                tenantId: '123e4567-e89b-12d3-a456-426614174000',
+                userId: '123e4567-e89b-12d3-a456-426614174001'
+            };
+
+            const result = secureValidate(BaseInputSchema, data);
+            expect(result.requestId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+
+            crypto.randomUUID = originalRandomUUID;
+        });
     });
 });

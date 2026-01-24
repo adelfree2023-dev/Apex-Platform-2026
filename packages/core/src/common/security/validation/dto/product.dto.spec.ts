@@ -61,4 +61,11 @@ describe('ProductDTO Validation', () => {
             expect(() => ProductSearchSchema.parse({ limit: 500 })).toThrow(); // Max 100
         });
     });
+
+    describe('ProductVariantSchema', () => {
+        it('should enforce compareAtPrice > price for variants', () => {
+            const invalid = { productId: 1, price: 100, compareAtPrice: 50 };
+            expect(() => ProductVariantSchema.parse(invalid)).toThrow('سعر المقارنة يجب أن يكون أكبر من السعر الأساسي');
+        });
+    });
 });

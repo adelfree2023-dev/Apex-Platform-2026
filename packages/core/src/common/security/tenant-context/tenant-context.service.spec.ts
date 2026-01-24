@@ -13,7 +13,8 @@ describe('TenantContextService', () => {
       ],
     }).compile();
 
-    service = module.get<TenantContextService>(TenantContextService);
+    // 🛡️ S7: use resolve() for REQUEST-scoped providers
+    service = await module.resolve<TenantContextService>(TenantContextService);
   });
 
   it('stores and retrieves tenant per async context', async () => {

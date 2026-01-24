@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PaymentController } from './payment.controller';
 import { PaymentService } from '../services/payment.service';
-import { CreatePaymentIntentDto } from '../dto/create-payment-intent.dto';
 import { CheckoutDto } from '../dto/checkout.dto';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import request from 'supertest';
@@ -22,10 +21,12 @@ describe('PaymentController (e2e)', () => {
       confirmPayment: jest.fn().mockResolvedValue({
         id: 'order-1',
         orderNumber: 'ORD-123',
-        status: 'PAID'
+        status: 'PAID',
+        totalAmount: 100,
+        currency: 'USD'
       }),
       sendPaymentConfirmation: jest.fn(),
-      refundPayment: jest.fn().mockResolvedValue({ success: true, refundId: 'r-1' }),
+      refundPayment: jest.fn().mockResolvedValue({ success: true, refundId: 'r-1', tenantId: 't1', id: 'r-1' }),
     };
 
     mockPrisma = createMockPrisma();
@@ -44,6 +45,13 @@ describe('PaymentController (e2e)', () => {
     }).compile();
 
     app = module.createNestApplication();
+
+    // 🛡️ S2: Middleware to inject mock tenant for audit logging
+    app.use((req: any, res: any, next: any) => {
+      req.tenant = { id: '00000000-0000-0000-0000-000000000001' };
+      next();
+    });
+
     await app.init();
   });
 
@@ -81,7 +89,7 @@ describe('PaymentController (e2e)', () => {
       const response = await request(app.getHttpServer())
         .post(`/api/shop/${tenantSub}/payments/refund`)
         .set('x-tenant-id', validTenantId)
-        .send({ orderId: 'o1', amount: 10 })
+        .send({ orderId: '00000000-0000-0000-0000-000000000002', amount: 10 })
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toEqual({ success: true, refundId: 'r-1' });

@@ -4,6 +4,7 @@ import { CallHandler, ExecutionContext } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
 import { getCommonProviders, createMockAnomalyDetection } from '../../../../test/test-utils';
 import { AnomalyDetectionService } from '../../access-control/services/anomaly-detection.service';
+import { RateLimiterService } from '../../access-control/services/rate-limiter.service';
 
 describe('DefenseInterceptor', () => {
   let interceptor: DefenseInterceptor;

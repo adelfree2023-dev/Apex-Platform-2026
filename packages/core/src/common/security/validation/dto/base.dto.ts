@@ -81,14 +81,14 @@ export const BaseInputSchema = z.object({
     .trim().optional()
 }).transform(data => {
   // تنقية جميع الحقول النصية (Extra Safety Layer)
-  return Object.keys(data).reduce((cleanData, key) => {
-    if (typeof data[key] === 'string') {
-      cleanData[key] = data[key]
+  return Object.keys(data).reduce((cleanData: any, key: string) => {
+    if (typeof (data as any)[key] === 'string') {
+      cleanData[key] = (data as any)[key]
         .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove scripts
         .replace(/javascript:/gi, '') // Remove js proto
         .replace(/on\w+=/gi, ''); // Remove event handlers
     } else {
-      cleanData[key] = data[key];
+      cleanData[key] = (data as any)[key];
     }
     return cleanData;
   }, {} as any);

@@ -1,18 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TenantsModule } from './tenants.module';
 import { TenantsService } from './tenants.service';
-import { PrismaModule } from '../../prisma/prisma.module';
-
+import { PrismaService } from '../../prisma/prisma.service';
+import { AuditService } from '../../common/monitoring/audit/audit.service';
+import { TenantContextService } from '../../common/security/tenant-context/tenant-context.service';
 import { commonProviders } from '../../../test/test-utils';
 
 describe('TenantsModule', () => {
   let module: TestingModule;
 
   beforeAll(async () => {
+    const { mockPrisma, mockAudit, mockTenantContext } = require('../../../test/test-utils');
     module = await Test.createTestingModule({
       imports: [TenantsModule],
     })
-      .overrideProvider(PrismaModule).useValue({ providers: commonProviders })
+      .overrideProvider(PrismaService).useValue(mockPrisma)
+      .overrideProvider(AuditService).useValue(mockAudit)
+      .overrideProvider(TenantContextService).useValue(mockTenantContext)
       .compile();
   });
 

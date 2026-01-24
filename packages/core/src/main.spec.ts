@@ -12,7 +12,7 @@ describe('Bootstrap (main)', () => {
   const mockLogger = { log: jest.fn(), error: jest.fn() };
 
   beforeAll(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    let moduleBuilder = Test.createTestingModule({
       imports: [AppModule],
     })
       .overrideProvider(ConfigService)
@@ -23,11 +23,11 @@ describe('Bootstrap (main)', () => {
     // Apply common providers to overwrite any missing dependencies in AppModule deep hierarchy
     commonProviders.forEach(p => {
       if ('provide' in p) {
-        module.overrideProvider(p.provide).useValue((p as any).useValue);
+        moduleBuilder.overrideProvider(p.provide).useValue((p as any).useValue);
       }
     });
 
-    const compiled = await module.compile();
+    const compiled = await moduleBuilder.compile();
 
     app = compiled.createNestApplication();
     await app.init();

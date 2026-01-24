@@ -39,7 +39,8 @@ describe('AppController (e2e)', () => {
       .expect(HttpStatus.OK);
 
     expect(resp.body).toMatchObject({ status: 'ok', service: 'apex-core' });
-    expect(mockAuditService.logOperation).toHaveBeenCalledTimes(1);
+    const { mockAudit } = require('../test/test-utils');
+    expect(mockAudit.logOperation).toHaveBeenCalledTimes(1);
   });
 
   it('/GET health (includeDetails true)', async () => {

@@ -40,9 +40,6 @@ export class PaymentService {
 
         this.stripe = new Stripe(stripeSecretKey || 'sk_test_51N5BQdJvI3n5', {
             apiVersion: '2024-06-20',
-            httpClient: Stripe.createNodeHttpClient({
-                timeout: 10000,
-            }),
         });
     }
 
@@ -94,7 +91,7 @@ export class PaymentService {
                 metadata: {
                     tenantId: createPaymentIntentDto.tenantId,
                     orderId: createPaymentIntentDto.orderId,
-                    ipAddress,
+                    ipAddress: ipAddress || 'unknown',
                 },
                 automatic_payment_methods: {
                     enabled: true,
@@ -421,7 +418,7 @@ export class PaymentService {
                 metadata: {
                     orderId,
                     refundedBy: 'admin',
-                    ipAddress,
+                    ipAddress: ipAddress || 'unknown',
                 },
             });
 

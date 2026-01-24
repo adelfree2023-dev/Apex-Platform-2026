@@ -38,7 +38,13 @@ describe('AuthController (e2e)', () => {
         { provide: SecurityContext, useValue: mockSecurity },
       ],
     })
-      .overrideGuard(TenantScopedGuard).useValue({ canActivate: () => true })
+      .overrideGuard(TenantScopedGuard).useValue({
+      canActivate: (context: any) => {
+        const req = context.switchToHttp().getRequest();
+        req.tenantId = req.headers['x-tenant-id'];
+        return true;
+      }
+    })
       .overrideGuard(LicenseGuard).useValue({ canActivate: () => true })
       .overrideInterceptor(DefenseInterceptor).useValue({ intercept: (_: any, next: any) => next.handle() })
       .overrideInterceptor(AuditLoggerInterceptor).useValue({ intercept: (_: any, next: any) => next.handle() })

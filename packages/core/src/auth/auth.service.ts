@@ -73,7 +73,7 @@ export class AuthService {
 
             return this.generateTokens(users[0].id, tenantId, users[0].role);
         } catch (error) {
-            const status = error?.status || error?.response?.status || error?.response?.statusCode || (error?.getResponse ? error.getResponse()?.statusCode : null) || (error?.name?.toLowerCase().includes('unauthorized') ? 401 : (error?.name?.toLowerCase().includes('forbidden') ? 403 : 500));
+            const status = error?.status || error?.response?.status || error?.response?.statusCode || (error?.getResponse ? error.getResponse()?.statusCode : null) || (error?.constructor?.name === 'UnauthorizedException' ? 401 : (error?.constructor?.name === 'ForbiddenException' ? 403 : 500));
             if (status === 401 || status === 403) throw error;
 
             await this.auditService.logSecurityEvent('AUTH_SYSTEM_ERROR', {

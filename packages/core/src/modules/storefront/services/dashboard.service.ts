@@ -217,7 +217,7 @@ export class DashboardService {
                 createdAt: {
                     lte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // 90 يوماً
                 },
-                orderItems: {
+                items: {
                     none: {
                         order: {
                             createdAt: {
@@ -295,7 +295,7 @@ export class DashboardService {
             where: whereClause,
         });
 
-        const averageCustomerValue = customerCount > 0 ? totalRevenue._sum.totalAmount / customerCount : 0;
+        const averageCustomerValue = customerCount > 0 ? (totalRevenue._sum.totalAmount || 0) / customerCount : 0;
 
         return {
             newCustomers,

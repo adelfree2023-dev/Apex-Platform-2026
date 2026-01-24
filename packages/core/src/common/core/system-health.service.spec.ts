@@ -4,7 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AnomalyDetectionService } from '../access-control/services/anomaly-detection.service';
 import { RateLimiterService } from '../access-control/services/rate-limiter.service';
 import { EncryptedFieldService } from '../security/encryption/encrypted-field.service';
-import { createMockPrisma } from '../../../../test/test-utils';
+import { createMockPrisma } from '../../../test/test-utils';
 
 describe('SystemHealthService', () => {
     let service: SystemHealthService;

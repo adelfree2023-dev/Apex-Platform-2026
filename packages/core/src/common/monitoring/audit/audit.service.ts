@@ -179,6 +179,7 @@ export class AuditService {
             action: data.action,
             userId: data.userId,
             ip: data.ip,
+            requestId: (data as any).requestId,
             severity: 'info',
             details: {
                 target: data.target,

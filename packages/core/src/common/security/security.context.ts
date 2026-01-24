@@ -79,7 +79,7 @@ export class SecurityContext implements OnModuleInit {
     /**
     * Log a security event with automatic AuditService fallback
     */
-    logSecurityEvent(event: string, details: Record<string, unknown>): void {
+    logSecurityEvent(event: string, details: any): void {
         try {
             if (this.auditService) {
                 this.auditService.logSecurityEvent(event, details);
@@ -97,7 +97,7 @@ export class SecurityContext implements OnModuleInit {
     /**
     * Log critical security events
     */
-    logCriticalSecurityEvent(event: string, details: Record<string, unknown>): void {
+    logCriticalSecurityEvent(event: string, details: any): void {
         try {
             if (this.auditService) {
                 this.auditService.logSecurityEvent(`CRITICAL_${event}`, details);

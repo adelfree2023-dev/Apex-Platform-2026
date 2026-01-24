@@ -43,6 +43,8 @@ describe('AuthService', () => {
   };
   const mockAudit = {
     logOperation: jest.fn(),
+    logActivity: jest.fn(),
+    logSecurityEvent: jest.fn(),
   };
   const mockSecurity = {
     logSecurityEvent: jest.fn(),

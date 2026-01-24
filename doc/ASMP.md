@@ -1,4 +1,14 @@
 # 🔒 بروتوكول ASMP (Apex Secure Model Protocol) - الإصدار التنفيذي الكامل
+المستودع الرئيسي
+https://github.com/adelfree2023-dev/Apex-Platform-2026
+
+
+الويندوز الحالي ملفات فقط للمشروع التجربة علي السيرفر راجع 
+الربط بين الاثنين هاب جيت
+
+
+C:\Users\Dell\Desktop\Apex-Platform-2026\doc\server_credentials.txt
+
 
 > **المبدأ التوجيهي**: "لا تثق بأي مدخل – تحقق من كل شيء – قلل الصلاحيات – سجل كل شيء"
 

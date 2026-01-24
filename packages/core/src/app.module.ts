@@ -78,9 +78,8 @@ import { StorefrontModule } from './modules/storefront/storefront.module';
     EncryptedFieldService,
     AnomalyDetectionService,
     RateLimiterService,
-    CSPConfig,
     // Add other guards/interceptors if the classes exist
   ],
-  exports: [AppService, SystemInitializationService, CSPConfig]
+  exports: [AppService, SystemInitializationService]
 })
 export class AppModule { }

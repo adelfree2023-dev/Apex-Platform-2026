@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TenantsService } from './tenants.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { AuditService } from '../common/monitoring/audit/audit.service';
+import { AuditService } from '../../common/monitoring/audit/audit.service';
 import {
     BadRequestException,
     ConflictException,

@@ -9,7 +9,7 @@ describe('TenantContextService', () => {
       providers: [TenantContextService],
     }).compile();
 
-    service = module.get<TenantContextService>(TenantContextService);
+    service = await module.resolve<TenantContextService>(TenantContextService);
   });
 
   it('should be defined', () => {

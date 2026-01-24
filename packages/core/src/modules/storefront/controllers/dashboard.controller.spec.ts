@@ -3,11 +3,13 @@ import { DashboardController } from './dashboard.controller';
 import { DashboardService } from '../services/dashboard.service';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { getCommonProviders } from '../../../../test/test-utils';
+import { getCommonProviders, createMockPrisma } from '../../../../test/test-utils';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 describe('DashboardController (e2e)', () => {
   let app: INestApplication;
   let mockDashboard: any;
+  let mockPrisma: any;
 
   beforeAll(async () => {
     mockDashboard = {
@@ -24,21 +26,25 @@ describe('DashboardController (e2e)', () => {
       getDashboardAlerts: jest.fn().mockResolvedValue([]),
     };
 
+    mockPrisma = createMockPrisma();
+    // 🛡️ S2: Ensure tenant is found by guard
+    mockPrisma.tenant.findUnique.mockResolvedValue({
+      id: '00000000-0000-0000-0000-000000000001',
+      name: 'Demo Store',
+      status: 'ACTIVE',
+      subdomain: 'demo'
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [DashboardController],
       providers: [
         ...getCommonProviders(),
         { provide: DashboardService, useValue: mockDashboard },
+        { provide: PrismaService, useValue: mockPrisma },
       ],
     }).compile();
 
     app = module.createNestApplication();
-
-    app.use((req: any, res: any, next: any) => {
-      req.tenant = { id: 't-uuid', name: 'Demo Store' };
-      next();
-    });
-
     await app.init();
   });
 
@@ -49,11 +55,13 @@ describe('DashboardController (e2e)', () => {
   });
 
   const tenantSub = 'demo';
+  const validTenantId = '00000000-0000-0000-0000-000000000001';
 
   describe('GET /overview', () => {
     it('should return dashboard overview successfully', async () => {
       const response = await request(app.getHttpServer())
         .get(`/api/shop/${tenantSub}/dashboard/overview`)
+        .set('x-tenant-id', validTenantId)
         .expect(HttpStatus.OK);
 
       expect(response.body).toMatchObject({

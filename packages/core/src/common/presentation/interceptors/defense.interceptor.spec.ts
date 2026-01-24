@@ -12,7 +12,8 @@ describe('DefenseInterceptor', () => {
         method: 'GET',
         url: '/api/test',
         headers: { 'x-request-id': 'req-123' },
-        tenantId: '00000000-0000-0000-0000-000000000001'
+        tenantId: '00000000-0000-0000-0000-000000000001',
+        socket: { remoteAddress: '127.0.0.1' }
       }),
       getResponse: () => ({
         setHeader: jest.fn(),
@@ -37,7 +38,7 @@ describe('DefenseInterceptor', () => {
     interceptor = module.get<DefenseInterceptor>(DefenseInterceptor);
   });
 
-  it('passes through when tenant is present', (done) => {
+  it('passes through and sets headers', (done) => {
     interceptor.intercept(mockContext, mockCallHandler).subscribe({
       next: (val) => {
         expect(val).toEqual({ success: true });

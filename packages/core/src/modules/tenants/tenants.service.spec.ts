@@ -47,6 +47,11 @@ describe('TenantsService', () => {
                 status: 'provisioning'
             });
             mockPrisma.$executeRawUnsafe.mockResolvedValue(undefined);
+            mockPrisma.tenant.update.mockResolvedValueOnce({
+                id: 'tenant-uuid',
+                status: 'active',
+                schemaName: 'tenant_tenant_uuid'
+            });
             mockPrisma.user.create.mockResolvedValueOnce({ id: 'user-1' });
 
             const result = await service.createTenantWithStore(validDto as any);
@@ -58,6 +63,7 @@ describe('TenantsService', () => {
             });
 
             expect(mockPrisma.tenant.create).toHaveBeenCalled();
+            expect(mockPrisma.tenant.update).toHaveBeenCalled();
         });
 
         it('should throw ConflictException if subdomain exists', async () => {
@@ -69,7 +75,6 @@ describe('TenantsService', () => {
 
         it('should handle transaction failure with proper error', async () => {
             mockPrisma.tenant.findFirst.mockResolvedValueOnce(null);
-            // Simulate transaction failure
             mockPrisma.tenant.create.mockRejectedValueOnce(new Error('Database error'));
 
             await expect(service.createTenantWithStore(validDto as any))

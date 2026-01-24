@@ -7,14 +7,22 @@ import * as crypto from 'crypto';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
 
-// 🛡️ Mock crypto globally for NestJS ModuleTokenFactory and other internals
-// We polyfill it carefully to avoid breaking other things
+// 🛡️ S8: Global crypto polyfill for environments where it might be shadowed or missing
+// We explicitly define it on the object to ensure named imports work.
 if (typeof crypto.createHash !== 'function') {
-    (crypto as any).createHash = (algorithm: string) => ({
-        update: () => ({
-            digest: () => 'mocked-hash'
-        })
+    const mockCreateHash = (algorithm: string) => ({
+        update: function () { return this; },
+        digest: function () { return 'mocked-hash'; }
     });
+
+    // Set on the imported object (works for commonjs require)
+    (crypto as any).createHash = mockCreateHash;
+
+    // Also try to set on the module itself if possible
+    try {
+        const nodeCrypto = require('node:crypto');
+        nodeCrypto.createHash = mockCreateHash;
+    } catch (e) { }
 }
 
 // Global mocks if necessary

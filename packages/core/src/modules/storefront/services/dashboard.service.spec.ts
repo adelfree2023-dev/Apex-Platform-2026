@@ -45,6 +45,8 @@ describe('DashboardService', () => {
     });
 
     it('should log and throw error on failure', async () => {
+      const cacheService = (service as any).cacheService;
+      jest.spyOn(cacheService, 'get').mockResolvedValue(null);
       mockPrisma.order.aggregate.mockRejectedValue(new Error('DB Fail'));
       await expect(service.getOverview('t1')).rejects.toThrow('DB Fail');
     });

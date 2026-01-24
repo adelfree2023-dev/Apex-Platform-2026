@@ -84,10 +84,10 @@ describe('DashboardController (e2e)', () => {
     });
   });
 
-  describe('GET /reports/sales', () => {
+  describe('GET /sales', () => {
     it('should return sales report', async () => {
       await request(app.getHttpServer())
-        .get(`/api/shop/${tenantSub}/dashboard/reports/sales`)
+        .get(`/api/shop/${tenantSub}/dashboard/sales`)
         .set('x-tenant-id', validTenantId)
         .expect(HttpStatus.OK);
 
@@ -95,10 +95,10 @@ describe('DashboardController (e2e)', () => {
     });
   });
 
-  describe('GET /reports/products', () => {
+  describe('GET /products', () => {
     it('should return products report', async () => {
       await request(app.getHttpServer())
-        .get(`/api/shop/${tenantSub}/dashboard/reports/products`)
+        .get(`/api/shop/${tenantSub}/dashboard/products`)
         .set('x-tenant-id', validTenantId)
         .expect(HttpStatus.OK);
 
@@ -106,10 +106,10 @@ describe('DashboardController (e2e)', () => {
     });
   });
 
-  describe('GET /reports/customers', () => {
+  describe('GET /customers', () => {
     it('should return customers report', async () => {
       await request(app.getHttpServer())
-        .get(`/api/shop/${tenantSub}/dashboard/reports/customers`)
+        .get(`/api/shop/${tenantSub}/dashboard/customers`)
         .set('x-tenant-id', validTenantId)
         .expect(HttpStatus.OK);
 

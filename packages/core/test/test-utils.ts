@@ -9,13 +9,15 @@ import { RateLimiterService } from '../src/common/access-control/services/rate-l
 import { MailService } from '../src/common/communication/mail.service';
 import { AnomalyDetectionService } from '../src/common/access-control/services/anomaly-detection.service';
 import { InputValidatorService } from '../src/common/security/validation/input-validator.service';
+import { SanitizerService } from '../src/common/security/validation/sanitizer.service';
+import { EncryptedFieldService as EncryptionService } from '../src/common/security/encryption/encrypted-field.service';
 
 export const createMockPrisma = () => {
     const mock: any = {
-        tenant: { findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
-        user: { findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
-        product: { findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
-        order: { findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
+        tenant: { findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
+        user: { findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
+        product: { findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
+        order: { findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
         $transaction: jest.fn().mockImplementation((cb) => cb(mock)),
         $queryRaw: jest.fn().mockResolvedValue([]),
         $executeRawUnsafe: jest.fn().mockResolvedValue(1),
@@ -51,6 +53,7 @@ export const createMockTenantContext = () => ({
 export const createMockConfig = () => ({
     get: jest.fn((key: string) => {
         if (key === 'JWT_SECRET') return 'test-secret';
+        if (key === 'BASE_DOMAIN') return 'apex-platform.com';
         return 'test-value';
     }),
 });
@@ -73,9 +76,54 @@ export const createMockAnomalyDetection = () => ({
 
 export const createMockInputValidator = () => ({
     secureValidate: jest.fn().mockImplementation(async (_, data) => data),
+    getTenantIdSchema: jest.fn().mockReturnValue({ parse: jest.fn() }),
 });
 
-// Singletons for simple tests (but factories should be used in TestingModule)
+export const createMockSanitizer = () => ({
+    sanitizeObject: jest.fn().mockImplementation((data) => data),
+    sanitizeString: jest.fn().mockImplementation((str) => str),
+});
+
+export const createMockEncryption = () => ({
+    encrypt: jest.fn((_, data) => `encrypted:${data}`),
+    decrypt: jest.fn((_, data) => data?.replace('encrypted:', '') || data),
+    encryptSensitiveData: jest.fn((data) => `encrypted:${data}`),
+    decryptSensitiveData: jest.fn((data) => data?.replace('encrypted:', '') || data),
+});
+
+// Providers list for TestingModule
+export const getCommonProviders = (): Provider[] => {
+    const mockPrisma = createMockPrisma();
+    const mockAudit = createMockAudit();
+    const mockSecurityContext = createMockSecurityContext();
+    const mockTenantContext = createMockTenantContext();
+    const mockConfig = createMockConfig();
+    const mockRateLimiter = createMockRateLimiter();
+    const mockMailService = createMockMailService();
+    const mockAnomalyDetection = createMockAnomalyDetection();
+    const mockInputValidator = createMockInputValidator();
+    const mockSanitizer = createMockSanitizer();
+    const mockEncryption = createMockEncryption();
+
+    return [
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: AuditService, useValue: mockAudit },
+        { provide: SecurityContext, useValue: mockSecurityContext },
+        { provide: TenantContextService, useValue: mockTenantContext },
+        { provide: ConfigService, useValue: mockConfig },
+        { provide: RateLimiterService, useValue: mockRateLimiter },
+        { provide: MailService, useValue: mockMailService },
+        { provide: AnomalyDetectionService, useValue: mockAnomalyDetection },
+        { provide: InputValidatorService, useValue: mockInputValidator },
+        { provide: SanitizerService, useValue: mockSanitizer },
+        { provide: EncryptionService, useValue: mockEncryption },
+        Reflector,
+        { provide: 'SECURITY_LOGGER', useValue: { logEvent: jest.fn() } },
+        { provide: 'CACHE_MANAGER', useValue: { get: jest.fn(), set: jest.fn() } },
+    ];
+};
+
+// Legacy constants for backward compatibility (lazy init)
 export const mockPrisma = createMockPrisma();
 export const mockAudit = createMockAudit();
 export const mockSecurityContext = createMockSecurityContext();
@@ -85,6 +133,8 @@ export const mockRateLimiter = createMockRateLimiter();
 export const mockMailService = createMockMailService();
 export const mockAnomalyDetection = createMockAnomalyDetection();
 export const mockInputValidator = createMockInputValidator();
+export const mockSanitizer = createMockSanitizer();
+export const mockEncryption = createMockEncryption();
 
 export const commonProviders: Provider[] = [
     { provide: PrismaService, useValue: mockPrisma },
@@ -96,5 +146,9 @@ export const commonProviders: Provider[] = [
     { provide: MailService, useValue: mockMailService },
     { provide: AnomalyDetectionService, useValue: mockAnomalyDetection },
     { provide: InputValidatorService, useValue: mockInputValidator },
+    { provide: SanitizerService, useValue: mockSanitizer },
+    { provide: EncryptionService, useValue: mockEncryption },
     Reflector,
+    { provide: 'SECURITY_LOGGER', useValue: { logEvent: jest.fn() } },
+    { provide: 'CACHE_MANAGER', useValue: { get: jest.fn(), set: jest.fn() } },
 ];

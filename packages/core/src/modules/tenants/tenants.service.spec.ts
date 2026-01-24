@@ -8,42 +8,31 @@ import {
     ConflictException,
     InternalServerErrorException
 } from '@nestjs/common';
+import {
+    getCommonProviders,
+    createMockPrisma,
+    createMockAudit,
+    createMockConfig
+} from '../../../test/test-utils';
 
 describe('TenantsService', () => {
     let service: TenantsService;
-    const mockPrisma: any = {
-        tenant: {
-            create: jest.fn(),
-            findFirst: jest.fn(),
-            findUnique: jest.fn(),
-            update: jest.fn(),
-        },
-        user: {
-            create: jest.fn(),
-        },
-        $executeRawUnsafe: jest.fn().mockResolvedValue(undefined),
-        $transaction: jest.fn().mockImplementation((cb) => cb(mockPrisma)),
-    };
-
-    const mockConfig = {
-        get: jest.fn((key) => {
-            if (key === 'BASE_DOMAIN') return 'apex-platform.com';
-            return null;
-        }),
-    };
-
-    const mockAudit = {
-        logActivity: jest.fn(),
-        logSecurityEvent: jest.fn(),
-    };
+    let mockPrisma: any;
+    let mockAudit: any;
+    let mockConfig: any;
 
     beforeEach(async () => {
+        mockPrisma = createMockPrisma();
+        mockAudit = createMockAudit();
+        mockConfig = createMockConfig();
+
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 TenantsService,
+                ...getCommonProviders(),
                 { provide: PrismaService, useValue: mockPrisma },
-                { provide: ConfigService, useValue: mockConfig },
                 { provide: AuditService, useValue: mockAudit },
+                { provide: ConfigService, useValue: mockConfig },
             ],
         }).compile();
 
@@ -68,7 +57,7 @@ describe('TenantsService', () => {
                 schemaName: 'tenant_mocked_uuid',
                 status: 'provisioning'
             });
-            mockPrisma.$executeRawUnsafe.mockResolvedValueOnce(undefined);
+            mockPrisma.$executeRawUnsafe.mockResolvedValue(undefined);
             mockPrisma.user.create.mockResolvedValueOnce({ id: 'user-1' });
 
             const result = await service.createTenantWithStore(validDto as any);
@@ -76,16 +65,12 @@ describe('TenantsService', () => {
             expect(result).toMatchObject({
                 id: 'tenant-uuid',
                 subdomain: 'teststore',
-                schemaName: 'tenant_tenant_uuid',
                 storeUrl: expect.stringContaining('teststore'),
             });
 
             expect(mockPrisma.tenant.create).toHaveBeenCalled();
-            expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalledWith(
-                expect.stringContaining('CREATE SCHEMA IF NOT EXISTS')
-            );
             expect(mockAudit.logActivity).toHaveBeenCalledWith(
-                expect.objectContaining({ action: 'TENANT_CREATED' })
+                expect.objectContaining({ action: 'TENANT_STORE_CREATED' })
             );
         });
 

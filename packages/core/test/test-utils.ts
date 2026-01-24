@@ -1,10 +1,14 @@
 import { Provider } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { AuditService } from '../src/common/monitoring/audit/audit.service';
 import { SecurityContext } from '../src/common/security/security.context';
 import { TenantContextService } from '../src/common/security/tenant-context/tenant-context.service';
-import { ConfigService } from '@nestjs/config';
-import { Reflector } from '@nestjs/core';
+import { RateLimiterService } from '../src/common/access-control/services/rate-limiter.service';
+import { MailService } from '../src/common/communication/mail.service';
+import { AnomalyDetectionService } from '../src/common/access-control/services/anomaly-detection.service';
+import { InputValidatorService } from '../src/common/security/validation/input-validator.service';
 
 export const mockPrisma: any = {
     tenant: { findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
@@ -48,11 +52,33 @@ export const mockConfig = {
     }),
 };
 
+export const mockRateLimiter = {
+    consume: jest.fn().mockResolvedValue({ allowed: true }),
+};
+
+export const mockMailService = {
+    sendMail: jest.fn().mockResolvedValue(true),
+};
+
+export const mockAnomalyDetection = {
+    inspectFailedLogin: jest.fn(),
+    inspectFailedEvent: jest.fn(),
+    inspectAnomalousRequest: jest.fn(),
+};
+
+export const mockInputValidator = {
+    secureValidate: jest.fn().mockImplementation(async (_, data) => data),
+};
+
 export const commonProviders: Provider[] = [
     { provide: PrismaService, useValue: mockPrisma },
     { provide: AuditService, useValue: mockAudit },
     { provide: SecurityContext, useValue: mockSecurityContext },
     { provide: TenantContextService, useValue: mockTenantContext },
     { provide: ConfigService, useValue: mockConfig },
+    { provide: RateLimiterService, useValue: mockRateLimiter },
+    { provide: MailService, useValue: mockMailService },
+    { provide: AnomalyDetectionService, useValue: mockAnomalyDetection },
+    { provide: InputValidatorService, useValue: mockInputValidator },
     Reflector,
 ];

@@ -78,4 +78,21 @@ describe('EncryptedFieldService', () => {
         expect(result).toBe(plainText);
         jest.restoreAllMocks();
     });
+
+    it('should handle rotation failure gracefully', async () => {
+        const data = ['invalid-cipher'];
+        const result = await service.rotateKeys(tenantId, 'v1', 'v2', data);
+        expect(result[0]).toBe('invalid-cipher'); // Decrypt will return failure, rotate returns original
+    });
+
+    it('should throw error in production if key is missing', () => {
+        process.env.NODE_ENV = 'production';
+        const oldKey = process.env.ENCRYPTION_MASTER_KEY;
+        delete process.env.ENCRYPTION_MASTER_KEY;
+
+        expect(() => new (require('./encrypted-field.service').EncryptedFieldService)()).toThrow();
+
+        process.env.NODE_ENV = 'test';
+        process.env.ENCRYPTION_MASTER_KEY = oldKey;
+    });
 });

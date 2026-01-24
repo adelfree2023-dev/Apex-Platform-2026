@@ -80,4 +80,41 @@ describe('AuditService', () => {
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[AUDIT_FALLBACK_MISSING_TABLE]'));
     consoleSpy.mockRestore();
   });
+
+  it('logs operations using logOperation', async () => {
+    await service.logOperation({
+      tenantId: 't1',
+      userId: 'u1',
+      action: 'OP_ACTION',
+      target: 'resource1'
+    });
+    expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalled();
+  });
+
+  it('throws InternalServerErrorException on getAuditLogs failure', async () => {
+    mockPrisma.$queryRawUnsafe.mockRejectedValue(new Error('Query failed'));
+    await expect(service.getAuditLogs('t1', {})).rejects.toThrow('فشل الحصول على سجلات التدقيق');
+  });
+
+  it('logs activity using object argument', async () => {
+    await service.logActivity({ action: 'OBJ_ACTION', details: { x: 1 } });
+    expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalled();
+  });
+
+  it('handles mkdirSync error in logToFallback', async () => {
+    service.setIsSystemReady(true);
+    mockPrisma.$executeRawUnsafe.mockRejectedValue(new Error('DB Fail'));
+
+    const fs = require('fs');
+    jest.spyOn(fs, 'existsSync').mockReturnValue(false);
+    const mkdirSpy = jest.spyOn(fs, 'mkdirSync').mockImplementation(() => { throw new Error('mkdir fail'); });
+    const loggerSpy = jest.spyOn((service as any).logger, 'error');
+
+    await service.log('t1', { action: 'FAIL_MKDIR' });
+
+    expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('Audit fallback logger failed'));
+
+    mkdirSpy.mockRestore();
+    jest.restoreAllMocks();
+  });
 });

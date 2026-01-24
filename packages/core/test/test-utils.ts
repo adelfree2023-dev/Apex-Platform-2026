@@ -11,8 +11,9 @@ import { AnomalyDetectionService } from '../src/common/access-control/services/a
 import { InputValidatorService } from '../src/common/security/validation/input-validator.service';
 import { SanitizerService } from '../src/common/security/validation/sanitizer.service';
 import { EncryptedFieldService } from '../src/common/security/encryption/encrypted-field.service';
+import { CacheService } from '../src/common/caching/cache.service';
 
-/** 🛡️ ASMP: Unified Test Utilities */
+/** 🛡️ ASMP: Unified Test Utilities (Final Stabilization) */
 
 export const createMockPrisma = () => {
     const mock: any = {
@@ -123,6 +124,7 @@ export const getCommonProviders = (exclude: any[] = []): Provider[] => {
         { provide: InputValidatorService, useValue: createMockInputValidator() },
         { provide: SanitizerService, useValue: createMockSanitizer() },
         { provide: EncryptedFieldService, useValue: createMockEncryption() },
+        { provide: CacheService, useValue: createMockCache() },
         Reflector,
         { provide: 'SECURITY_LOGGER', useValue: { logEvent: jest.fn() } },
         { provide: 'CACHE_MANAGER', useValue: createMockCache() },
@@ -135,19 +137,3 @@ export const getCommonProviders = (exclude: any[] = []): Provider[] => {
         return !exclude.includes(p);
     });
 };
-
-// Singletons for simple tests (Backward compatibility)
-export const mockPrisma = createMockPrisma();
-export const mockAudit = createMockAudit();
-export const mockSecurityContext = createMockSecurityContext();
-export const mockTenantContext = createMockTenantContext();
-export const mockConfig = createMockConfig();
-export const mockRateLimiter = createMockRateLimiter();
-export const mockMailService = createMockMailService();
-export const mockAnomalyDetection = createMockAnomalyDetection();
-export const mockInputValidator = createMockInputValidator();
-export const mockSanitizer = createMockSanitizer();
-export const mockEncryption = createMockEncryption();
-export const mockCache = createMockCache();
-
-export const commonProviders: Provider[] = getCommonProviders();

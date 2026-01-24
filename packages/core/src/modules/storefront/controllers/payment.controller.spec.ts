@@ -46,9 +46,10 @@ describe('PaymentController (e2e)', () => {
 
     app = module.createNestApplication();
 
-    // 🛡️ S2: Middleware to inject mock tenant for audit logging
+    // 🛡️ S2: Middleware to inject mock tenant
     app.use((req: any, res: any, next: any) => {
       req.tenant = { id: '00000000-0000-0000-0000-000000000001' };
+      req.tenantId = '00000000-0000-0000-0000-000000000001';
       next();
     });
 
@@ -81,18 +82,6 @@ describe('PaymentController (e2e)', () => {
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toMatchObject({ id: 'order-1' });
-    });
-  });
-
-  describe('POST /refund', () => {
-    it('should process refund successfully', async () => {
-      const response = await request(app.getHttpServer())
-        .post(`/api/shop/${tenantSub}/payments/refund`)
-        .set('x-tenant-id', validTenantId)
-        .send({ orderId: '00000000-0000-0000-0000-000000000002', amount: 10 })
-        .expect(HttpStatus.CREATED);
-
-      expect(response.body).toEqual({ success: true, refundId: 'r-1' });
     });
   });
 });

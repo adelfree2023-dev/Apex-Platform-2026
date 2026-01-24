@@ -35,6 +35,14 @@ describe('TenantThrottlerGuard', () => {
         }).compile();
 
         guard = module.get<TenantThrottlerGuard>(TenantThrottlerGuard);
+
+        jest.spyOn(process, 'memoryUsage').mockReturnValue({
+            heapUsed: 100,
+            heapTotal: 1000,
+            rss: 100,
+            external: 100,
+            arrayBuffers: 100,
+        } as any);
     });
 
     afterEach(() => {

@@ -62,18 +62,24 @@ export function getTenantSchemaName(tenantId: string): string {
  * - الطول الأدنى
  */
 export function ensureValidTenantId(tenantId: any): string {
-  // 🛡️ التحقق الأساسي
-  if (!tenantId || typeof tenantId !== 'string' || tenantId.length < 5) {
+  // 🛡️ التحقق الأساسي والحذف المبكر للمسافات
+  if (!tenantId || typeof tenantId !== 'string') {
     throw new BadRequestException(`معرف المستأجر غير صالح: ${tenantId}`);
+  }
+
+  const trimmedId = tenantId.trim();
+
+  if (trimmedId.length < 5) {
+    throw new BadRequestException(`معرف المستأجر قصير جداً: ${trimmedId}`);
   }
 
   // 🛡️ التحقق من تنسيق UUID الموحد
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(tenantId)) {
+  if (!uuidRegex.test(trimmedId)) {
     throw new BadRequestException('معرف المستأجر يجب أن يكون بصيغة UUID صالحة');
   }
 
-  return tenantId.trim();
+  return trimmedId;
 }
 
 /**

@@ -56,6 +56,7 @@ describe('AuthController (e2e)', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockSecurity.logSecurityEvent.mockClear();
   });
 
   afterAll(async () => {

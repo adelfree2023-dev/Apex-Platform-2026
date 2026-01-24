@@ -34,10 +34,10 @@ export const createMockPrisma = () => {
 };
 
 export const createMockAudit = () => ({
-    logActivity: jest.fn(),
-    logSecurityEvent: jest.fn(),
-    logOperation: jest.fn(),
-    logCriticalSecurityEvent: jest.fn(),
+    logActivity: jest.fn().mockResolvedValue(undefined),
+    logSecurityEvent: jest.fn().mockResolvedValue(undefined),
+    logOperation: jest.fn().mockResolvedValue(undefined),
+    logCriticalSecurityEvent: jest.fn().mockResolvedValue(undefined),
     setIsSystemReady: jest.fn(),
 });
 

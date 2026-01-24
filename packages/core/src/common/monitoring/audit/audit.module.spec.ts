@@ -1,7 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuditModule } from './audit.module';
 import { SecurityContext } from '../../security/security.context';
-import { createMockSecurityContext } from '../../../../test/test-utils';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { createMockSecurityContext, createMockPrisma, createMockConfig } from '../../../../test/test-utils';
 
 describe('AuditModule', () => {
   let module: TestingModule;
@@ -10,6 +12,8 @@ describe('AuditModule', () => {
       imports: [AuditModule],
     })
       .overrideProvider(SecurityContext).useValue(createMockSecurityContext())
+      .overrideProvider(PrismaService).useValue(createMockPrisma())
+      .overrideProvider(ConfigService).useValue(createMockConfig())
       .compile();
   });
 

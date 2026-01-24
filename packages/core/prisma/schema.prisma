@@ -194,3 +194,16 @@ model Refund {
   @@index([orderId])
   @@index([status])
 }
+
+model RevokedToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique // SHA-256 hash of the token
+  tenantId  String
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([tokenHash])
+  @@index([tenantId, userId])
+  @@map("revoked_tokens")
+}

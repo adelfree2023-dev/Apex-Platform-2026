@@ -39,7 +39,7 @@ export class PaymentService {
         }
 
         this.stripe = new Stripe(stripeSecretKey || 'sk_test_51N5BQdJvI3n5', {
-            apiVersion: '2023-10-16',
+            apiVersion: '2024-06-20',
             httpClient: Stripe.createNodeHttpClient({
                 timeout: 10000,
             }),
@@ -409,9 +409,13 @@ export class PaymentService {
         }
 
         try {
+            if (!order.payment) {
+                throw new HttpException('لا توجد تفاصيل دفع للطلب', HttpStatus.BAD_REQUEST);
+            }
+
             // ✅ S7: إعادة المبلغ في Stripe
             const refund = await this.stripe.refunds.create({
-                payment_intent: order.payment?.paymentId,
+                payment_intent: order.payment.paymentId,
                 amount: Math.round(amount * 100), // تحويل إلى cents
                 reason: (reason as Stripe.RefundCreateParams.Reason) || 'requested_by_customer',
                 metadata: {

@@ -14,6 +14,7 @@ describe('AuthModule', () => {
     module = await Test.createTestingModule({
       imports: [AuthModule],
     })
+      .overrideProvider(PrismaService).useValue({ $connect: jest.fn(), $disconnect: jest.fn() })
       .overrideProvider(ConfigService).useValue({ get: jest.fn() })
       .compile();
   });

@@ -196,8 +196,8 @@ export class AuditService {
         let finalDetails: any;
         let tenantId: string;
         let userId: string;
-        let requestId: string;
-        let ip: string;
+        let requestId: string | undefined = undefined;
+        let ip: string | undefined = undefined;
 
         if (typeof dataOrAction === 'object') {
             action = dataOrAction.action;

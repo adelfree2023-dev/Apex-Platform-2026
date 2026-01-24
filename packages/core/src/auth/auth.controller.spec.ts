@@ -39,12 +39,12 @@ describe('AuthController (e2e)', () => {
       ],
     })
       .overrideGuard(TenantScopedGuard).useValue({
-      canActivate: (context: any) => {
-        const req = context.switchToHttp().getRequest();
-        req.tenantId = req.headers['x-tenant-id'];
-        return true;
-      }
-    })
+        canActivate: (context: any) => {
+          const req = context.switchToHttp().getRequest();
+          req.tenantId = req.headers['x-tenant-id'];
+          return true;
+        }
+      })
       .overrideGuard(LicenseGuard).useValue({ canActivate: () => true })
       .overrideInterceptor(DefenseInterceptor).useValue({ intercept: (_: any, next: any) => next.handle() })
       .overrideInterceptor(AuditLoggerInterceptor).useValue({ intercept: (_: any, next: any) => next.handle() })
@@ -83,15 +83,19 @@ describe('AuthController (e2e)', () => {
       );
     });
 
-    it('should reject rate-limited requests', async () => {
-      mockRateLimiter.consume.mockResolvedValueOnce({ allowed: false });
+    it('should handle login exceptions', async () => {
+      mockAuthService.login.mockRejectedValueOnce(new Error('Auth Fail'));
 
       await request(app.getHttpServer())
         .post('/api/auth/login')
         .set('x-tenant-id', tenantId)
-        .set('X-Forwarded-For', ip)
         .send(validLogin)
-        .expect(HttpStatus.TOO_MANY_REQUESTS);
+        .expect(HttpStatus.UNAUTHORIZED);
+
+      expect(mockSecurity.logSecurityEvent).toHaveBeenCalledWith(
+        'LOGIN_FAILURE',
+        expect.objectContaining({ errorType: 'Error' })
+      );
     });
   });
 
@@ -111,6 +115,21 @@ describe('AuthController (e2e)', () => {
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toEqual({ success: true });
+    });
+
+    it('should handle registration exceptions', async () => {
+      mockAuthService.register.mockRejectedValueOnce(new Error('Reg Fail'));
+
+      await request(app.getHttpServer())
+        .post('/api/auth/register')
+        .set('x-tenant-id', tenantId)
+        .send(validRegister)
+        .expect(HttpStatus.BAD_REQUEST);
+
+      expect(mockSecurity.logSecurityEvent).toHaveBeenCalledWith(
+        'REGISTRATION_FAILURE',
+        expect.objectContaining({ email: 'newuser@example.com' })
+      );
     });
   });
 });

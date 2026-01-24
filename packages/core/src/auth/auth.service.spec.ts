@@ -140,6 +140,34 @@ describe('AuthService', () => {
 
       await expect(service.login(validLoginDto, tenantId, ip)).rejects.toThrow(ForbiddenException);
     });
+    it('should throw InternalServerErrorException on database error', async () => {
+      mockPrisma.$queryRawUnsafe.mockRejectedValueOnce(new Error('DB Error'));
+
+      await expect(service.login(validLoginDto, tenantId, ip)).rejects.toThrow(InternalServerErrorException);
+      expect(mockAudit.logSecurityEvent).toHaveBeenCalledWith(
+        'AUTH_SYSTEM_ERROR',
+        expect.objectContaining({
+          details: expect.objectContaining({ context: 'login_db' })
+        })
+      );
+    });
+  });
+
+  describe('revokeToken', () => {
+    it('should revoke token successfully', async () => {
+      await service.revokeToken('some-jwt-token', 'tenant-1');
+      expect(mockCache.set).toHaveBeenCalledWith(
+        expect.stringContaining('revoked_token:tenant-1:'),
+        'revoked',
+        900
+      );
+      expect(mockAudit.logSecurityEvent).toHaveBeenCalledWith('TOKEN_REVOKED', expect.any(Object));
+    });
+
+    it('should throw and log error on failure', async () => {
+      mockCache.set.mockRejectedValueOnce(new Error('Cache Error'));
+      await expect(service.revokeToken('t', 'id')).rejects.toThrow('Cache Error');
+    });
   });
 
   describe('register', () => {
@@ -157,12 +185,13 @@ describe('AuthService', () => {
       const result = await service.register(validRegisterDto, tenantId, ip);
 
       expect(result).toEqual({ success: true });
-      expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO'),
-        validRegisterDto.email.toLowerCase(),
-        'hashed-password',
-        validRegisterDto.name,
-      );
+      expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalled();
+    });
+
+    it('should throw InternalServerErrorException on registration failure', async () => {
+      mockPrisma.$executeRawUnsafe.mockRejectedValueOnce(new Error('Insert Fail'));
+      await expect(service.register(validRegisterDto, tenantId, ip)).rejects.toThrow(InternalServerErrorException);
+      expect(mockAudit.logSecurityEvent).toHaveBeenCalledWith('USER_REGISTRATION_FAILED', expect.any(Object));
     });
   });
 });

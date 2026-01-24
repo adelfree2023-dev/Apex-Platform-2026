@@ -117,15 +117,59 @@ describe('SecurityContext', () => {
       await expect(SecurityContext.verifyDatabaseConnection(mockPrisma as any, mockApp)).resolves.not.toThrow();
     });
 
-    it('should attempt reconnection if initial check fails', async () => {
+    it('should throw if database reconnection fails', async () => {
       const mockPrisma = {
-        $queryRaw: jest.fn().mockRejectedValueOnce(new Error('Fail')).mockResolvedValue([1]),
-        $connect: jest.fn().mockResolvedValue(undefined),
+        $queryRaw: jest.fn().mockRejectedValue(new Error('Fail')),
+        $connect: jest.fn().mockRejectedValue(new Error('Reconnect Fail')),
       };
       const mockApp = {} as INestApplication;
 
-      await SecurityContext.verifyDatabaseConnection(mockPrisma as any, mockApp);
-      expect(mockPrisma.$connect).toHaveBeenCalled();
+      await expect(SecurityContext.verifyDatabaseConnection(mockPrisma as any, mockApp)).rejects.toThrow('Database connection failed');
+    });
+
+    it('should throw for missing env vars in production', () => {
+      mockConfigService.get.mockImplementation((key: string) => {
+        if (key === 'NODE_ENV') return 'production';
+        return null;
+      });
+
+      expect(() => SecurityContext.validateEnvironment(mockConfigService)).toThrow('CRITICAL: Missing environment variable');
+    });
+  });
+
+  describe('onModuleInit', () => {
+    it('should warn if ConfigService is missing', async () => {
+      const module = await Test.createTestingModule({
+        providers: [
+          SecurityContext,
+          { provide: AuditService, useValue: mockAuditService },
+        ],
+      }).compile();
+      const standalone = await module.resolve<SecurityContext>(SecurityContext);
+      const loggerSpy = jest.spyOn((standalone as any).logger, 'warn');
+
+      standalone.onModuleInit();
+      expect(loggerSpy).toHaveBeenCalledWith('ConfigService not available in SecurityContext');
+    });
+  });
+
+  describe('error handling in logging', () => {
+    it('should catch errors in logSecurityEvent gracefully', () => {
+      mockAuditService.logSecurityEvent.mockImplementation(() => { throw new Error('Log Fail'); });
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      expect(() => service.logSecurityEvent('FAIL_EVENT', {})).not.toThrow();
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it('should catch errors in logCriticalSecurityEvent gracefully', () => {
+      mockAuditService.logSecurityEvent.mockImplementation(() => { throw new Error('Critical Log Fail'); });
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      expect(() => service.logCriticalSecurityEvent('CRITICAL_FAIL', {})).not.toThrow();
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
   });
 });

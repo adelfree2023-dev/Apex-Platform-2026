@@ -21,30 +21,27 @@ describe('AnomalyDetectionService', () => {
         expect(service).toBeDefined();
     });
 
-    it('should track and suspend tenants after enough failed attempts', () => {
+    it('should track and throttle tenants after enough failed attempts', () => {
         const tenantId = 'suspicious-tenant';
 
         // Initial state
-        expect(service.isSuspended(tenantId)).toBe(false);
-
-        // Multiple failures
-        for (let i = 0; i < 6; i++) {
-            service.inspectFailedEvent(tenantId, 'test-event');
-        }
-
-        expect(service.isSuspended(tenantId)).toBe(true);
-    });
-
-    it('should track and throttle tenants', () => {
-        const tenantId = 'chatty-tenant';
-
         expect(service.isThrottled(tenantId)).toBe(false);
 
-        for (let i = 0; i < 11; i++) {
-            service.inspectAnomalousRequest(tenantId, 'too-many-requests');
+        // Multiple failures
+        for (let i = 0; i < 21; i++) {
+            service.inspectFailedEvent(tenantId, 'test-event', new Error('test'));
         }
 
         expect(service.isThrottled(tenantId)).toBe(true);
+    });
+
+    it('should track and report anomalous requests', () => {
+        const tenantId = 'chatty-tenant';
+
+        service.inspect(tenantId, true, { path: '/test' });
+
+        const status = service.getStatus(tenantId);
+        expect(status.failureCount).toBe(1);
     });
 
     it('should handle failed logins separately', () => {

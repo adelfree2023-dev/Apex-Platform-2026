@@ -41,7 +41,7 @@ describe('EnvValidatorService', () => {
 
     it('should throw in production if JWT_SECRET is weak', () => {
         mockConfig.isProduction.mockReturnValue(true);
-        mockConfig.get.mockImplementation((key) => {
+        mockConfig.get.mockImplementation((key: string) => {
             if (key === 'JWT_SECRET') return 'short';
             return 'valid-value';
         });

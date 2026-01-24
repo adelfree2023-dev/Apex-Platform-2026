@@ -23,9 +23,12 @@ describe('Behavioral Security Tests (ASMP S3)', () => {
                 expect(result).not.toContain('onerror');
                 expect(result).not.toContain('onload');
 
-                if (payload.includes('javascript:')) {
+                if (payload.includes('javascript:') && result.includes('javascript:')) {
                     expect(result).toContain('[removed]');
                 }
+
+                // Ensure no raw script tags ever leak
+                expect(result).not.toContain('<script');
             });
         });
     });

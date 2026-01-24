@@ -35,6 +35,9 @@ describe('DashboardController (e2e)', () => {
       subdomain: 'demo'
     });
 
+    // 🛡️ S2: Mock schema existence for isolation check
+    mockPrisma.$queryRaw.mockResolvedValue([{ schema_name: 'tenant_00000000_0000_0000_0000_000000000001' }]);
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [DashboardController],
       providers: [

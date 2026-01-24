@@ -29,7 +29,7 @@ export class PrismaModule implements OnModuleInit, OnModuleDestroy {
             console.log('✅ Prisma connection established successfully');
 
             // 🛡️ تطبيق إعدادات الأمان الإضافية
-            this.prismaService.applySecurityHardening();
+            // this.prismaService.applySecurityHardening(); (Removed: invalid method)
         } catch (error) {
             console.error('🚨 Critical: Failed to connect to database', error);
             throw new Error('Database connection failed - cannot start application');

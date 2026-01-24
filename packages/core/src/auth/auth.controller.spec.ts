@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import { SecurityContext } from '../common/security/security.context';
 import { InputValidatorService } from '../common/security/validation/input-validator.service';
 import { RateLimiterService } from '../common/access-control/services/rate-limiter.service';
+import { TenantContextService } from '../common/security/tenant-context/tenant-context.service';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { z } from 'zod';

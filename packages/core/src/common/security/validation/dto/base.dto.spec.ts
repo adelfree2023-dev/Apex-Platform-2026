@@ -32,6 +32,10 @@ describe('BaseDTO Validation', () => {
         it('should coerce string numbers', () => {
             expect(BaseSchema.number.parse('123.45')).toBe(123.45);
         });
+
+        it('should handle non-string inputs in phoneNumber preprocess', () => {
+            expect(BaseSchema.phoneNumber.parse(1234567890 as any)).toBe('1234567890');
+        });
     });
 
     describe('BaseInputSchema', () => {
@@ -71,6 +75,18 @@ describe('BaseDTO Validation', () => {
             expect(result.tenantId).toBe(tenantId);
             expect(result.requestId).toBeDefined();
             expect(result.timestamp).toBeDefined();
+        });
+
+        it('should use provided requestId and timestamp if present', () => {
+            const tenantId = '123e4567-e89b-12d3-a456-426614174000';
+            const userId = '123e4567-e89b-12d3-a456-426614174001';
+            const requestId = '123e4567-e89b-12d3-a456-426614174002';
+            const timestamp = 123456789;
+            const data = { tenantId, userId, requestId, timestamp };
+
+            const result = secureValidate(BaseInputSchema, data);
+            expect(result.requestId).toBe(requestId);
+            expect(result.timestamp).toBe(timestamp);
         });
 
         it('should throw "فشل التحقق من صحة المدخلات" on validation error', () => {

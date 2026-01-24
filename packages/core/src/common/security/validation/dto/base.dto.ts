@@ -24,6 +24,7 @@ export const BaseSchema = {
   safeText: z.string()
     .min(1, 'النص مطلوب')
     .max(500, 'النص طويل جداً')
+    .trim()
     .transform(text => sanitizeHtml(text, {
       allowedTags: [],
       allowedAttributes: {}
@@ -50,19 +51,19 @@ export const BaseSchema = {
     .trim(),
 
   // ✅ S3: رقم آمن
-  number: z.number().or(z.string().transform(val => Number(val)))
+  number: z.coerce.number()
 };
 
 // ✅ S3: المخططات المصدرة للتوافق مع DTOs الأخرى
-export const SafeTextRawSchema = BaseSchema.safeText;
+export const SafeTextRawSchema = z.string().trim();
 export const SafeTextSchema = BaseSchema.safeText;
-export const EmailRawSchema = BaseSchema.emailAddress;
+export const EmailRawSchema = z.string().email();
 export const EmailSchema = BaseSchema.emailAddress;
 export const NameRawSchema = BaseSchema.name;
 export const NameSchema = BaseSchema.name;
-export const SafeNumberRawSchema = BaseSchema.number;
+export const SafeNumberRawSchema = z.coerce.number();
 export const SafeNumberSchema = BaseSchema.number;
-export const ExternalIdRawSchema = z.string().uuid().or(z.string().min(1));
+export const ExternalIdRawSchema = z.string().trim();
 export const ExternalIdSchema = ExternalIdRawSchema;
 
 // ✅ S3: مخطط التحقق الأساسي لجميع المدخلات

@@ -49,7 +49,7 @@ describe('PaymentService', () => {
     logSecurityEvent: jest.fn()
   };
   const mockMail = {
-    sendEmail: jest.fn().mockResolvedValue(undefined)
+    sendMail: jest.fn().mockResolvedValue(undefined)
   };
   const mockConfig = {
     get: jest.fn((key) => {
@@ -314,7 +314,7 @@ describe('PaymentService', () => {
         country: 'Egypt',
         postalCode: '12345'
       },
-      paymentMethod: 'CARD'
+      paymentMethod: 'CREDIT_CARD'
     };
 
     it('should confirm payment successfully', async () => {
@@ -342,7 +342,7 @@ describe('PaymentService', () => {
         where: { id: 'order-1' },
         data: expect.objectContaining({
           status: 'CONFIRMED',
-          paymentMethod: 'CARD'
+          paymentMethod: 'CREDIT_CARD'
         })
       });
     });
@@ -359,8 +359,7 @@ describe('PaymentService', () => {
     it('should send email confirmation successfully', async () => {
       mockPrisma.tenant.findUnique.mockResolvedValue({
         id: 'tenant-1',
-        storeName: 'My Store',
-        supportEmail: 'support@my-store.com'
+        name: 'My Store',
       });
 
       await service.sendPaymentConfirmation({
@@ -374,10 +373,14 @@ describe('PaymentService', () => {
         }
       } as any, 'tenant-1');
 
-      expect(mockMail.sendEmail).toHaveBeenCalledWith(
+      expect(mockMail.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           to: 'customer@example.com',
-          subject: 'تأكيد الدفع #ORD-123 - My Store'
+          subject: 'تأكيد الدفع #ORD-123 - My Store',
+          context: expect.objectContaining({
+            storeName: 'My Store',
+            supportEmail: 'support@apex-platform.com'
+          })
         })
       );
       expect(mockAudit.logActivity).toHaveBeenCalledWith(

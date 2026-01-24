@@ -8,18 +8,20 @@ import { SecurityContext } from './common/security/security.context';
 describe('AppService', () => {
   let service: AppService;
   let mockPrisma: any;
-  let mockSecurity: any;
+  const mockSecurity = {
+    logSecurityEvent: jest.fn(),
+    logCriticalSecurityEvent: jest.fn(),
+  };
 
   beforeEach(async () => {
     mockPrisma = createMockPrisma();
-    const common = getCommonProviders([AppService]);
-    mockSecurity = common.find(p => p.provide === SecurityContext).useValue;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AppService,
-        ...common,
+        ...getCommonProviders([AppService]).filter(p => (p as any).provide !== SecurityContext),
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: SecurityContext, useValue: mockSecurity },
       ],
     }).compile();
 
@@ -55,7 +57,6 @@ describe('AppService', () => {
     });
 
     it('should catch unexpected errors and log security event', async () => {
-      // Force error in a way that triggers the catch block in getHealth
       jest.spyOn(service as any, 'getDatabaseHealth').mockRejectedValueOnce(new Error('Unexpected'));
 
       const health = await service.getHealth(false);
@@ -83,14 +84,6 @@ describe('AppService', () => {
         'DATABASE_CONNECTION_FAILURE',
         expect.objectContaining({ error: 'Conn Fail' })
       );
-    });
-  });
-
-  describe('initializeDatabaseConnection', () => {
-    it('should log critical event if initialization fails', async () => {
-      mockPrisma.$queryRaw.mockRejectedValue(new Error('Init Fail'));
-      // We need to re-instantiate or manually call the private method if possible
-      // but it's called in constructor. So we mock before construction in a sub-test.
     });
   });
 });

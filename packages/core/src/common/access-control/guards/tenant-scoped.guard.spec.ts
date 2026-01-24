@@ -1,18 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TenantScopedGuard } from './tenant-scoped.guard';
-import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { TenantContextService } from '../../security/tenant-context/tenant-context.service';
-
-import { commonProviders, mockTenantContext } from '../../../../test/test-utils';
+import { ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { getCommonProviders, createMockPrisma } from '../../../../test/test-utils';
 
 describe('TenantScopedGuard', () => {
   let guard: TenantScopedGuard;
+  let mockPrisma: any;
 
   beforeEach(async () => {
+    mockPrisma = createMockPrisma();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TenantScopedGuard,
-        ...commonProviders,
+        ...getCommonProviders(),
+        { provide: PrismaService, useValue: mockPrisma },
       ],
     }).compile();
 
@@ -28,8 +30,12 @@ describe('TenantScopedGuard', () => {
       getClass: () => ({}),
     } as unknown as ExecutionContext;
 
-    const { mockPrisma } = require('../../../../test/test-utils');
-    mockPrisma.tenant.findUnique.mockResolvedValue({ id: '123', status: 'active' });
+    mockPrisma.tenant.findUnique.mockResolvedValue({
+      id: '00000000-0000-0000-0000-000000000001',
+      status: 'ACTIVE'
+    });
+    // Database isolation check
+    mockPrisma.$queryRaw.mockResolvedValue([{ exists: true }]);
 
     expect(await guard.canActivate(ctx)).toBe(true);
   });
@@ -42,6 +48,6 @@ describe('TenantScopedGuard', () => {
       getHandler: () => ({}),
       getClass: () => ({}),
     } as unknown as ExecutionContext;
-    await expect(guard.canActivate(ctx)).rejects.toThrow();
+    await expect(guard.canActivate(ctx)).rejects.toThrow(ForbiddenException);
   });
 });

@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { InputValidatorService } from './input-validator.service';
 import { z } from 'zod';
 import { BadRequestException } from '@nestjs/common';
+import { getCommonProviders } from '../../../../test/test-utils';
 
 describe('InputValidatorService', () => {
   let service: InputValidatorService;
@@ -9,7 +10,10 @@ describe('InputValidatorService', () => {
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [InputValidatorService],
+      providers: [
+        InputValidatorService,
+        ...getCommonProviders(),
+      ],
     }).compile();
 
     service = module.get<InputValidatorService>(InputValidatorService);

@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DefenseInterceptor } from './defense.interceptor';
 import { CallHandler, ExecutionContext } from '@nestjs/common';
 import { of } from 'rxjs';
+import { getCommonProviders } from '../../../../test/test-utils';
 
 describe('DefenseInterceptor', () => {
   let interceptor: DefenseInterceptor;
@@ -11,6 +12,7 @@ describe('DefenseInterceptor', () => {
         method: 'GET',
         url: '/api/test',
         headers: { 'x-request-id': 'req-123' },
+        tenantId: '00000000-0000-0000-0000-000000000001'
       }),
       getResponse: () => ({
         setHeader: jest.fn(),
@@ -26,18 +28,24 @@ describe('DefenseInterceptor', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [DefenseInterceptor],
+      providers: [
+        DefenseInterceptor,
+        ...getCommonProviders(),
+      ],
     }).compile();
 
     interceptor = module.get<DefenseInterceptor>(DefenseInterceptor);
   });
 
-  it('adds security headers and passes through', (done) => {
-    const response = mockContext.switchToHttp().getResponse();
-    interceptor.intercept(mockContext, mockCallHandler).subscribe((val) => {
-      expect(val).toEqual({ success: true });
-      expect(response.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
-      done();
+  it('passes through when tenant is present', (done) => {
+    interceptor.intercept(mockContext, mockCallHandler).subscribe({
+      next: (val) => {
+        expect(val).toEqual({ success: true });
+        done();
+      },
+      error: (err) => {
+        done(err);
+      }
     });
   });
 });

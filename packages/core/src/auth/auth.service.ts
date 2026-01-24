@@ -67,13 +67,13 @@ export class AuthService {
             await this.auditService.logActivity({
                 tenantId,
                 userId: users[0].id.toString(),
-                action: 'USER_LOGIN_SUCCESS',
+                action: 'USER_LOGIN',
                 details: { email: validated.email, ip }
             });
 
             return this.generateTokens(users[0].id, tenantId, users[0].role);
         } catch (error) {
-            const status = error?.status || error?.response?.status || error?.response?.statusCode || (error?.getResponse ? error.getResponse()?.statusCode : null) || (error?.name === 'UnauthorizedException' ? 401 : (error?.name === 'ForbiddenException' ? 403 : 500));
+            const status = error?.status || error?.response?.status || error?.response?.statusCode || (error?.getResponse ? error.getResponse()?.statusCode : null) || (error?.name?.includes('Unauthorized') ? 401 : (error?.name?.includes('Forbidden') ? 403 : 500));
             if (status === 401 || status === 403) throw error;
 
             await this.auditService.logSecurityEvent('AUTH_SYSTEM_ERROR', {

@@ -9,9 +9,13 @@ describe('AllExceptionsFilter', () => {
     status: jest.fn().mockReturnThis(),
     json: jest.fn(),
   };
+  const mockRequest = {
+    url: '/test',
+  };
   const mockHost = {
     switchToHttp: () => ({
       getResponse: () => mockResponse,
+      getRequest: () => mockRequest,
     }),
   } as unknown as ArgumentsHost;
 

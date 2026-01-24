@@ -111,33 +111,6 @@ export const createMockCache = () => ({
     wrap: jest.fn().mockImplementation((_, cb) => cb()),
 });
 
-export const getCommonProviders = (exclude: any[] = []): Provider[] => {
-    const providers: Provider[] = [
-        { provide: PrismaService, useValue: createMockPrisma() },
-        { provide: AuditService, useValue: createMockAudit() },
-        { provide: SecurityContext, useValue: createMockSecurityContext() },
-        { provide: TenantContextService, useValue: createMockTenantContext() },
-        { provide: ConfigService, useValue: createMockConfig() },
-        { provide: RateLimiterService, useValue: createMockRateLimiter() },
-        { provide: MailService, useValue: createMockMailService() },
-        { provide: AnomalyDetectionService, useValue: createMockAnomalyDetection() },
-        { provide: InputValidatorService, useValue: createMockInputValidator() },
-        { provide: SanitizerService, useValue: createMockSanitizer() },
-        { provide: EncryptedFieldService, useValue: createMockEncryption() },
-        { provide: CacheService, useValue: createMockCache() },
-        Reflector,
-        { provide: 'SECURITY_LOGGER', useValue: { logEvent: jest.fn() } },
-        { provide: 'CACHE_MANAGER', useValue: createMockCache() },
-    ];
-
-    return providers.filter(p => {
-        if ('provide' in p) {
-            return !exclude.includes(p.provide);
-        }
-        return !exclude.includes(p);
-    });
-};
-
 // Singletons for simple tests (Backward compatibility)
 export const mockPrisma = createMockPrisma();
 export const mockAudit = createMockAudit();
@@ -151,5 +124,32 @@ export const mockInputValidator = createMockInputValidator();
 export const mockSanitizer = createMockSanitizer();
 export const mockEncryption = createMockEncryption();
 export const mockCache = createMockCache();
+
+export const getCommonProviders = (exclude: any[] = []): Provider[] => {
+    const providers: Provider[] = [
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: AuditService, useValue: mockAudit },
+        { provide: SecurityContext, useValue: mockSecurityContext },
+        { provide: TenantContextService, useValue: mockTenantContext },
+        { provide: ConfigService, useValue: mockConfig },
+        { provide: RateLimiterService, useValue: mockRateLimiter },
+        { provide: MailService, useValue: mockMailService },
+        { provide: AnomalyDetectionService, useValue: mockAnomalyDetection },
+        { provide: InputValidatorService, useValue: mockInputValidator },
+        { provide: SanitizerService, useValue: mockSanitizer },
+        { provide: EncryptedFieldService, useValue: mockEncryption },
+        { provide: CacheService, useValue: mockCache },
+        Reflector,
+        { provide: 'SECURITY_LOGGER', useValue: { logEvent: jest.fn() } },
+        { provide: 'CACHE_MANAGER', useValue: mockCache },
+    ];
+
+    return providers.filter(p => {
+        if ('provide' in p) {
+            return !exclude.includes(p.provide);
+        }
+        return !exclude.includes(p);
+    });
+};
 
 export const commonProviders: Provider[] = getCommonProviders();

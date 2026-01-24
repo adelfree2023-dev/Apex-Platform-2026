@@ -6,7 +6,7 @@ import { CreatePaymentIntentDto } from '../dto/create-payment-intent.dto';
 import { ProcessWebhookDto } from '../dto/process-webhook.dto';
 import { CheckoutDto } from '../dto/checkout.dto';
 import { HttpException, HttpStatus, INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { getCommonProviders } from '../../../../test/test-utils';
 
 describe('PaymentController (e2e)', () => {
@@ -63,7 +63,7 @@ describe('PaymentController (e2e)', () => {
         orderId: '00000000-0000-0000-0000-000000000002',
         amount: 150,
         currency: 'USD',
-        paymentMethod: 'CARD',
+        paymentMethod: 'CREDIT_CARD',
         customerEmail: 'customer@example.com'
       };
 
@@ -86,7 +86,7 @@ describe('PaymentController (e2e)', () => {
         orderId: '00000000-0000-0000-0000-000000000002',
         amount: 150,
         currency: 'USD',
-        paymentMethod: 'CARD',
+        paymentMethod: 'CREDIT_CARD',
       } as any;
 
       await request(app.getHttpServer())
@@ -133,7 +133,7 @@ describe('PaymentController (e2e)', () => {
           country: 'Egypt',
           postalCode: '12345'
         },
-        paymentMethod: 'CARD'
+        paymentMethod: 'CREDIT_CARD'
       };
 
       const response = await request(app.getHttpServer())

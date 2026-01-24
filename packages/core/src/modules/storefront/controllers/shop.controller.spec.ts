@@ -5,7 +5,7 @@ import { ProductService } from '../../products/services/product.service';
 import { CategoryService } from '../../categories/services/category.service';
 import { TenantsService } from '../../tenants/tenants.service';
 import { HttpStatus, INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { getCommonProviders } from '../../../../test/test-utils';
 
 describe('ShopController (e2e)', () => {
@@ -134,7 +134,7 @@ describe('ShopController (e2e)', () => {
         country: 'Egypt',
         postalCode: '12345'
       },
-      paymentMethod: 'CARD',
+      paymentMethod: 'CREDIT_CARD',
     };
 
     it('should process checkout successfully', async () => {

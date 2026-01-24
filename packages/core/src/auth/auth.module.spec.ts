@@ -44,8 +44,10 @@ describe('AuthModule', () => {
     expect(controller).toBeDefined();
   });
 
-  it('should contain all required core providers', () => {
+  it('should be able to resolve all required providers', async () => {
     expect(module.get(PrismaService)).toBeDefined();
-    expect(module.get(TenantContextService)).toBeDefined();
+    // Resolve scoped provider
+    const tenantContext = await module.resolve(TenantContextService);
+    expect(tenantContext).toBeDefined();
   });
 });

@@ -72,7 +72,8 @@ export class AuthService {
 
             return this.generateTokens(users[0].id, tenantId, users[0].role);
         } catch (error) {
-            if (error.status === 401 || error.status === 403) throw error;
+            const status = error?.status || error?.response?.statusCode || error?.response?.status;
+            if (status === 401 || status === 403) throw error;
 
             await this.auditService.logSecurityEvent('AUTH_SYSTEM_ERROR', {
                 severity: 'CRITICAL',

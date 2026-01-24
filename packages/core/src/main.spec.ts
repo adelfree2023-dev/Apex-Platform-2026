@@ -5,27 +5,25 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from '@nestjs/common';
 
-import { commonProviders, mockConfig } from '../test/test-utils';
+import { getCommonProviders, mockConfig } from '../test/test-utils';
 
 describe('Bootstrap (main)', () => {
   let app: INestApplication;
-  const mockLogger = { log: jest.fn(), error: jest.fn() };
+  const mockLogger = { log: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() };
 
   beforeAll(async () => {
-    let moduleBuilder = Test.createTestingModule({
+    const moduleBuilder = Test.createTestingModule({
       imports: [AppModule],
-    })
-      .overrideProvider(ConfigService)
-      .useValue(mockConfig)
-      .overrideProvider(Logger)
-      .useValue(mockLogger);
+    });
 
-    // Apply common providers to overwrite any missing dependencies in AppModule deep hierarchy
-    commonProviders.forEach(p => {
+    // 🛡️ S7: Overwrite ALL common providers globally to satisfy deep hierarchies
+    getCommonProviders().forEach(p => {
       if ('provide' in p) {
         moduleBuilder.overrideProvider(p.provide).useValue((p as any).useValue);
       }
     });
+
+    moduleBuilder.overrideProvider(Logger).useValue(mockLogger);
 
     const compiled = await moduleBuilder.compile();
 

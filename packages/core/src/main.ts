@@ -57,14 +57,18 @@ async function bootstrap() {
   const auditService = app.get(AuditService);
   const cspConfig = app.get(CSPConfig);
 
+  logger.debug(`🔧 DATABASE_URL Check: ${appConfigService.get('DATABASE_URL') ? 'LOADED' : 'MISSING'}`);
+  logger.debug(`🔧 Prisma Service exists: ${!!prismaService}`);
+
   // ✅ S1: Database Connection Check with Retry
   try {
-    // Assuming simple connection check here as retry logic might be inside PrismaService
-    // or we can implement a simple retry loop here
+    logger.log('📡 Attempting to connect to database...');
     await prismaService.$connect();
     logger.log('✅ Database connection established');
-  } catch (error) {
-    logger.error('❌ Database connection failed', error);
+  } catch (error: any) {
+    logger.error('❌ Database connection failed');
+    logger.error(`Error Message: ${error?.message || 'No message'}`);
+    logger.error(`Error Stack: ${error?.stack || 'No stack'}`);
     process.exit(1);
   }
 

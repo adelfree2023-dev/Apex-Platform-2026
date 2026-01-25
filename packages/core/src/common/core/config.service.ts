@@ -13,14 +13,7 @@ export class ConfigService {
    * - مع القيمة الافتراضية للأمان
    */
   get(key: string, defaultValue?: string): string | undefined {
-    const value = process.env[key] || defaultValue;
-
-    // ✅ S1: حماية من تسريب أسرار في السجلات
-    if (this.isSecretKey(key) && value) {
-      return this.maskSecret(value);
-    }
-
-    return value;
+    return process.env[key] || defaultValue;
   }
 
   /**

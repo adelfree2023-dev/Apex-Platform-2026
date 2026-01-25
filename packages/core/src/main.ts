@@ -9,7 +9,7 @@ import * as crypto from 'crypto';
 import { PrismaService } from './prisma/prisma.service';
 import { ValidationPipe } from '@nestjs/common';
 import { CSPConfig } from './common/presentation/security-headers/csp.config';
-import { apexAgent } from './common/security/apex-agent';
+import { apexAgent } from './common/ai/apex-agent';
 import { SystemInitializationService } from './common/core/system-initialization.service';
 import { AuditService } from './common/monitoring/audit/audit.service';
 import rateLimit from 'express-rate-limit';

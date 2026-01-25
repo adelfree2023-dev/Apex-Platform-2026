@@ -79,7 +79,9 @@ export class AuthController {
                 errorType: error.name,
                 ...ctx
             });
-            await constantTimeDelay(1500);
+            // ✅ S12: إضافة تأخير زمني متغير لمنع هجمات القوة الغاشمة
+            const variableDelay = Math.floor(Math.random() * 1000) + 1500; // 1500-2500ms
+            await constantTimeDelay(variableDelay);
             return response.status(HttpStatus.UNAUTHORIZED).json({
                 statusCode: HttpStatus.UNAUTHORIZED,
                 message: 'بيانات اعتماد غير صالحة',

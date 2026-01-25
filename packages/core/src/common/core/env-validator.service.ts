@@ -7,7 +7,7 @@ export class EnvValidatorService {
   private readonly requiredVars = ['JWT_SECRET', 'DATABASE_URL'];
   private readonly minimumSecretLength = 64; // S1: التحقق من قوة الأسرار
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly configService: ConfigService) { }
 
   /**
    * ✅ S1: التحقق الشامل من متغيرات البيئة
@@ -21,12 +21,18 @@ export class EnvValidatorService {
       const missingVars = this.requiredVars.filter(
         varName => !this.configService.get(varName)
       );
-      
-      if (missingVars.length > 0) {
-        this.logger.error(`🔥 متغيرات البيئة المطلوبة مفقودة: ${missingVars.join(', ')}`);
-        throw new InternalServerErrorException(
-          `رفض التشغيل في وضع الإنتاج: متغيرات البيئة المطلوبة مفقودة (${missingVars.join(', ')})`
-        );
+
+      // S11: منع متغيرات التطوير في الإنتاج
+      const devVars = ['LOCAL_DEV', 'DEBUG_MODE', 'SKIP_AUTH'];
+      const activeDevVars = devVars.filter(v => this.configService.get(v));
+
+      if (missingVars.length > 0 || activeDevVars.length > 0) {
+        const errorMsg = missingVars.length > 0
+          ? `🔥 متغيرات البيئة المطلوبة مفقودة: ${missingVars.join(', ')}`
+          : `🛑 تحذير أمني: متغيرات التطوير نشطة في الإنتاج: ${activeDevVars.join(', ')}`;
+
+        this.logger.error(errorMsg);
+        throw new InternalServerErrorException(errorMsg);
       }
     }
 
@@ -44,11 +50,11 @@ export class EnvValidatorService {
    */
   private validateSecrets(): void {
     const jwtSecret = this.configService.get('JWT_SECRET');
-    
+
     if (jwtSecret && jwtSecret.length < this.minimumSecretLength) {
       const message = `تحذير أمني: JWT_SECRET قصير جداً (${jwtSecret.length} حرفاً). 
       يوصى باستخدام 64 حرفاً على الأقل لأمان عالي.`;
-      
+
       if (this.configService.isProduction()) {
         this.logger.error(message);
         throw new InternalServerErrorException('JWT_SECRET غير آمن للإنتاج');
@@ -64,12 +70,12 @@ export class EnvValidatorService {
   private logEnvironmentStatus(): void {
     const env = this.configService.get('NODE_ENV') || 'development';
     const isProd = this.configService.isProduction();
-    
+
     this.logger.log(`🔒 حالة البيئة: ${env.toUpperCase()}`);
-    
+
     if (!isProd) {
       this.logger.warn('⚠️ وضع التطوير الآمن مفعل. بعض القيود الأمنية مخففة.');
-      
+
       // التحقق من وجود قيم افتراضية في التطوير
       if (!this.configService.get('JWT_SECRET')) {
         this.logger.warn('🔧 تم تعيين JWT_SECRET افتراضي للتطوير فقط');
@@ -83,12 +89,12 @@ export class EnvValidatorService {
   async validateSystemReadiness(): Promise<boolean> {
     try {
       this.validateEnvironment();
-      
+
       // يمكن إضافة المزيد من عمليات التحقق هنا:
       // - التحقق من اتصال قاعدة البيانات
       // - التحقق من مساحة التخزين
       // - التحقق من الذاكرة المتاحة
-      
+
       this.logger.log('✅ النظام جاهز للتشغيل');
       return true;
     } catch (error) {

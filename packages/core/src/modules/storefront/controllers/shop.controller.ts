@@ -38,6 +38,18 @@ export class ShopController {
         private readonly inputValidator: InputValidatorService,
     ) { }
 
+    private validateUrl(url: string): void {
+        try {
+            const parsed = new URL(url);
+            const forbidden = ['localhost', '127.0.0.1', 'metadata.google.internal', '169.254.169.254'];
+            if (forbidden.some(host => parsed.hostname.includes(host))) {
+                throw new Error('Forbidden URL');
+            }
+        } catch (e) {
+            throw new HttpException('رابط غير صالح أو محظور (Potential SSRF)', HttpStatus.FORBIDDEN);
+        }
+    }
+
     @Public()
     @Get('/:tenantSubdomain/products')
     @ApiOperation({ summary: 'الحصول على منتجات المتجر' })

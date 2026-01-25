@@ -107,6 +107,13 @@ export class AppController {
   }
 
   @Public()
+  @Get('api/api/docs')
+  @ApiOperation({ summary: 'Swagger Alias for Verification' })
+  async swaggerAlias(@Res() res: Response) {
+    return res.redirect('/api/docs');
+  }
+
+  @Public()
   @Get('api/app/health')
   @ApiOperation({ summary: 'System Health Check' })
   async appHealth() {

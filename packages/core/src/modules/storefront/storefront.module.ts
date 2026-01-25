@@ -2,6 +2,7 @@ import { Module, forwardRef, Global } from '@nestjs/common';
 import { ShopController } from './controllers/shop.controller';
 import { PaymentController } from './controllers/payment.controller';
 import { DashboardController } from './controllers/dashboard.controller';
+import { ModuleHealthController } from './controllers/health.controller';
 import { ShopService } from './services/shop.service';
 import { PaymentService } from './services/payment.service';
 import { DashboardService } from './services/dashboard.service';
@@ -32,6 +33,7 @@ import { CacheModule } from '../../common/caching/cache.module';
         ShopController,
         PaymentController,
         DashboardController,
+        ModuleHealthController,
     ],
     providers: [
         ShopService,

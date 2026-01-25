@@ -8,6 +8,7 @@ export class AuditController {
     constructor(private readonly auditService: AuditService) { }
 
     @Get()
+    @Get('logs') // ✅ S4: إضافة مسار متوافق مع سكربت الاختبار
     async getLogs(@Req() req: any, @Query() query: any) {
         return this.auditService.getAuditLogs(req.tenantId, query);
     }

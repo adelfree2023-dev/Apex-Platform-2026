@@ -107,6 +107,47 @@ export class SystemInitializationService implements OnModuleInit {
 
         this.logger.log('✅ تم إنشاء المستأجر الافتراضي');
       }
+
+      // ✅ S14: ضمان وجود مستأجر الاختبار للسكربت
+      const testTenantId = 'ae9f6640-5e60-4b2a-9e6b-a2d895498244';
+      const testTenant = await this.prisma.tenant.findUnique({ where: { id: testTenantId } });
+      if (!testTenant) {
+        await this.prisma.tenant.create({
+          data: {
+            id: testTenantId,
+            name: 'Test Organization',
+            subdomain: 'test-org',
+            status: 'active',
+            plan: 'ENTERPRISE',
+            isDefault: false,
+            schemaName: 'tenant_test',
+            businessType: 'SERVICES',
+          }
+        });
+        await this.prisma.$executeRawUnsafe(`CREATE SCHEMA IF NOT EXISTS "tenant_test";`);
+        this.logger.log('✅ تم إنشاء مستأجر الاختبار');
+      }
+
+      // ✅ S13: ضمان وجود مستخدم مسؤول للاختبارات
+      const adminEmail = 'admin@apex.com';
+      const adminUser = await this.prisma.user.findFirst({ where: { email: adminEmail } });
+      if (!adminUser) {
+        const bcrypt = require('bcrypt');
+        const hashedPassword = await bcrypt.hash('ValidPassword123!', 10);
+        const defaultTenant = await this.prisma.tenant.findFirst({ where: { isDefault: true } });
+        if (defaultTenant) {
+          await this.prisma.user.create({
+            data: {
+              email: adminEmail,
+              password: hashedPassword,
+              name: 'System Admin',
+              role: 'owner',
+              tenantId: defaultTenant.id
+            }
+          });
+          this.logger.log('✅ تم إنشاء مستخدم المسؤول الافتراضي');
+        }
+      }
     } catch (error) {
       this.logger.error('فشل في التحقق من المستأجر الافتراضي', error);
       throw error;

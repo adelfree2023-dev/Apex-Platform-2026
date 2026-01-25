@@ -56,12 +56,17 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Delegate common methods to the client
-  get tentant() { return this.client.tenant; }
+  get tenant() { return this.client.tenant; }
   get user() { return this.client.user; }
   get systemSetting() { return this.client.systemSetting; }
   get product() { return this.client.product; }
   get order() { return this.client.order; }
   get payment() { return this.client.payment; }
+  get customer() { return this.client.customer; }
+  get revokedToken() { return this.client.revokedToken; }
+  get refund() { return this.client.refund; }
+  get systemConfig() { return this.client.systemConfig; }
+  get orderItem() { return this.client.orderItem; }
   // ... add more as needed or use client directly
 
   // Helper for raw queries used in audit/tenants

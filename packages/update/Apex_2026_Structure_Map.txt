@@ -1,0 +1,242 @@
+﻿========================================================
+🗺️  PROJECT STRUCTURE MAP
+========================================================
+📅 Generated: 2026-01-25 03:10
+📂 Files Included: 168
+🚫 Noise Filtered: Lockfiles, Logs, Assets
+🔒 Security Filter: ACTIVE
+========================================================
+
+├── 📂 core
+│   ├── 📂 prisma
+│   │   ├── 📄 schema.prisma
+│   │   └── 📄 tenant-schema.prisma ➤ Apex Platform - Tenant-Isolated Schema Template
+│   ├── 📂 src
+│   │   ├── 📂 auth
+│   │   │   ├── 📂 dto
+│   │   │   │   ├── 📄 login.dto.spec.ts
+│   │   │   │   ├── 📄 login.dto.ts
+│   │   │   │   ├── 📄 register.dto.spec.ts
+│   │   │   │   └── 📄 register.dto.ts
+│   │   │   ├── 📄 auth.controller.spec.ts
+│   │   │   ├── 📄 auth.controller.ts
+│   │   │   ├── 📄 auth.module.spec.ts
+│   │   │   ├── 📄 auth.module.ts
+│   │   │   ├── 📄 auth.service.spec.ts
+│   │   │   └── 📄 auth.service.ts
+│   │   ├── 📂 common
+│   │   │   ├── 📂 access-control
+│   │   │   │   ├── 📂 guards
+│   │   │   │   │   ├── 📄 license.guard.spec.ts
+│   │   │   │   │   ├── 📄 license.guard.ts
+│   │   │   │   │   ├── 📄 super-admin.guard.spec.ts
+│   │   │   │   │   ├── 📄 super-admin.guard.ts
+│   │   │   │   │   ├── 📄 tenant-scoped.guard.spec.ts
+│   │   │   │   │   ├── 📄 tenant-scoped.guard.ts
+│   │   │   │   │   ├── 📄 tenant-throttler.guard.spec.ts
+│   │   │   │   │   └── 📄 tenant-throttler.guard.ts
+│   │   │   │   └── 📂 services
+│   │   │   │       ├── 📄 anomaly-detection.service.spec.ts
+│   │   │   │       ├── 📄 anomaly-detection.service.ts
+│   │   │   │       ├── 📄 rate-limiter.service.spec.ts
+│   │   │   │       └── 📄 rate-limiter.service.ts
+│   │   │   ├── 📂 caching
+│   │   │   │   ├── 📄 cache.module.ts
+│   │   │   │   ├── 📄 cache.service.spec.ts
+│   │   │   │   └── 📄 cache.service.ts
+│   │   │   ├── 📂 communication
+│   │   │   │   ├── 📄 mail.module.ts
+│   │   │   │   ├── 📄 mail.service.spec.ts
+│   │   │   │   └── 📄 mail.service.ts
+│   │   │   ├── 📂 core
+│   │   │   │   ├── 📄 config.service.spec.ts
+│   │   │   │   ├── 📄 config.service.ts
+│   │   │   │   ├── 📄 env-validator.service.spec.ts
+│   │   │   │   ├── 📄 env-validator.service.ts
+│   │   │   │   ├── 📄 system-health.service.spec.ts
+│   │   │   │   ├── 📄 system-health.service.ts
+│   │   │   │   ├── 📄 system-initialization.service.spec.ts
+│   │   │   │   └── 📄 system-initialization.service.ts
+│   │   │   ├── 📂 decorators
+│   │   │   │   ├── 📄 action.decorator.ts
+│   │   │   │   └── 📄 public.decorator.ts
+│   │   │   ├── 📂 filters
+│   │   │   │   └── 📄 all-exceptions.filter.ts
+│   │   │   ├── 📂 monitoring
+│   │   │   │   └── 📂 audit
+│   │   │   │       ├── 📄 audit-logger.interceptor.spec.ts
+│   │   │   │       ├── 📄 audit-logger.interceptor.ts
+│   │   │   │       ├── 📄 audit.controller.spec.ts
+│   │   │   │       ├── 📄 audit.controller.ts
+│   │   │   │       ├── 📄 audit.module.spec.ts
+│   │   │   │       ├── 📄 audit.module.ts
+│   │   │   │       ├── 📄 audit.service.spec.ts
+│   │   │   │       └── 📄 audit.service.ts
+│   │   │   ├── 📂 presentation
+│   │   │   │   ├── 📂 filters
+│   │   │   │   │   ├── 📄 all-exceptions.filter.spec.ts
+│   │   │   │   │   └── 📄 all-exceptions.filter.ts
+│   │   │   │   ├── 📂 interceptors
+│   │   │   │   │   ├── 📄 defense.interceptor.spec.ts
+│   │   │   │   │   ├── 📄 defense.interceptor.ts
+│   │   │   │   │   ├── 📄 tenant-context.interceptor.spec.ts
+│   │   │   │   │   └── 📄 tenant-context.interceptor.ts
+│   │   │   │   └── 📂 security-headers
+│   │   │   │       ├── 📄 csp.config.spec.ts
+│   │   │   │       ├── 📄 csp.config.ts
+│   │   │   │       ├── 📄 helmet.config.spec.ts
+│   │   │   │       └── 📄 helmet.config.ts
+│   │   │   ├── 📂 security
+│   │   │   │   ├── 📂 encryption
+│   │   │   │   │   ├── 📄 encrypted-field.service.spec.ts
+│   │   │   │   │   ├── 📄 encrypted-field.service.ts
+│   │   │   │   │   ├── 📄 encryption.module.ts
+│   │   │   │   │   ├── 📄 key-management.service.spec.ts
+│   │   │   │   │   └── 📄 key-management.service.ts
+│   │   │   │   ├── 📂 rate-limiter
+│   │   │   │   │   └── 📄 rate-limiter.module.ts
+│   │   │   │   ├── 📂 session
+│   │   │   │   │   ├── 📄 jwt.service.spec.ts
+│   │   │   │   │   └── 📄 jwt.service.ts
+│   │   │   │   ├── 📂 tenant-context
+│   │   │   │   │   ├── 📄 tenant-context.module.spec.ts
+│   │   │   │   │   ├── 📄 tenant-context.module.ts
+│   │   │   │   │   ├── 📄 tenant-context.service.spec.ts
+│   │   │   │   │   ├── 📄 tenant-context.service.ts
+│   │   │   │   │   ├── 📄 tenant.middleware.spec.ts
+│   │   │   │   │   ├── 📄 tenant.middleware.ts
+│   │   │   │   │   ├── 📄 tenant.utils.spec.ts
+│   │   │   │   │   └── 📄 tenant.utils.ts
+│   │   │   │   ├── 📂 validation
+│   │   │   │   │   ├── 📂 dto
+│   │   │   │   │   │   ├── 📄 base.dto.spec.ts
+│   │   │   │   │   │   ├── 📄 base.dto.ts
+│   │   │   │   │   │   ├── 📄 product.dto.spec.ts
+│   │   │   │   │   │   ├── 📄 product.dto.ts
+│   │   │   │   │   │   ├── 📄 tenant.dto.spec.ts
+│   │   │   │   │   │   └── 📄 tenant.dto.ts
+│   │   │   │   │   ├── 📄 behavioral-security.spec.ts
+│   │   │   │   │   ├── 📄 input-validator.service.spec.ts
+│   │   │   │   │   ├── 📄 input-validator.service.ts
+│   │   │   │   │   ├── 📄 sanitizer.service.spec.ts
+│   │   │   │   │   ├── 📄 sanitizer.service.ts
+│   │   │   │   │   └── 📄 validation.module.ts
+│   │   │   │   ├── 📄 security.context.module.ts
+│   │   │   │   ├── 📄 security.context.spec.ts
+│   │   │   │   └── 📄 security.context.ts
+│   │   │   ├── 📂 utils
+│   │   │   │   ├── 📄 crypto.utils.spec.ts
+│   │   │   │   ├── 📄 crypto.utils.ts
+│   │   │   │   └── 📄 security.utils.ts
+│   │   │   └── 📄 Spec file common .md
+│   │   ├── 📂 events
+│   │   │   ├── 📄 events.controller.spec.ts
+│   │   │   ├── 📄 events.controller.ts
+│   │   │   ├── 📄 events.module.spec.ts
+│   │   │   ├── 📄 events.module.ts
+│   │   │   ├── 📄 events.service.spec.ts
+│   │   │   └── 📄 events.service.ts
+│   │   ├── 📂 modules
+│   │   │   ├── 📂 categories
+│   │   │   │   ├── 📂 services
+│   │   │   │   │   └── 📄 category.service.ts
+│   │   │   │   └── 📄 categories.module.ts
+│   │   │   ├── 📂 products
+│   │   │   │   ├── 📂 services
+│   │   │   │   │   ├── 📄 product.service.spec.ts
+│   │   │   │   │   └── 📄 product.service.ts
+│   │   │   │   └── 📄 products.module.ts
+│   │   │   ├── 📂 storefront
+│   │   │   │   ├── 📂 controllers
+│   │   │   │   │   ├── 📄 dashboard.controller.spec.ts
+│   │   │   │   │   ├── 📄 dashboard.controller.ts
+│   │   │   │   │   ├── 📄 health.controller.ts
+│   │   │   │   │   ├── 📄 payment.controller.spec.ts
+│   │   │   │   │   ├── 📄 payment.controller.ts
+│   │   │   │   │   ├── 📄 shop.controller.spec.ts
+│   │   │   │   │   └── 📄 shop.controller.ts
+│   │   │   │   ├── 📂 dto
+│   │   │   │   │   ├── 📄 cart-item.dto.ts
+│   │   │   │   │   ├── 📄 checkout.dto.ts
+│   │   │   │   │   ├── 📄 create-payment-intent.dto.ts
+│   │   │   │   │   ├── 📄 customer-info.dto.ts
+│   │   │   │   │   ├── 📄 date-range.dto.ts
+│   │   │   │   │   ├── 📄 order-response.dto.ts
+│   │   │   │   │   ├── 📄 process-webhook.dto.ts
+│   │   │   │   │   ├── 📄 product-list.dto.ts
+│   │   │   │   │   └── 📄 shipping-address.dto.ts
+│   │   │   │   ├── 📂 services
+│   │   │   │   │   ├── 📄 dashboard.service.spec.ts
+│   │   │   │   │   ├── 📄 dashboard.service.ts
+│   │   │   │   │   ├── 📄 payment.service.spec.ts
+│   │   │   │   │   ├── 📄 payment.service.ts
+│   │   │   │   │   ├── 📄 shop.service.spec.ts
+│   │   │   │   │   └── 📄 shop.service.ts
+│   │   │   │   └── 📄 storefront.module.ts
+│   │   │   └── 📂 tenants
+│   │   │       ├── 📂 dto
+│   │   │       │   ├── 📄 create-tenant.dto.spec.ts
+│   │   │       │   └── 📄 create-tenant.dto.ts
+│   │   │       ├── 📂 services
+│   │   │       ├── 📄 tenants.controller.spec.ts
+│   │   │       ├── 📄 tenants.controller.ts
+│   │   │       ├── 📄 tenants.module.spec.ts
+│   │   │       ├── 📄 tenants.module.ts
+│   │   │       ├── 📄 tenants.service.spec.ts
+│   │   │       └── 📄 tenants.service.ts
+│   │   ├── 📂 prisma
+│   │   │   ├── 📄 prisma.module.spec.ts
+│   │   │   ├── 📄 prisma.module.ts
+│   │   │   ├── 📄 prisma.service.spec.ts
+│   │   │   └── 📄 prisma.service.ts
+│   │   ├── 📄 app.controller.spec.ts
+│   │   ├── 📄 app.controller.ts
+│   │   ├── 📄 app.module.ts
+│   │   ├── 📄 app.service.spec.ts
+│   │   ├── 📄 app.service.ts
+│   │   ├── 📄 main.spec.ts
+│   │   └── 📄 main.ts
+│   ├── 📂 test
+│   │   ├── 📄 app.e2e-spec.ts ➤ E2E API Tests
+│   │   ├── 📄 jest-setup.ts ➤ Jest Setup for Apex Core
+│   │   └── 📄 test-utils.ts
+│   ├── 📄 create_tests.py
+│   ├── 📄 jest.config.js
+│   ├── 📄 nest-cli.json
+│   ├── 📄 package.json
+│   └── 📄 tsconfig.json
+├── 📂 shared
+│   └── 📂 types
+│       └── 📄 tenant.types.ts ➤ Tenant Types
+└── 📂 storefront
+    ├── 📂 src
+    │   ├── 📂 app
+    │   │   ├── 📂 register
+    │   │   │   └── 📂 components
+    │   │   ├── 📂 [tenantSubdomain]
+    │   │   └── 📄 globals.css
+    │   ├── 📂 components
+    │   │   ├── 📂 cart
+    │   │   ├── 📂 categories
+    │   │   ├── 📂 dashboard
+    │   │   ├── 📂 products
+    │   │   ├── 📂 search
+    │   │   └── 📂 ui
+    │   ├── 📂 hooks
+    │   │   └── 📄 use-dashboard.ts
+    │   ├── 📂 lib
+    │   │   ├── 📂 api
+    │   │   │   ├── 📄 products.ts
+    │   │   │   └── 📄 tenants.ts
+    │   │   └── 📂 utils
+    │   │       └── 📄 error-handler.ts
+    │   ├── 📂 providers
+    │   └── 📂 types
+    │       ├── 📄 dashboard.types.ts
+    │       ├── 📄 product.types.ts
+    │       └── 📄 tenant.types.ts
+    ├── 📄 next.config.js ➤ @type {import('next').NextConfig} 
+    ├── 📄 package.json
+    ├── 📄 postcss.config.js
+    ├── 📄 tailwind.config.js ➤ @type {import('tailwindcss').Config} 
+    └── 📄 tsconfig.json

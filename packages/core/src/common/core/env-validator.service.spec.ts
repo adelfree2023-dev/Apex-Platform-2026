@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EnvValidatorService } from './env-validator.service';
 import { ConfigService } from './config.service';
+import { SecurityContext } from '../security/security.context';
 
 describe('EnvValidatorService', () => {
     let service: EnvValidatorService;
     let mockConfig: any;
+    let mockSecurityContext: any;
 
     beforeEach(async () => {
         mockConfig = {
@@ -12,10 +14,15 @@ describe('EnvValidatorService', () => {
             get: jest.fn().mockImplementation((key) => process.env[key]),
         };
 
+        mockSecurityContext = {
+            logSecurityEvent: jest.fn(),
+        };
+
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 EnvValidatorService,
                 { provide: ConfigService, useValue: mockConfig },
+                { provide: SecurityContext, useValue: mockSecurityContext },
             ],
         }).compile();
 

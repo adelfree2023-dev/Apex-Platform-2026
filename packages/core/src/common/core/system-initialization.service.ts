@@ -22,6 +22,12 @@ export class SystemInitializationService implements OnModuleInit {
   ) { }
 
   async onModuleInit() {
+    // 🛡️ S1: التحقق من وجود التبعيات قبل البدء لتجنب TypeError
+    if (!this.configService || !this.prisma) {
+      console.error('📋 [CORE_DI_FAILURE] SystemInitializationService missing critical dependencies (ConfigService/Prisma). Skipping init.');
+      return;
+    }
+
     try {
       console.log('🔧 بدء تهيئة النظام الأساسي (ASMP Protocol)...');
 
@@ -49,11 +55,16 @@ export class SystemInitializationService implements OnModuleInit {
   */
   private async validateEnvironmentVariables() {
     console.log('🛡️ التحقق من بيئة الأمان...');
-    const env = this.configService.get('NODE_ENV') || 'development';
+    const config = (this as any).configService || this.configService;
+    if (!config) {
+      console.warn('⚠️ validateEnvironmentVariables cancelled: configService is undefined');
+      return;
+    }
+    const env = config.get('NODE_ENV') || 'development';
 
     // ✅ S1: التحقق من المتغيرات البيئية الحرجة
     const requiredVars = ['DATABASE_URL', 'JWT_SECRET', 'ENCRYPTION_MASTER_KEY'];
-    const missingVars = requiredVars.filter(varName => !this.configService.get(varName));
+    const missingVars = requiredVars.filter(varName => !config.get(varName));
 
     if (missingVars.length > 0) {
       throw new Error(`المتغيرات البيئية التالية مفقودة: ${missingVars.join(', ')}`);

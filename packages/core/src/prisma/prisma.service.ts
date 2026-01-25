@@ -99,7 +99,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
         await this.$connect();
         return;
       } catch (error: any) {
-        this.logger.warn(`Connection attempt ${i + 1} failed: ${error.message}`);
+        console.warn(`Connection attempt ${i + 1} failed: ${error?.message || 'Unknown error'}`);
         if (i === maxRetries - 1) throw error;
         await new Promise(r => setTimeout(r, delayMs));
       }

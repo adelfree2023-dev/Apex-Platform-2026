@@ -23,7 +23,7 @@ export class SystemInitializationService implements OnModuleInit {
 
   async onModuleInit() {
     try {
-      this.logger.log('🔧 بدء تهيئة النظام الأساسي (ASMP Protocol)...');
+      console.log('🔧 بدء تهيئة النظام الأساسي (ASMP Protocol)...');
 
       // ✅ S1: التحقق من البيئة أولاً
       await this.validateEnvironmentVariables();
@@ -37,9 +37,9 @@ export class SystemInitializationService implements OnModuleInit {
       // ✅ M1: تهيئة النظام الأساسي
       await this.withRetry(async () => await this.initializeCoreSystem());
 
-      this.logger.log('✅ تم تهيئة النظام بنجاح');
+      console.log('✅ تم تهيئة النظام بنجاح');
     } catch (error: any) {
-      this.logger.error('❌ فشل في تهيئة النظام', error?.stack || error?.message || 'Unknown Error');
+      console.error('❌ فشل في تهيئة النظام', error?.stack || error?.message || 'Unknown Error');
       // لا ننهي العملية هنا، نترك للـ health check التعامل معها
     }
   }
@@ -149,7 +149,7 @@ export class SystemInitializationService implements OnModuleInit {
         }
       }
     } catch (error) {
-      this.logger.error('فشل في التحقق من المستأجر الافتراضي', error);
+      console.error('فشل في التحقق من المستأجر الافتراضي', error);
       throw error;
     }
   }
@@ -177,7 +177,7 @@ export class SystemInitializationService implements OnModuleInit {
         this.logger.log('✅ تم تهيئة إعدادات النظام الأساسية');
       }
     } catch (error) {
-      this.logger.error('فشل تهيئة إعدادات النظام', error);
+      console.error('فشل تهيئة إعدادات النظام', error);
       throw error;
     }
   }
@@ -195,14 +195,16 @@ export class SystemInitializationService implements OnModuleInit {
       try {
         return await operation();
       } catch (error: any) {
-        this.logger.warn(`Attempt ${attempt} failed: ${error?.message || 'Internal error'}`);
+        console.warn(`Attempt ${attempt} failed: ${error?.message || 'Internal error'}`);
 
         if (attempt === maxRetries) {
-          this.securityContext.logSecurityEvent('INITIALIZATION_FAILURE', {
-            error: error?.message || 'Unknown failure',
-            operation: operation.name || 'anonymous',
-            timestamp: new Date().toISOString(),
-          });
+          if (this.securityContext) {
+            this.securityContext.logSecurityEvent('INITIALIZATION_FAILURE', {
+              error: error?.message || 'Unknown failure',
+              operation: operation.name || 'anonymous',
+              timestamp: new Date().toISOString(),
+            });
+          }
           throw error;
         }
 
@@ -218,7 +220,7 @@ export class SystemInitializationService implements OnModuleInit {
       await this.prisma.$queryRaw`SELECT 1`;
       this.logger.log('✅ اتصال قاعدة البيانات ناجح');
     } catch (error) {
-      this.logger.error('❌ فشل الاتصال بقاعدة البيانات', error);
+      console.error('❌ فشل الاتصال بقاعدة البيانات', error);
       throw new InternalServerErrorException('لا يمكن الاتصال بقاعدة البيانات');
     }
   }

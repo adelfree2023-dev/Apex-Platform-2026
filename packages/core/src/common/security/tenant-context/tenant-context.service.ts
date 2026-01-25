@@ -22,7 +22,9 @@ export class TenantContextService {
     public auditService: any = null;
 
     private getStore(): ITenantContext {
-        return this.storage.getStore() || this.fallbackStore;
+        const store = this.storage.getStore();
+        if (store) return store;
+        return this.fallbackStore;
     }
 
     setContext(tenantId: string, userId?: string) {
@@ -50,15 +52,17 @@ export class TenantContextService {
     }
 
     clearTenantId() {
-        const store = this.getStore();
-        store.tenantId = null;
-        store.schemaName = null;
-        store.subdomain = null;
+        if (this.storage.getStore()) {
+            // Context-bound stores clear automatically, but we can reset the fallback
+        }
+        this.fallbackStore.tenantId = null;
+        this.fallbackStore.schemaName = null;
+        this.fallbackStore.subdomain = null;
     }
 
     getCurrentTenant() {
         const ctx = this.getStore();
-        if (!ctx.tenantId) return null;
+        if (!ctx || !ctx.tenantId) return null;
         return {
             id: ctx.tenantId,
             schemaName: ctx.schemaName,
@@ -66,10 +70,25 @@ export class TenantContextService {
         };
     }
 
-    getTenantId(): string | null { return this.getStore().tenantId; }
-    getUserId(): string | null { return this.getStore().userId || null; }
-    getSchemaName(): string | null { return this.getStore().schemaName; }
-    getSubdomain(): string | null { return this.getStore().subdomain || null; }
+    getTenantId(): string | null {
+        const store = this.getStore();
+        return store ? store.tenantId : null;
+    }
+
+    getUserId(): string | null {
+        const store = this.getStore();
+        return store ? (store.userId || null) : null;
+    }
+
+    getSchemaName(): string | null {
+        const store = this.getStore();
+        return store ? store.schemaName : null;
+    }
+
+    getSubdomain(): string | null {
+        const store = this.getStore();
+        return store ? (store.subdomain || null) : null;
+    }
 
     async getTenantSchema(tenantId: string): Promise<string> {
         return `tenant_${tenantId.replace(/-/g, '_')}`;

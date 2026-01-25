@@ -22,11 +22,8 @@ export class SystemInitializationService {
   ) { }
 
   async initializeSystem() {
-    // 🛡️ S1: التحقق من وجود التبعيات قبل البدء
-    if (!this.configService || !this.prisma) {
-      console.warn('📋 [CORE_INIT_SKIP] SystemInitializationService dependencies not fully loaded yet.');
-      return;
-    }
+    // 🛡️ S1: الانتظار حتى تكون جميع التبعيات جاهزة (إصلاح جذري للـ Race Condition)
+    await this.waitForDependencies();
 
     try {
       console.log('🔧 بدء تهيئة النظام الأساسي (ASMP Protocol)...');
@@ -47,6 +44,21 @@ export class SystemInitializationService {
     } catch (error: any) {
       console.error('❌ فشل في تهيئة النظام', error?.stack || error?.message || 'Unknown Error');
     }
+  }
+
+  /**
+   * 🛡️ الانتظار الذكي لتبعيات NestJS (إصلاح الـ Race Condition)
+   */
+  private async waitForDependencies(maxAttempts = 10, delayMs = 500) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      // نستخدم (this as any) لتجنب أخطاء TypeScript الصارمة أثناء فحص التوافر الديناميكي
+      if (this.configService && this.prisma && this.securityContext) {
+        return; // جميع التبعيات جاهزة
+      }
+      console.log(`⏳ Waiting for core dependencies (attempt ${attempt}/${maxAttempts})...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+    console.warn('⚠️ [ASMP_TIMEOUT] Core dependencies did not load in time. Proceeding in limited mode.');
   }
 
   /**

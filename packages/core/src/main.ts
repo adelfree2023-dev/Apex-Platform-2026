@@ -9,6 +9,7 @@ import * as crypto from 'crypto';
 import { PrismaService } from './prisma/prisma.service';
 import { ValidationPipe } from '@nestjs/common';
 import { CSPConfig } from './common/presentation/security-headers/csp.config';
+import { apexAgent } from './common/security/apex-agent';
 import { SystemInitializationService } from './common/core/system-initialization.service';
 import { AuditService } from './common/monitoring/audit/audit.service';
 import rateLimit from 'express-rate-limit';
@@ -51,6 +52,14 @@ async function bootstrap() {
   logger.log('🚀 Phase 3: Creating Full Application...');
   const app = await NestFactory.create(AppModule);
   logger.log('✅ Phase 3 Complete: Full App Created');
+
+  // ✅ Activate Apex Security Agent (New Vision Integration)
+  try {
+    await (apexAgent as any).activate();
+    logger.log('🤖 Apex Security Agent Activated Successfully');
+  } catch (agentError: any) {
+    logger.warn(`⚠️ Apex Agent failed to activate: ${agentError?.message || 'Unknown Agent Error'}`);
+  }
 
   // Get services from the main app context with safety checks
   const appConfigService = app.get(ConfigService);
@@ -105,20 +114,26 @@ async function bootstrap() {
       logger.warn('⚠️ SystemInitializationService not found. Skipping initialization.');
     }
   } catch (error: any) {
-    // ✅ S5: التعامل الصحيح مع الأخطاء
-    const errorMessage = error?.message || 'Unknown initialization error';
+    // ✅ S5: التعامل الآمن مع الأخطاء (إصلاح المشكلة الجذرية)
+    const errorMessage = error?.message || error?.toString() || 'Unknown initialization error';
     const errorStack = error?.stack || 'No stack trace available';
 
     console.error(`[BOOTSTRAP_FAIL] System Initialization: ${errorMessage}`);
     console.error(`[BOOTSTRAP_STACK] ${errorStack.substring(0, 500)}`);
 
-    // ✅ S5: تسجيل الحدث كحدث أمني
-    logger.error('❌ System Initialization Failed', {
-      message: errorMessage,
-      timestamp: new Date().toISOString()
-    });
+    // تسجيل الحدث دون انهيار كامل
+    try {
+      const audit = app.get(AuditService, { strict: false });
+      if (audit) {
+        audit.logSecurityEvent('SYSTEM_INIT_FAILURE', { error: errorMessage });
+        audit.setIsSystemReady(false);
+      }
+    } catch (auditError) {
+      console.warn('⚠️ Could not log init failure to audit service');
+    }
 
-    if (auditService) auditService.setIsSystemReady(false);
+    // ✅ S5: الاستمرار في وضع آمن
+    logger.error('❌ Critical: System Initialization Failed. Platform running in LIMITED mode.');
     logger.warn('⚠️ Warning: Continuing in safe mode despite initialization failure');
   }
 

@@ -36,28 +36,31 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     // 🛡️ S5: تسجيل آمن للاستثناءات
     try {
+      const exceptionData = typeof exception === 'object' && exception !== null ? exception : {};
+      const errorMessage = exceptionData.message || (typeof exception === 'string' ? exception : 'Unknown check failed');
+      const exceptionStack = exceptionData.stack?.substring(0, 500) || '';
+
       this.securityContext?.logSecurityEvent?.('EXCEPTION_CAUGHT', {
         requestId,
         status,
         path: request.url,
         method: request.method,
         ip,
-        error: isProduction ? 'Internal Error' : safeError.message,
-        stack: isProduction ? undefined : exception.stack?.substring(0, 500),
+        error: isProduction ? 'Internal Error' : errorMessage,
+        stack: isProduction ? undefined : exceptionStack,
         timestamp: new Date().toISOString(),
       });
     } catch (e) {
       this.logger.error(`Critical: SecurityContext logging failed: ${e.message}`);
     }
 
-    // 🛡️ S5: التسجيل في نظام التدقيق مع التعامل مع الفشل بأمان
     if (this.auditService) {
       this.auditService.logSecurityEvent('UNHANDLED_EXCEPTION', {
         requestId,
         path: request.url,
         method: request.method,
         ip,
-        error: safeError.message,
+        error: safeError?.message || 'Unknown',
         status,
         timestamp: new Date().toISOString(),
       }).catch(auditError => {

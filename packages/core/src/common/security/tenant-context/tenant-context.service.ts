@@ -2,67 +2,63 @@ import { Injectable } from '@nestjs/common';
 import { AsyncLocalStorage } from 'async_hooks';
 
 export interface ITenantContext {
-    tenantId: string;
-    userId?: string;
-    schemaName: string;
-    subdomain?: string;
+    tenantId: string | null;
+    userId?: string | null;
+    schemaName: string | null;
+    subdomain?: string | null;
 }
 
 @Injectable()
 export class TenantContextService {
     private readonly storage = new AsyncLocalStorage<ITenantContext>();
 
-    // 🛡️ المرجع لخدمة التدقيق (حقن اختياري)
+    // 🛡️ Fallback store for non-request contexts (Bootstrap/Tests)
+    private fallbackStore: ITenantContext = {
+        tenantId: null,
+        userId: 'anonymous',
+        schemaName: null,
+    };
+
     public auditService: any = null;
 
-    setContext(tenantId: string, userId?: string) {
-        const context: ITenantContext = {
-            tenantId,
-            userId: userId || 'anonymous',
-            schemaName: `tenant_${tenantId.replace(/-/g, '_')}`,
-        };
-        // Note: For persistent setting in middlewares, wrap request in storage.run
-        // For simple setter (legacy support), we'll try to update current context
-        const current = this.storage.getStore();
-        if (current) {
-            Object.assign(current, context);
-        }
+    private getStore(): ITenantContext {
+        return this.storage.getStore() || this.fallbackStore;
     }
 
-    /**
-     * 🛡️ ASMP: Start a scoped context (to be used in middleware)
-     */
+    setContext(tenantId: string, userId?: string) {
+        const store = this.getStore();
+        store.tenantId = tenantId;
+        store.userId = userId || 'anonymous';
+        store.schemaName = `tenant_${tenantId.replace(/-/g, '_')}`;
+    }
+
     runWithContext<T>(context: ITenantContext, callback: () => T): T {
         return this.storage.run(context, callback);
     }
 
-    /**
-     * 🛡️ ASMP: Security Hardened Context Setter
-     */
     setTenantContext(tenantId: string, schemaName: string, subdomain: string) {
-        const current = this.storage.getStore();
-        if (current) {
-            current.tenantId = tenantId;
-            current.schemaName = schemaName;
-            current.subdomain = subdomain;
-        }
+        const store = this.getStore();
+        store.tenantId = tenantId;
+        store.schemaName = schemaName;
+        store.subdomain = subdomain;
     }
 
     setTenantId(tenantId: string) {
-        const current = this.storage.getStore();
-        if (current) {
-            current.tenantId = tenantId;
-            current.schemaName = `tenant_${tenantId.replace(/-/g, '_')}`;
-        }
+        const store = this.getStore();
+        store.tenantId = tenantId;
+        store.schemaName = `tenant_${tenantId.replace(/-/g, '_')}`;
     }
 
     clearTenantId() {
-        // AsyncLocalStorage context clears automatically after the run() callback
+        const store = this.getStore();
+        store.tenantId = null;
+        store.schemaName = null;
+        store.subdomain = null;
     }
 
     getCurrentTenant() {
-        const ctx = this.storage.getStore();
-        if (!ctx) return null;
+        const ctx = this.getStore();
+        if (!ctx.tenantId) return null;
         return {
             id: ctx.tenantId,
             schemaName: ctx.schemaName,
@@ -70,21 +66,10 @@ export class TenantContextService {
         };
     }
 
-    getTenantId(): string | null {
-        return this.storage.getStore()?.tenantId || null;
-    }
-
-    getUserId(): string | null {
-        return this.storage.getStore()?.userId || null;
-    }
-
-    getSchemaName(): string | null {
-        return this.storage.getStore()?.schemaName || null;
-    }
-
-    getSubdomain(): string | null {
-        return this.storage.getStore()?.subdomain || null;
-    }
+    getTenantId(): string | null { return this.getStore().tenantId; }
+    getUserId(): string | null { return this.getStore().userId || null; }
+    getSchemaName(): string | null { return this.getStore().schemaName; }
+    getSubdomain(): string | null { return this.getStore().subdomain || null; }
 
     async getTenantSchema(tenantId: string): Promise<string> {
         return `tenant_${tenantId.replace(/-/g, '_')}`;

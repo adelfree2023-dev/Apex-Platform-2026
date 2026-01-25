@@ -1,8 +1,14 @@
 const fs = require('fs');
+const path = require('path');
 
-const BASE_URL = 'http://localhost:3002/api';
+const BASE_URL = 'http://localhost:3001/api';
 const TEST_TENANT = 'ae9f6640-5e60-4b2a-9e6b-a2d895498244';
-const LOG_FILE = './doc/final_verification_report.csv';
+const LOG_DIR = path.join(__dirname, '../doc');
+const LOG_FILE = path.join(LOG_DIR, 'final_verification_report.csv');
+
+if (!fs.existsSync(LOG_DIR)) {
+    fs.mkdirSync(LOG_DIR, { recursive: true });
+}
 
 const results = [];
 
@@ -115,6 +121,78 @@ async function runVerification() {
         await logResult('SSRF Protection', 'Security', ssrfRes.status, 'Internal Metadata Blocked', 'OWASP-SSRF', ssrfRes.status === 403 || ssrfRes.status === 400 ? 'PASS' : 'FAIL');
     } catch (e) {
         await logResult('SSRF Protection', 'Security', 500, e.message, 'OWASP-SSRF', 'FAIL');
+    }
+
+    // 7. 🔐 اختبار أمان رؤوس HTTP (Helmet)
+    console.log('🛡️ Testing Security Headers (Helmet)...');
+    try {
+        const res = await fetch(`${BASE_URL}/app/health`, {
+            headers: { 'x-tenant-id': TEST_TENANT }
+        });
+
+        const headers = Object.fromEntries(res.headers.entries());
+        const securityHeaders = {
+            'content-security-policy': headers['content-security-policy'],
+            'x-content-type-options': headers['x-content-type-options'],
+            'x-frame-options': headers['x-frame-options'],
+            'strict-transport-security': headers['strict-transport-security'],
+            'x-xss-protection': headers['x-xss-protection']
+        };
+
+        const missingHeaders = Object.keys(securityHeaders).filter(h => !securityHeaders[h]);
+        const status = missingHeaders.length === 0 ? 'PASS' : 'WARN';
+
+        await logResult('Helmet Security Headers', 'S8 Protocol', res.status,
+            `Missing: ${missingHeaders.length}/5 headers`, 'Internal', status);
+    } catch (error) {
+        await logResult('Helmet Security Headers', 'S8 Protocol', 500, error.message, 'Internal', 'FAIL');
+    }
+
+    // 8. 📚 اختبار Swagger UI ووثائق API
+    console.log('📚 Testing Swagger API Documentation...');
+    try {
+        const swaggerRes = await fetch(`${BASE_URL}/api/docs`);
+        const swaggerHtml = await swaggerRes.text();
+
+        const hasSwaggerUI = swaggerHtml.includes('Swagger UI') || swaggerHtml.includes('swagger-ui');
+        const hasAuthEndpoints = swaggerHtml.includes('/auth/login') || swaggerHtml.includes('Authentication');
+        const hasSecuritySchemes = swaggerHtml.includes('securitySchemes') || swaggerHtml.includes('Bearer');
+
+        const status = swaggerRes.ok && hasSwaggerUI && hasAuthEndpoints && hasSecuritySchemes ? 'PASS' : 'WARN';
+        const details = `UI:${hasSwaggerUI}, Auth:${hasAuthEndpoints}, Security:${hasSecuritySchemes}`;
+
+        await logResult('Swagger Documentation', 'API Layer', swaggerRes.status, details, 'Internal', status);
+    } catch (error) {
+        await logResult('Swagger Documentation', 'API Layer', 500, error.message, 'Internal', 'FAIL');
+    }
+
+    // 9. 🛡️ اختبار تفصيلي لسياسة CSP (الجزء الأكثر أهمية في Helmet)
+    console.log('🛡️ Detailed CSP Policy Verification...');
+    try {
+        const res = await fetch(`${BASE_URL}/app/health`, {
+            headers: { 'x-tenant-id': TEST_TENANT }
+        });
+
+        const cspHeader = res.headers.get('content-security-policy');
+        const cspStatus = cspHeader ? 'PASS' : 'FAIL';
+        const cspDetails = cspHeader ? cspHeader.substring(0, 100) + '...' : 'Missing CSP Header';
+
+        await logResult('CSP Policy', 'S8 Deep Scan', res.status, cspDetails, 'Internal', cspStatus);
+
+        // فحص محتوى CSP للتأكد من عدم وجود مصادر غير آمنة
+        if (cspHeader) {
+            const hasUnsafeInline = cspHeader.includes("'unsafe-inline'");
+            const hasUnsafeEval = cspHeader.includes("'unsafe-eval'");
+            const hasWildcards = cspHeader.includes("*");
+
+            if (hasUnsafeInline || hasUnsafeEval || hasWildcards) {
+                await logResult('CSP Security', 'S8 Deep Scan', 200,
+                    `Unsafe: inline=${hasUnsafeInline}, eval=${hasUnsafeEval}, wildcards=${hasWildcards}`,
+                    'Internal', 'WARN');
+            }
+        }
+    } catch (error) {
+        await logResult('CSP Policy', 'S8 Deep Scan', 500, error.message, 'Internal', 'FAIL');
     }
 
     // Export to CSV

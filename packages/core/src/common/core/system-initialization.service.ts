@@ -48,7 +48,7 @@ export class SystemInitializationService implements OnModuleInit {
   * ✅ التحقق من البيئة (S1)
   */
   private async validateEnvironmentVariables() {
-    this.logger.log('🛡️ التحقق من بيئة الأمان...');
+    console.log('🛡️ التحقق من بيئة الأمان...');
     const env = this.configService.get('NODE_ENV') || 'development';
 
     // ✅ S1: التحقق من المتغيرات البيئية الحرجة
@@ -72,14 +72,14 @@ export class SystemInitializationService implements OnModuleInit {
       }
     }
 
-    this.logger.log(`✅ البيئة صالحة للوضع: ${env}`);
+    console.log(`✅ البيئة صالحة للوضع: ${env}`);
   }
 
   /**
   * ✅ ضمان وجود المستأجر الافتراضي (M2)
   */
   private async ensureDefaultTenantExists() {
-    this.logger.log('🔧 التحقق من المستأجر الافتراضي...');
+    console.log('🔧 التحقق من المستأجر الافتراضي...');
     try {
       const defaultTenant = await this.prisma.tenant.findFirst({
         where: { isDefault: true }
@@ -105,7 +105,7 @@ export class SystemInitializationService implements OnModuleInit {
         // التأكد من وجود المخطط الافتراضي
         await this.prisma.$executeRawUnsafe(`CREATE SCHEMA IF NOT EXISTS "tenant_default";`);
 
-        this.logger.log('✅ تم إنشاء المستأجر الافتراضي');
+        console.log('✅ تم إنشاء المستأجر الافتراضي');
       }
 
       // ✅ S14: ضمان وجود مستأجر الاختبار للسكربت
@@ -125,7 +125,7 @@ export class SystemInitializationService implements OnModuleInit {
           }
         });
         await this.prisma.$executeRawUnsafe(`CREATE SCHEMA IF NOT EXISTS "tenant_test";`);
-        this.logger.log('✅ تم إنشاء مستأجر الاختبار');
+        console.log('✅ تم إنشاء مستأجر الاختبار');
       }
 
       // ✅ S13: ضمان وجود مستخدم مسؤول للاختبارات
@@ -145,7 +145,7 @@ export class SystemInitializationService implements OnModuleInit {
               tenantId: defaultTenant.id
             }
           });
-          this.logger.log('✅ تم إنشاء مستخدم المسؤول الافتراضي');
+          console.log('✅ تم إنشاء مستخدم المسؤول الافتراضي');
         }
       }
     } catch (error) {
@@ -158,7 +158,7 @@ export class SystemInitializationService implements OnModuleInit {
   * ✅ تهيئة إعدادات النظام الأساسية (M3)
   */
   private async initializeCoreSystem() {
-    this.logger.log('🔧 تهيئة إعدادات النظام الأساسية...');
+    console.log('🔧 تهيئة إعدادات النظام الأساسية...');
     try {
       const systemSettings = await this.prisma.systemSetting.findFirst({
         where: { key: 'core_initialized' }
@@ -174,7 +174,7 @@ export class SystemInitializationService implements OnModuleInit {
           ]
         });
 
-        this.logger.log('✅ تم تهيئة إعدادات النظام الأساسية');
+        console.log('✅ تم تهيئة إعدادات النظام الأساسية');
       }
     } catch (error) {
       console.error('فشل تهيئة إعدادات النظام', error);
@@ -218,7 +218,7 @@ export class SystemInitializationService implements OnModuleInit {
   private async verifyDatabaseConnection(): Promise<void> {
     try {
       await this.prisma.$queryRaw`SELECT 1`;
-      this.logger.log('✅ اتصال قاعدة البيانات ناجح');
+      console.log('✅ اتصال قاعدة البيانات ناجح');
     } catch (error) {
       console.error('❌ فشل الاتصال بقاعدة البيانات', error);
       throw new InternalServerErrorException('لا يمكن الاتصال بقاعدة البيانات');

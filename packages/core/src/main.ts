@@ -51,11 +51,16 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   logger.log('✅ Phase 3 Complete: Full App Created');
 
-  // Get services from the main app context
+  // Get services from the main app context with safety checks
   const appConfigService = app.get(ConfigService);
   const prismaService = app.get(PrismaService);
   const auditService = app.get(AuditService);
   const cspConfig = app.get(CSPConfig);
+
+  if (!appConfigService || !prismaService || !auditService || !cspConfig) {
+    logger.error('🛡️ CRITICAL: One or more core services (Config, Prisma, Audit, CSP) failed to load. Aborting.');
+    process.exit(1);
+  }
 
   // ✅ S1: Database Connection Check
   try {
@@ -122,7 +127,7 @@ async function bootstrap() {
   // ✅ API Documentation
   setupSwagger(app);
 
-  const port = appConfigService.get('PORT') || 3001;
+  const port = appConfigService?.get('PORT') || 3001;
   await app.listen(port);
   logger.log(`🚀 Apex Core is running on port ${port} with ENHANCED SECURITY`);
 }

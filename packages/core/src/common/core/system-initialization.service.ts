@@ -39,7 +39,7 @@ export class SystemInitializationService implements OnModuleInit {
 
       this.logger.log('✅ تم تهيئة النظام بنجاح');
     } catch (error: any) {
-      this.logger.error('❌ فشل في تهيئة النظام', error.stack);
+      this.logger.error('❌ فشل في تهيئة النظام', error?.stack || error?.message || 'Unknown Error');
       // لا ننهي العملية هنا، نترك للـ health check التعامل معها
     }
   }

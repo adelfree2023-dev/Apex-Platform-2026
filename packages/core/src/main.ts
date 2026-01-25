@@ -43,7 +43,7 @@ async function bootstrap() {
     await appContext.close();
   } catch (error: any) {
     const errorMsg = error?.message || (typeof error === 'string' ? error : 'Unknown Environment Error');
-    logger.error('❌ Proactive Environment Validation Failed', errorMsg);
+    console.error(`[BOOTSTRAP_FAIL] Phase 2: ${errorMsg}`);
     process.exit(1);
   }
 
@@ -74,7 +74,7 @@ async function bootstrap() {
     }
   } catch (error: any) {
     const errorMsg = error?.message || (typeof error === 'string' ? error : 'Database connection timed out');
-    logger.error(`❌ Database connection failed: ${errorMsg}`);
+    console.error(`[BOOTSTRAP_FAIL] Phase 3 (DB): ${errorMsg}`);
     process.exit(1);
   }
 
@@ -91,7 +91,7 @@ async function bootstrap() {
     }
   } catch (error: any) {
     const errorMsg = error?.message || (typeof error === 'string' ? error : 'Internal Init Error');
-    logger.error('❌ System Initialization Failed', errorMsg);
+    console.error(`[BOOTSTRAP_FAIL] System Initialization: ${errorMsg}`);
     if (auditService) auditService.setIsSystemReady(false);
     logger.warn('⚠️ Warning: Continuing in safe mode despite initialization failure');
   }

@@ -132,7 +132,7 @@ export class SystemInitializationService implements OnModuleInit {
       const adminEmail = 'admin@apex.com';
       const adminUser = await this.prisma.user.findFirst({ where: { email: adminEmail } });
       if (!adminUser) {
-        const bcrypt = require('bcrypt');
+        const bcrypt = require('bcryptjs');
         const hashedPassword = await bcrypt.hash('ValidPassword123!', 10);
         const defaultTenant = await this.prisma.tenant.findFirst({ where: { isDefault: true } });
         if (defaultTenant) {

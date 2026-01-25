@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from './config.service';
+import { SecurityContext } from '../security/security.context';
 
 @Injectable()
 export class EnvValidatorService {
@@ -7,7 +8,10 @@ export class EnvValidatorService {
   private readonly requiredVars = ['JWT_SECRET', 'DATABASE_URL'];
   private readonly minimumSecretLength = 64; // S1: التحقق من قوة الأسرار
 
-  constructor(private readonly configService: ConfigService) { }
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly securityContext: SecurityContext,
+  ) { }
 
   /**
    * ✅ S1: التحقق الشامل من متغيرات البيئة
@@ -59,10 +63,21 @@ export class EnvValidatorService {
         this.logger.error(message);
         throw new InternalServerErrorException('JWT_SECRET غير آمن للإنتاج');
       } else {
+        // ✅ S1: تسجيل التحذيرات كأحداث أمنية حتى في التطوير
+        if (this.securityContext) {
+          this.securityContext.logSecurityEvent('ENV_WARNING', {
+            variable: 'JWT_SECRET',
+            environment: 'development',
+            severity: 'medium',
+            message,
+            timestamp: new Date().toISOString()
+          });
+        }
         this.logger.warn(message);
       }
     }
   }
+
 
   /**
    * ✅ S1: تسجيل حالة البيئة للأغراض الأمنية

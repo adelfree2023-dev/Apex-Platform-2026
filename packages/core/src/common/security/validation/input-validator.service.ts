@@ -25,10 +25,24 @@ export class InputValidatorService {
     });
   }
 
+  private redactSensitiveFields(data: any): any {
+    if (!data || typeof data !== 'object') return data;
+    const sensitiveKeys = ['password', 'token', 'secret', 'key', 'creditCard', 'cvv'];
+    const redacted = { ...data };
+    for (const key of Object.keys(redacted)) {
+      if (sensitiveKeys.some(sk => key.toLowerCase().includes(sk))) {
+        redacted[key] = '[REDACTED]';
+      } else if (typeof redacted[key] === 'object') {
+        redacted[key] = this.redactSensitiveFields(redacted[key]);
+      }
+    }
+    return redacted;
+  }
+
   /**
   * 🛡️ S5: تسجيل أمان آمن
   */
-  private async logValidationFailure(context: string, error: any): Promise<void> {
+  private async logValidationFailure(context: string, error: any, data?: any): Promise<void> {
     try {
       const safeError = {
         name: error.name || 'ValidationError',
@@ -36,21 +50,23 @@ export class InputValidatorService {
         path: error.path || [],
       };
 
+      const redactedData = data ? this.redactSensitiveFields(data) : undefined;
+
       // استخدام الـ fallback logger
       if (this.securityLogger) {
         this.securityLogger.logEvent('INPUT_VALIDATION_FAILURE', {
           context,
           error: safeError,
+          data: redactedData,
           timestamp: new Date().toISOString(),
         });
       }
       // التسجيل الأساسي
       else {
-        this.logger.warn(`Validation failure in ${context}: ${JSON.stringify(safeError)}`);
-        console.warn(`[SECURITY] Validation failure in ${context}`, safeError);
+        console.warn(`[SECURITY] Validation failure in ${context}`, { error: safeError, data: redactedData });
       }
-    } catch (loggingError) {
-      this.logger.error('فشل تسجيل حدث التحقق', loggingError);
+    } catch (loggingError: any) {
+      console.error('فشل تسجيل حدث التحقق', loggingError?.message);
     }
   }
 
@@ -70,7 +86,7 @@ export class InputValidatorService {
       // 3. تطهير إضافي للبيانات المفحوصة
       return this.sanitizer.sanitizeObject(validatedData) as T;
     } catch (error) {
-      await this.logValidationFailure(context, error);
+      await this.logValidationFailure(context, error, data);
       this.logger.warn(`S3: فشل التحقق في ${context}`);
 
       throw new BadRequestException({

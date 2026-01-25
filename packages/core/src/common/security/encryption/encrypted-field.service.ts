@@ -144,6 +144,18 @@ export class EncryptedFieldService implements OnModuleInit {
     );
   }
 
+  /**
+   * 🛡️ S7: تدوير المفاتيح لكل مستأجر (Architecture Placeholder)
+   */
+  async rotateTenantKey(tenantId: string): Promise<void> {
+    this.logger.log(`🔄 Initiating key rotation for tenant: ${tenantId}`);
+    // This would involve:
+    // 1. Generating a new version
+    // 2. Re-encrypting existing fields (async/batch)
+    // 3. Updating the 'currentVersion' metadata
+    console.log(`[S7_AUDIT] Key rotation initiated for ${tenantId}`);
+  }
+
   generateRandomToken(bytes: number = 32): string {
     return crypto.randomBytes(bytes).toString('hex');
   }

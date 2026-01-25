@@ -105,12 +105,19 @@ async function bootstrap() {
       logger.warn('⚠️ SystemInitializationService not found. Skipping initialization.');
     }
   } catch (error: any) {
-    const errorMsg = error?.message || 'Internal Init Error';
-    const errorStack = error?.stack || 'No Stack Available';
-    console.error(`[BOOTSTRAP_FAIL] System Initialization: ${errorMsg}`);
+    // ✅ S5: التعامل الصحيح مع الأخطاء
+    const errorMessage = error?.message || 'Unknown initialization error';
+    const errorStack = error?.stack || 'No stack trace available';
+
+    console.error(`[BOOTSTRAP_FAIL] System Initialization: ${errorMessage}`);
     console.error(`[BOOTSTRAP_STACK] ${errorStack.substring(0, 500)}`);
 
-    // ✅ S5: Safe logging attempt
+    // ✅ S5: تسجيل الحدث كحدث أمني
+    logger.error('❌ System Initialization Failed', {
+      message: errorMessage,
+      timestamp: new Date().toISOString()
+    });
+
     if (auditService) auditService.setIsSystemReady(false);
     logger.warn('⚠️ Warning: Continuing in safe mode despite initialization failure');
   }

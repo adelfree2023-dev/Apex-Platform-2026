@@ -34,6 +34,10 @@ describe('AuthModule', () => {
       .compile();
   });
 
+  afterAll(async () => {
+    await module.close();
+  });
+
   it('should export AuthService', () => {
     const exported = module.get<AuthService>(AuthService);
     expect(exported).toBeInstanceOf(AuthService);

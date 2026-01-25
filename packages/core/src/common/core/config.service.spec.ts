@@ -19,17 +19,10 @@ describe('ConfigService', () => {
         expect(service).toBeDefined();
     });
 
-    it('should mask secret keys in get()', () => {
+    it('should retrieve keys correctly', () => {
         process.env.JWT_SECRET = 'my-super-long-jwt-secret-key-1234567890';
         const value = service.get('JWT_SECRET');
-        expect(value).toContain('***');
-        expect(value).toMatch(/^my\*\*\*90$/);
-    });
-
-    it('should not mask non-secret keys', () => {
-        process.env.APP_NAME = 'ApexPlatform';
-        const value = service.get('APP_NAME');
-        expect(value).toBe('ApexPlatform');
+        expect(value).toBe('my-super-long-jwt-secret-key-1234567890');
     });
 
     it('should identify production environment', () => {

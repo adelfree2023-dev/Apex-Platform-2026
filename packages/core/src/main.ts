@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -30,19 +31,25 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   // ✅ S1: Create context just for config first to validate environment
-  const appContext = await NestFactory.createApplicationContext(AppModule, { logger: false });
+  logger.log('🚀 Phase 1: Creating Application Context...');
+  const appContext = await NestFactory.createApplicationContext(AppModule, { logger: ['error', 'warn', 'log', 'debug', 'verbose'] });
+  logger.log('✅ Phase 1 Complete: App Context Created');
   const configService = appContext.get(ConfigService);
 
   try {
+    logger.log('🚀 Phase 2: Validating Environment...');
     // Basic validation of critical variables
     validateEnvironment(configService);
+    logger.log('✅ Phase 2 Complete: Environment Validated');
     await appContext.close();
   } catch (error: any) {
     logger.error('❌ Proactive Environment Validation Failed', error.message);
     process.exit(1);
   }
 
+  logger.log('🚀 Phase 3: Creating Full Application...');
   const app = await NestFactory.create(AppModule);
+  logger.log('✅ Phase 3 Complete: Full App Created');
 
   // Get services from the main app context
   const appConfigService = app.get(ConfigService);

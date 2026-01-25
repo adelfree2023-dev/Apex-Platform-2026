@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthModule } from './auth.module';
 import { AuthService } from './auth.service';
@@ -15,6 +16,8 @@ import { AuditService } from '../common/monitoring/audit/audit.service';
 import { EncryptedFieldService } from '../common/security/encryption/encrypted-field.service';
 import { InputValidatorService } from '../common/security/validation/input-validator.service';
 import { TenantContextService } from '../common/security/tenant-context/tenant-context.service';
+import { CacheService } from '../common/caching/cache.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 describe('AuthModule', () => {
   let module: TestingModule;
@@ -23,8 +26,10 @@ describe('AuthModule', () => {
     module = await Test.createTestingModule({
       imports: [AuthModule],
     })
-      .overrideProvider(PrismaService).useValue({ $connect: jest.fn(), $disconnect: jest.fn() })
-      .overrideProvider(ConfigService).useValue({ get: jest.fn() })
+      .overrideProvider(CACHE_MANAGER).useValue({ get: jest.fn(), set: jest.fn(), del: jest.fn() })
+      .overrideProvider(CacheService).useValue({ get: jest.fn(), set: jest.fn(), del: jest.fn(), clear: jest.fn() })
+      .overrideProvider(PrismaService).useValue({ $connect: jest.fn(), $disconnect: jest.fn(), $queryRawUnsafe: jest.fn().mockResolvedValue([]), $executeRawUnsafe: jest.fn().mockResolvedValue(1) })
+      .overrideProvider(ConfigService).useValue({ get: jest.fn().mockReturnValue('mock-secret') })
       .overrideProvider(SecurityContext).useValue({ logSecurityEvent: jest.fn() })
       .overrideProvider(AnomalyDetectionService).useValue({ detect: jest.fn() })
       .overrideProvider(RateLimiterService).useValue({ consume: jest.fn() })

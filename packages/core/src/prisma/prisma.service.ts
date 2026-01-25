@@ -67,14 +67,19 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   get refund() { return this.client.refund; }
   get systemConfig() { return this.client.systemConfig; }
   get orderItem() { return this.client.orderItem; }
+  get category() { return (this.client as any).category; } // Add if missing in schema/client
   // ... add more as needed or use client directly
 
-  // Helper for raw queries used in audit/tenants
+  // Helper for raw queries and internal methods
   get $queryRaw() { return this.client.$queryRaw.bind(this.client); }
   get $queryRawUnsafe() { return this.client.$queryRawUnsafe.bind(this.client); }
   get $executeRawUnsafe() { return this.client.$executeRawUnsafe.bind(this.client); }
   get $connect() { return this.client.$connect.bind(this.client); }
   get $disconnect() { return this.client.$disconnect.bind(this.client); }
+  get $transaction() { return this.client.$transaction.bind(this.client); }
+  get $on() { return (this.client as any).$on.bind(this.client); }
+  get $use() { return (this.client as any).$use.bind(this.client); }
+  get $extends() { return (this.client as any).$extends.bind(this.client); }
 
   async connectWithRetry(maxRetries = 3, delayMs = 2000): Promise<void> {
     for (let i = 0; i < maxRetries; i++) {

@@ -47,7 +47,7 @@ describe('SystemInitializationService', () => {
         mockPrisma.systemSetting.findFirst.mockResolvedValue({ key: 'existing' });
         mockPrisma.$queryRaw.mockResolvedValue([1]);
 
-        await service.onModuleInit();
+        await service.initializeSystem();
 
         expect(mockPrisma.tenant.findFirst).toHaveBeenCalled();
         expect(mockPrisma.$queryRaw).toHaveBeenCalled();
@@ -59,7 +59,7 @@ describe('SystemInitializationService', () => {
         mockPrisma.systemSetting.findFirst.mockResolvedValue({ key: 'existing' });
         mockPrisma.$queryRaw.mockResolvedValue([1]);
 
-        await service.onModuleInit();
+        await service.initializeSystem();
 
         expect(mockPrisma.tenant.create).toHaveBeenCalled();
         expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalledWith(expect.stringContaining('CREATE SCHEMA'));
@@ -71,7 +71,7 @@ describe('SystemInitializationService', () => {
         mockPrisma.systemSetting.createMany.mockResolvedValue({ count: 4 });
         mockPrisma.$queryRaw.mockResolvedValue([1]);
 
-        await service.onModuleInit();
+        await service.initializeSystem();
 
         expect(mockPrisma.systemSetting.createMany).toHaveBeenCalled();
     });
@@ -79,7 +79,7 @@ describe('SystemInitializationService', () => {
     it('should throw error if critical environment variables are missing', async () => {
         mockConfig.get.mockReturnValue(null);
 
-        await service.onModuleInit();
+        await service.initializeSystem();
         // It catches internal errors in onModuleInit and logs them, doesn't rethrow to allow health check to handle it.
         // So we check the logger or just verify it didn't complete successfully (though logic says it logs).
     });
@@ -91,7 +91,7 @@ describe('SystemInitializationService', () => {
             .mockRejectedValueOnce(new Error('Connection failed'))
             .mockResolvedValue([1]);
 
-        await service.onModuleInit();
+        await service.initializeSystem();
 
         expect(mockPrisma.$queryRaw).toHaveBeenCalledTimes(2);
     });
@@ -116,7 +116,7 @@ describe('SystemInitializationService', () => {
         });
 
         // validateEnvironmentVariables is private, but called via onModuleInit
-        await service.onModuleInit();
+        await service.initializeSystem();
         // Logic will catch error and log it
     });
 });

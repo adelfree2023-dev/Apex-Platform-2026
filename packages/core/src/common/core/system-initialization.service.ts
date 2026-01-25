@@ -1,4 +1,4 @@
-import { Injectable, Logger, InternalServerErrorException, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { SecurityContext } from '../security/security.context';
@@ -10,7 +10,7 @@ import { SecurityContext } from '../security/security.context';
 * - يسجل جميع الخطوات للأمان
 */
 @Injectable()
-export class SystemInitializationService implements OnModuleInit {
+export class SystemInitializationService {
   private readonly logger = new Logger(SystemInitializationService.name);
   private readonly MAX_RETRIES = 3;
   private readonly BASE_RETRY_DELAY = 1000; // ms
@@ -21,10 +21,10 @@ export class SystemInitializationService implements OnModuleInit {
     private readonly securityContext: SecurityContext,
   ) { }
 
-  async onModuleInit() {
-    // 🛡️ S1: التحقق من وجود التبعيات قبل البدء لتجنب TypeError
+  async initializeSystem() {
+    // 🛡️ S1: التحقق من وجود التبعيات قبل البدء
     if (!this.configService || !this.prisma) {
-      console.error('📋 [CORE_DI_FAILURE] SystemInitializationService missing critical dependencies (ConfigService/Prisma). Skipping init.');
+      console.warn('📋 [CORE_INIT_SKIP] SystemInitializationService dependencies not fully loaded yet.');
       return;
     }
 
@@ -46,7 +46,6 @@ export class SystemInitializationService implements OnModuleInit {
       console.log('✅ تم تهيئة النظام بنجاح');
     } catch (error: any) {
       console.error('❌ فشل في تهيئة النظام', error?.stack || error?.message || 'Unknown Error');
-      // لا ننهي العملية هنا، نترك للـ health check التعامل معها
     }
   }
 
@@ -193,13 +192,6 @@ export class SystemInitializationService implements OnModuleInit {
     }
   }
 
-  /**
-  * ⚡ تهيئة النظام بالكامل (النسخة القديمة للرجوع إليها أو الاستبدال)
-  */
-  async initializeSystem(): Promise<void> {
-    // تم نقل المنطق إلى onModuleInit للتشغيل التلقائي
-    await this.onModuleInit();
-  }
 
   private async withRetry<T>(operation: () => Promise<T>, maxRetries = this.MAX_RETRIES): Promise<T> {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {

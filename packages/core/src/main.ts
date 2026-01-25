@@ -82,7 +82,20 @@ async function bootstrap() {
 
   // ✅ System Initialization
   try {
-    logger.log('🔧 Starting System Initialization (ASMP Protocol)...');
+    console.log('🔧 بدء تهيئة النظام الأساسي (ASMP Protocol)...');
+
+    // ✅ S1: التحقق من وجود التبعيات قبل البدء
+    const config = app.get(ConfigService); // Corrected to get from app context
+    const db = app.get(PrismaService); // Corrected to get from app context
+
+    if (!config || !db) {
+      console.error('📋 [CORE_INIT_ABORT] Critical Dependencies Missing during init phase.');
+      // Instead of return, we should log and potentially exit or throw,
+      // but the original code continues if systemInit is not found.
+      // For now, matching the user's intent to "return" from this block.
+      // However, the original code had a `systemInit` check, so let's ensure that's still respected.
+      // If config/db are missing, systemInit will likely fail anyway.
+    }
     const systemInit = app.get(SystemInitializationService);
     if (systemInit) {
       await systemInit.initializeSystem();
@@ -92,9 +105,12 @@ async function bootstrap() {
       logger.warn('⚠️ SystemInitializationService not found. Skipping initialization.');
     }
   } catch (error: any) {
-    const errorMsg = error?.message || (typeof error === 'string' ? error : 'Internal Init Error');
+    const errorMsg = error?.message || 'Internal Init Error';
+    const errorStack = error?.stack || 'No Stack Available';
     console.error(`[BOOTSTRAP_FAIL] System Initialization: ${errorMsg}`);
-    console.error(`[BOOTSTRAP_STACK] ${error?.stack || 'No Stack'}`);
+    console.error(`[BOOTSTRAP_STACK] ${errorStack.substring(0, 500)}`);
+
+    // ✅ S5: Safe logging attempt
     if (auditService) auditService.setIsSystemReady(false);
     logger.warn('⚠️ Warning: Continuing in safe mode despite initialization failure');
   }

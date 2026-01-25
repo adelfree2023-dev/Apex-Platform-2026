@@ -1,54 +1,90 @@
-import { Injectable, Scope } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { AsyncLocalStorage } from 'async_hooks';
 
-@Injectable({ scope: Scope.REQUEST })
+export interface ITenantContext {
+    tenantId: string;
+    userId?: string;
+    schemaName: string;
+    subdomain?: string;
+}
+
+@Injectable()
 export class TenantContextService {
-    private tenantId: string | null = null;
-    private userId: string | null = null;
-    private schemaName: string | null = null;
-    private subdomain: string | null = null;
+    private readonly storage = new AsyncLocalStorage<ITenantContext>();
 
-    // 🛡️ المرجع لخدمة التدقيق (سيتم حقنه اختيارياً لتجنب الدوائر التكرارية)
+    // 🛡️ المرجع لخدمة التدقيق (حقن اختياري)
     public auditService: any = null;
 
     setContext(tenantId: string, userId?: string) {
-        this.tenantId = tenantId;
-        this.userId = userId || null;
-        this.schemaName = `tenant_${tenantId.replace(/-/g, '_')}`;
+        const context: ITenantContext = {
+            tenantId,
+            userId: userId || 'anonymous',
+            schemaName: `tenant_${tenantId.replace(/-/g, '_')}`,
+        };
+        // Note: For persistent setting in middlewares, wrap request in storage.run
+        // For simple setter (legacy support), we'll try to update current context
+        const current = this.storage.getStore();
+        if (current) {
+            Object.assign(current, context);
+        }
+    }
+
+    /**
+     * 🛡️ ASMP: Start a scoped context (to be used in middleware)
+     */
+    runWithContext<T>(context: ITenantContext, callback: () => T): T {
+        return this.storage.run(context, callback);
     }
 
     /**
      * 🛡️ ASMP: Security Hardened Context Setter
      */
     setTenantContext(tenantId: string, schemaName: string, subdomain: string) {
-        this.tenantId = tenantId;
-        this.schemaName = schemaName;
-        this.subdomain = subdomain;
+        const current = this.storage.getStore();
+        if (current) {
+            current.tenantId = tenantId;
+            current.schemaName = schemaName;
+            current.subdomain = subdomain;
+        }
     }
 
-    // ✅ التوافق مع PrismaService
     setTenantId(tenantId: string) {
-        this.tenantId = tenantId;
-        this.schemaName = `tenant_${tenantId.replace(/-/g, '_')}`;
+        const current = this.storage.getStore();
+        if (current) {
+            current.tenantId = tenantId;
+            current.schemaName = `tenant_${tenantId.replace(/-/g, '_')}`;
+        }
     }
 
     clearTenantId() {
-        this.tenantId = null;
-        this.schemaName = null;
+        // AsyncLocalStorage context clears automatically after the run() callback
     }
 
     getCurrentTenant() {
-        if (!this.tenantId) return null;
+        const ctx = this.storage.getStore();
+        if (!ctx) return null;
         return {
-            id: this.tenantId,
-            schemaName: this.schemaName,
-            subdomain: this.subdomain
+            id: ctx.tenantId,
+            schemaName: ctx.schemaName,
+            subdomain: ctx.subdomain
         };
     }
 
-    getTenantId(): string | null { return this.tenantId; }
-    getUserId(): string | null { return this.userId; }
-    getSchemaName(): string | null { return this.schemaName; }
-    getSubdomain(): string | null { return this.subdomain; }
+    getTenantId(): string | null {
+        return this.storage.getStore()?.tenantId || null;
+    }
+
+    getUserId(): string | null {
+        return this.storage.getStore()?.userId || null;
+    }
+
+    getSchemaName(): string | null {
+        return this.storage.getStore()?.schemaName || null;
+    }
+
+    getSubdomain(): string | null {
+        return this.storage.getStore()?.subdomain || null;
+    }
 
     async getTenantSchema(tenantId: string): Promise<string> {
         return `tenant_${tenantId.replace(/-/g, '_')}`;

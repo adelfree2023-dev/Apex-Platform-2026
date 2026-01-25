@@ -71,12 +71,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path: request.url,
       requestId,
-      message: this.getSafeErrorMessage(status, safeError.message, isProduction),
+      message: this.getSafeErrorMessage(status, safeError.message || 'An unexpected error occurred', isProduction),
     };
 
-    // تسجيل الخطأ محلياً للتطوير
+    // تسجيل الخطأ محلياً للتطوير بصيغة آمنة
+    const exceptionMessage = exception?.message || (typeof exception === 'string' ? exception : 'Unknown Exception');
+    const exceptionStack = exception?.stack || '';
+
     if (!isProduction) {
-      this.logger.error(`[${requestId}] ${request.method} ${request.url} - ${status}: ${exception.message}`, exception.stack);
+      this.logger.error(`[${requestId}] ${request.method} ${request.url} - ${status}: ${exceptionMessage}`, exceptionStack);
     } else if (status >= 500) {
       this.logger.error(`[${requestId}] ${request.method} ${request.url} - ${status}: Internal server error`);
     }

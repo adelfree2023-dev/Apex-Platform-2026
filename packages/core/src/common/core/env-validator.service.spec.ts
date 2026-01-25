@@ -43,6 +43,7 @@ describe('EnvValidatorService', () => {
         mockConfig.isProduction.mockReturnValue(true);
         mockConfig.get.mockImplementation((key: string) => {
             if (key === 'JWT_SECRET') return 'short';
+            if (['LOCAL_DEV', 'DEBUG_MODE', 'SKIP_AUTH'].includes(key)) return null;
             return 'valid-value';
         });
 

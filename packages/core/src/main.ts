@@ -38,12 +38,12 @@ async function bootstrap() {
 
   try {
     logger.log('🚀 Phase 2: Validating Environment...');
-    // Basic validation of critical variables
     validateEnvironment(configService);
     logger.log('✅ Phase 2 Complete: Environment Validated');
     await appContext.close();
   } catch (error: any) {
-    logger.error('❌ Proactive Environment Validation Failed', error.message);
+    const errorMsg = error?.message || (typeof error === 'string' ? error : 'Unknown Environment Error');
+    logger.error('❌ Proactive Environment Validation Failed', errorMsg);
     process.exit(1);
   }
 
@@ -65,10 +65,11 @@ async function bootstrap() {
       await (prismaService as any).$connect();
       logger.log('✅ Database connectivity verified');
     } else {
-      throw new Error(`PrismaService check failed. Instance state: ${prismaService ? 'Ghost Proxy' : 'Null'}`);
+      throw new Error('PrismaService check failed: Instance is null or ghost proxy');
     }
   } catch (error: any) {
-    logger.error(`❌ Database connection failed: ${error.message}`);
+    const errorMsg = error?.message || (typeof error === 'string' ? error : 'Database connection timed out');
+    logger.error(`❌ Database connection failed: ${errorMsg}`);
     process.exit(1);
   }
 
@@ -76,12 +77,17 @@ async function bootstrap() {
   try {
     logger.log('🔧 Starting System Initialization (ASMP Protocol)...');
     const systemInit = app.get(SystemInitializationService);
-    await systemInit.initializeSystem();
-    auditService.setIsSystemReady(true);
-    logger.log('✅ System Initialized Successfully');
+    if (systemInit) {
+      await systemInit.initializeSystem();
+      if (auditService) auditService.setIsSystemReady(true);
+      logger.log('✅ System Initialized Successfully');
+    } else {
+      logger.warn('⚠️ SystemInitializationService not found. Skipping initialization.');
+    }
   } catch (error: any) {
-    logger.error('❌ System Initialization Failed', error.message);
-    auditService.setIsSystemReady(false);
+    const errorMsg = error?.message || (typeof error === 'string' ? error : 'Internal Init Error');
+    logger.error('❌ System Initialization Failed', errorMsg);
+    if (auditService) auditService.setIsSystemReady(false);
     logger.warn('⚠️ Warning: Continuing in safe mode despite initialization failure');
   }
 

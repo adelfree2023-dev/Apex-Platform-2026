@@ -195,11 +195,11 @@ export class SystemInitializationService implements OnModuleInit {
       try {
         return await operation();
       } catch (error: any) {
-        this.logger.warn(`Attempt ${attempt} failed: ${error.message}`);
+        this.logger.warn(`Attempt ${attempt} failed: ${error?.message || 'Internal error'}`);
 
         if (attempt === maxRetries) {
           this.securityContext.logSecurityEvent('INITIALIZATION_FAILURE', {
-            error: error.message,
+            error: error?.message || 'Unknown failure',
             operation: operation.name || 'anonymous',
             timestamp: new Date().toISOString(),
           });

@@ -1,4 +1,4 @@
-import { Module, Global, ValidationPipe } from '@nestjs/common';
+import { Module, Global, ValidationPipe, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { APP_GUARD, APP_PIPE, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
@@ -23,6 +23,8 @@ import { AnomalyDetectionService } from './common/access-control/services/anomal
 import { RateLimiterService } from './common/access-control/services/rate-limiter.service';
 import { StorefrontModule } from './modules/storefront/storefront.module';
 import { SystemHealthService } from './common/core/system-health.service';
+import { ApexConfigService } from './common/core/apex-config.service';
+import { SecurityContext } from './common/security/security.context';
 
 /**
 * 🏰 Digital Fortress: Root AppModule
@@ -81,6 +83,7 @@ import { SystemHealthService } from './common/core/system-health.service';
       useClass: AllExceptionsFilter,
     },
     SystemHealthService,
+    ApexConfigService,
     // Add other guards/interceptors if the classes exist
   ],
   exports: [AppService, SystemInitializationService, SystemHealthService]

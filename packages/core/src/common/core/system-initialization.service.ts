@@ -1,6 +1,6 @@
 import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ConfigService } from '@nestjs/config';
+import { ApexConfigService } from './apex-config.service';
 import { SecurityContext } from '../security/security.context';
 
 /**
@@ -17,7 +17,7 @@ export class SystemInitializationService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
+    private readonly configService: ApexConfigService,
     private readonly securityContext: SecurityContext,
   ) { }
 
@@ -55,7 +55,7 @@ export class SystemInitializationService {
       if (this.configService && this.prisma && this.securityContext) {
         return; // جميع التبعيات جاهزة
       }
-      console.log(`⏳ Waiting for core dependencies (attempt ${attempt}/${maxAttempts})...`);
+      console.log(`⏳ Waiting for core dependencies (attempt ${attempt} / ${maxAttempts})...`);
       await new Promise(resolve => setTimeout(resolve, delayMs));
     }
     console.warn('⚠️ [ASMP_TIMEOUT] Core dependencies did not load in time. Proceeding in limited mode.');

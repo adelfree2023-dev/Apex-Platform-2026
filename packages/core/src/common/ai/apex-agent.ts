@@ -8,33 +8,44 @@ const execAsync = promisify(exec);
 const logger = new Logger('ApexAgent');
 
 /**
- * 🤖 Apex Security Monitor (Full Implementation)
- * - Monitoring S1-S8 in ASMP Protocol
- * - Auto-Fixing violations and build issues
- * - Generating missing tests for 100% coverage
+ * 🤖 Apex Security Monitor (Expert Implementation)
+ * This agent solves current server issues:
+ * 1. Corrects "Cannot read properties of undefined (reading 'error')"
+ * 2. Handles missing dist directory
+ * 3. Scans for ASMP protocol violations and logs them
+ * 4. Self-Heals build and permission issues
+ * 
+ * ⚠️ Note: Designed specifically for the current project structure.
  */
 export const apexAgent = {
     name: 'Apex Security Monitor',
     config: {
         securityProtocol: 'ASMP/v2.3',
-        projectRoot: join(__dirname, '../../../../'), // Points to packages/core root
-        logFile: join(__dirname, '../../../../logs/agent-report.log')
+        projectRoot: join(__dirname, '../../..'), // Points to packages/core root
+        logFile: join(__dirname, '../../../../logs/agent-report.log'),
+        errorLogFile: join(__dirname, '../../../../logs/agent-errors.log'),
+        devMode: process.env.AGENT_DEV_MODE === 'true'
     },
 
     async activate() {
         try {
+            if (this.config.devMode) this.enableVerboseLogging();
             logger.log('🤖 [APEX_AGENT] بدء تشغيل مراقب الأمان المحترف...');
             await this.initializeLogFile();
 
-            // 1. إصلاح أخطاء التجميع (المشكلة الحرجة الحالية)
+            // 1. Diagnostics (S1 Check)
+            await this.diagnoseIssues();
+
+            // 2. إصلاح أخطاء التجميع (Self-Healing)
             await this.fixBuildIssues();
 
-            // 2. فحص انتهاكات بروتوكول ASMP
+            // 3. فحص انتهاكات بروتوكول ASMP
             await this.scanForProtocolViolations();
 
             logger.log('✅ [APEX_AGENT] اكتمل التشغيل بنجاح');
             return { success: true, reportPath: this.config.logFile };
         } catch (error: any) {
+            await this.logErrorDetails(error, 'AGENT_ACTIVATION');
             logger.error('❌ [APEX_AGENT] فشل في التشغيل', error?.stack);
             throw error;
         }
@@ -42,7 +53,7 @@ export const apexAgent = {
 
     async initializeLogFile() {
         try {
-            const logDir = join(this.config.projectRoot, 'logs');
+            const logDir = join(this.config.projectRoot, '../../logs');
             await fs.mkdir(logDir, { recursive: true });
             const header = `===== Apex Agent Report - ${new Date().toISOString()} =====\n`;
             await fs.writeFile(this.config.logFile, header);
@@ -51,28 +62,55 @@ export const apexAgent = {
         }
     },
 
+    async diagnoseIssues() {
+        logger.log('🔍 بدء تشخيص مشاكل الوكيل...');
+
+        // 1. Check permissions
+        try {
+            const logDir = join(this.config.projectRoot, '../../logs');
+            await fs.access(logDir, fs.constants.W_OK);
+            logger.log('✅ الصلاحيات: جيدة');
+        } catch (e) {
+            logger.error('❌ الصلاحيات: لا يمكن الكتابة في مجلد السجلات');
+        }
+
+        // 2. Check critical paths
+        const pathsToCheck = [
+            join(this.config.projectRoot, 'src/main.ts'),
+            join(this.config.projectRoot, 'dist/main.js'),
+            join(this.config.projectRoot, '../../logs')
+        ];
+
+        for (const path of pathsToCheck) {
+            try {
+                await fs.access(path);
+                logger.log(`✅ المسار موجود: ${path}`);
+            } catch (e) {
+                logger.warn(`⚠️ المسار غير موجود: ${path}`);
+            }
+        }
+    },
+
     async fixBuildIssues() {
-        logger.log('🔧 [APEX_AGENT] إصلاح أخطاء التجميع...');
+        logger.log('🔧 [APEX_AGENT] إصلاح أخطاء التجميع (Self-Healing)...');
 
         try {
             // 🛡️ S11: Ensure clean dist and valid types
-            await execAsync('rm -rf dist && npx tsc --skipLibCheck --noEmitOnError');
+            const { stdout } = await execAsync('rm -rf dist && npx tsc --skipLibCheck --noEmitOnError --outDir dist');
             logger.log('✅ [APEX_AGENT] تم إصلاح عملية التجميع بنجاح');
 
-            // التحقق من وجود ملف main.js
+            // Quick verify
             const mainJsPath = join(this.config.projectRoot, 'dist/main.js');
-            try {
-                await fs.access(mainJsPath);
-                logger.log('✅ [APEX_AGENT] ملف التشغيل موجود: dist/main.js');
-            } catch (error) {
-                logger.warn('⚠️ [APEX_AGENT] Testing fallback path: dist/src/main.js');
-                const fallbackPath = join(this.config.projectRoot, 'dist/src/main.js');
-                await fs.access(fallbackPath);
-                logger.log('✅ [APEX_AGENT] ملف التشغيل موجود في المسار البديل');
-            }
+            await fs.access(mainJsPath);
+            logger.log('✅ [APEX_AGENT] ملف التشغيل موجود: dist/main.js');
         } catch (error: any) {
             logger.error('❌ [APEX_AGENT] فشل في إصلاح عملية التجميع', error.message);
-            // Don't throw here to allow scanning to continue
+            // Attempt self-heal reinstall if critical
+            if (error.message.includes('npm')) {
+                logger.log('🔄 محاولة إعادة تثبيت التبعيات (Deep Healing)...');
+                await execAsync('npm install --force');
+                await execAsync('npx tsc --skipLibCheck --noEmitOnError --outDir dist');
+            }
         }
     },
 
@@ -81,10 +119,18 @@ export const apexAgent = {
 
         try {
             const violations = [];
-            const mainTsPath = join(this.config.projectRoot, 'src/main.ts');
+            let mainTsPath = join(this.config.projectRoot, 'src/main.ts');
+
+            try {
+                await fs.access(mainTsPath);
+            } catch (e) {
+                // Fallback attempt
+                mainTsPath = join(process.cwd(), 'packages/core/src/main.ts');
+            }
+
             const mainTsContent = await fs.readFile(mainTsPath, 'utf-8');
 
-            // 🛡️ S5 Check: Error handling logic (The "error.error" bug)
+            // 🛡️ S5 Check: Error handling logic
             if (mainTsContent.includes('error.error')) {
                 violations.push({
                     layer: 'S5',
@@ -96,9 +142,10 @@ export const apexAgent = {
 
                 // Auto-Fix S5
                 const fixedContent = mainTsContent.replace(
-                    /error\.error/g,
-                    "error?.message || 'Unknown error'"
-                );
+                    /logger\.error\('❌ System Initialization Failed', error\.error\);/g,
+                    "logger.error('❌ System Initialization Failed', error?.message || 'Unknown error');"
+                ).replace(/console\.error\(\`\[BOOTSTRAP_FAIL\] Phase 2: \${error\.error}\`\);/g,
+                    "console.error(`[BOOTSTRAP_FAIL] Phase 2: ${error?.message || 'Unknown error'}`);");
 
                 await fs.writeFile(mainTsPath, fixedContent);
                 logger.log('✅ [APEX_AGENT] تم إصلاح خطأ معالجة الأخطاء في main.ts تلقائياً');
@@ -128,5 +175,39 @@ export const apexAgent = {
         } catch (error: any) {
             logger.error('❌ [APEX_AGENT] فشل في فحص الانتهاكات', error.message);
         }
+    },
+
+    private async logErrorDetails(error: any, context: string) {
+        const errorDetails = {
+            timestamp: new Date().toISOString(),
+            context,
+            error: {
+                message: error.message || 'خطأ غير معروف',
+                stack: error.stack?.split('\n').slice(0, 5).join('\n') || 'بدون تفصيل',
+                code: error.code || 'UNKNOWN'
+            },
+            systemInfo: {
+                nodeVersion: process.version,
+                platform: process.platform,
+                uptime: process.uptime()
+            }
+        };
+        try {
+            await fs.appendFile(this.config.errorLogFile, JSON.stringify(errorDetails, null, 2) + '\n');
+        } catch (e) {
+            console.error('Failed to log error details to file');
+        }
+        console.error(`🚨 [AGENT_ERROR] ${context}: ${error.message}`);
+    },
+
+    private enableVerboseLogging() {
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        console.log = (...args) => {
+            originalConsoleLog(`[${new Date().toISOString()}]`, ...args);
+        };
+        console.error = (...args) => {
+            originalConsoleError(`[${new Date().toISOString()}] ❌`, ...args);
+        };
     }
 };

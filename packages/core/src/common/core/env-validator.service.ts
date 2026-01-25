@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import { ConfigService } from './config.service';
+import { ApexConfigService } from './apex-config.service';
 import { SecurityContext } from '../security/security.context';
 
 @Injectable()
@@ -9,7 +9,7 @@ export class EnvValidatorService {
   private readonly minimumSecretLength = 64; // S1: التحقق من قوة الأسرار
 
   constructor(
-    private readonly configService: ConfigService,
+    private readonly configService: ApexConfigService,
     private readonly securityContext: SecurityContext,
   ) { }
 
@@ -112,7 +112,7 @@ export class EnvValidatorService {
 
       this.logger.log('✅ النظام جاهز للتشغيل');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`❌ النظام غير جاهز: ${error.message}`);
       throw error;
     }

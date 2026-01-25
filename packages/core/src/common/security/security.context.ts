@@ -1,5 +1,5 @@
 import { Injectable, Scope, Logger, Optional, Inject, OnModuleInit, forwardRef } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { ApexConfigService } from '../core/apex-config.service';
 import { Request } from 'express';
 import { AuditService } from '../monitoring/audit/audit.service';
 import { INestApplication } from '@nestjs/common';
@@ -18,7 +18,7 @@ export class SecurityContext implements OnModuleInit {
     constructor(
         @Optional() @Inject(forwardRef(() => AuditService))
         private readonly auditService?: AuditService,
-        private readonly configService?: ConfigService,
+        private readonly configService?: ApexConfigService,
     ) { }
 
     onModuleInit() {
@@ -32,7 +32,7 @@ export class SecurityContext implements OnModuleInit {
     * 🛡️ S1 Protocol: Static Environment Validation
     * - Can be called before app initialization
     */
-    static validateEnvironment(configService: ConfigService): void {
+    static validateEnvironment(configService: ApexConfigService): void {
         this.staticLogger.log('🛡️ Validating security environment...');
 
         const env = configService.get('NODE_ENV') || 'development';

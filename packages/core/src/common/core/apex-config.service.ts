@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
-export class ConfigService {
-  private readonly logger = new Logger(ConfigService.name);
+export class ApexConfigService {
+  private readonly logger = new Logger(ApexConfigService.name);
 
   constructor() {
     this.validateEnvironment();

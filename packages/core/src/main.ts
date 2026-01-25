@@ -44,6 +44,7 @@ async function bootstrap() {
   } catch (error: any) {
     const errorMsg = error?.message || (typeof error === 'string' ? error : 'Unknown Environment Error');
     console.error(`[BOOTSTRAP_FAIL] Phase 2: ${errorMsg}`);
+    console.error(`[BOOTSTRAP_STACK] ${error?.stack || 'No Stack'}`);
     process.exit(1);
   }
 
@@ -75,6 +76,7 @@ async function bootstrap() {
   } catch (error: any) {
     const errorMsg = error?.message || (typeof error === 'string' ? error : 'Database connection timed out');
     console.error(`[BOOTSTRAP_FAIL] Phase 3 (DB): ${errorMsg}`);
+    console.error(`[BOOTSTRAP_STACK] ${error?.stack || 'No Stack'}`);
     process.exit(1);
   }
 
@@ -92,6 +94,7 @@ async function bootstrap() {
   } catch (error: any) {
     const errorMsg = error?.message || (typeof error === 'string' ? error : 'Internal Init Error');
     console.error(`[BOOTSTRAP_FAIL] System Initialization: ${errorMsg}`);
+    console.error(`[BOOTSTRAP_STACK] ${error?.stack || 'No Stack'}`);
     if (auditService) auditService.setIsSystemReady(false);
     logger.warn('⚠️ Warning: Continuing in safe mode despite initialization failure');
   }

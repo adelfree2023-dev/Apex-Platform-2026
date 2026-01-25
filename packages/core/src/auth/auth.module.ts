@@ -40,13 +40,6 @@ import { JwtService } from '../common/security/session/jwt.service';
     providers: [
         AuthService,
         JwtService,
-        TenantContextService,
-        EncryptedFieldService,
-        AnomalyDetectionService,
-        RateLimiterService,
-        AuditService,
-        SecurityContext,
-        InputValidatorService,
     ],
     exports: [AuthService],
 })

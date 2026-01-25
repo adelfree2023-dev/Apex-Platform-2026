@@ -5,6 +5,7 @@ import { PrismaModule } from '../../../prisma/prisma.module';
 import { TenantContextModule } from '../../security/tenant-context/tenant-context.module';
 import { ValidationModule } from '../../security/validation/validation.module';
 
+@Global()
 @Module({
     imports: [
         PrismaModule,

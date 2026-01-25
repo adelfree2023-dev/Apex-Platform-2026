@@ -8,6 +8,7 @@ import { TenantScopedGuard } from './common/access-control/guards/tenant-scoped.
 import { DefenseInterceptor } from './common/presentation/interceptors/defense.interceptor';
 import { TenantContextService } from './common/security/tenant-context/tenant-context.service';
 import { AuditModule } from './common/monitoring/audit/audit.module';
+import { AccessControlModule } from './common/access-control/access-control.module';
 import { AuthModule } from './auth/auth.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { EventsModule } from './events/events.module';
@@ -43,6 +44,7 @@ import { SystemHealthService } from './common/core/system-health.service';
     AuthModule,
     EventsModule,
     AuditModule,
+    AccessControlModule,
     StorefrontModule,
     // SystemHealthModule, // Assuming this exists or will be created, commenting out if not to avoid break
   ],
@@ -76,9 +78,6 @@ import { SystemHealthService } from './common/core/system-health.service';
       provide: APP_FILTER,
       useClass: AllExceptionsFilter,
     },
-    EncryptedFieldService,
-    AnomalyDetectionService,
-    RateLimiterService,
     SystemHealthService,
     // Add other guards/interceptors if the classes exist
   ],

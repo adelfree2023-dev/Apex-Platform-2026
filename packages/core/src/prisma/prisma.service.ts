@@ -40,7 +40,8 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    await this.client.$disconnect();
+    // Calling the delegated method ensures tests can track the call
+    await this.$disconnect();
   }
 
   // ⚡ High-level methods for external use

@@ -8,7 +8,7 @@ import { PaymentService } from './services/payment.service';
 import { DashboardService } from './services/dashboard.service';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { TenantContextModule } from '../../common/security/tenant-context/tenant-context.module';
-import { RateLimiterModule } from '../../common/security/rate-limiter/rate-limiter.module';
+import { AccessControlModule } from '../../common/access-control/access-control.module';
 import { EncryptionModule } from '../../common/security/encryption/encryption.module';
 import { AuditModule } from '../../common/monitoring/audit/audit.module';
 import { ProductsModule } from '../products/products.module';
@@ -21,7 +21,7 @@ import { CacheModule } from '../../common/caching/cache.module';
     imports: [
         PrismaModule,
         TenantContextModule,
-        forwardRef(() => RateLimiterModule),
+        AccessControlModule,
         EncryptionModule,
         AuditModule,
         ProductsModule,

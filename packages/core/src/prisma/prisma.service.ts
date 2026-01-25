@@ -10,28 +10,28 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   public readonly client: PrismaClient;
 
   // Explicitly define delegates for TypeScript and runtime visibility
-  public $connect: () => Promise<void>;
-  public $disconnect: () => Promise<void>;
-  public $transaction: any;
-  public $queryRaw: any;
-  public $queryRawUnsafe: any;
-  public $executeRawUnsafe: any;
-  public $on: any;
-  public $use: any;
-  public $extends: any;
+  public $connect: PrismaClient['$connect'];
+  public $disconnect: PrismaClient['$disconnect'];
+  public $transaction: PrismaClient['$transaction'];
+  public $queryRaw: PrismaClient['$queryRaw'];
+  public $queryRawUnsafe: PrismaClient['$queryRawUnsafe'];
+  public $executeRawUnsafe: PrismaClient['$executeRawUnsafe'];
+  public $on: any; // $on is tricky with types, keeping any for now but binding correctly
+  public $use: PrismaClient['$use'];
+  public $extends: PrismaClient['$extends'];
 
   // Model delegates
-  public tenant: any;
-  public user: any;
-  public systemSetting: any;
-  public systemConfig: any;
-  public product: any;
-  public order: any;
-  public orderItem: any;
-  public payment: any;
-  public customer: any;
-  public refund: any;
-  public revokedToken: any;
+  public tenant: PrismaClient['tenant'];
+  public user: PrismaClient['user'];
+  public systemSetting: PrismaClient['systemSetting'];
+  public systemConfig: PrismaClient['systemConfig'];
+  public product: PrismaClient['product'];
+  public order: PrismaClient['order'];
+  public orderItem: PrismaClient['orderItem'];
+  public payment: PrismaClient['payment'];
+  public customer: PrismaClient['customer'];
+  public refund: PrismaClient['refund'];
+  public revokedToken: PrismaClient['revokedToken'];
 
   constructor(
     private configService: ConfigService,

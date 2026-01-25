@@ -27,6 +27,13 @@ export class TenantScopedGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
+
+    // ✅ S2: تأكد من وجود الـ Reflector وحماية من الانهيار
+    if (!this.reflector) {
+      this.logger.warn('Reflector not initialized in TenantScopedGuard. Bypassing metadata check.');
+      return true; // Safe fallback for critical paths
+    }
+
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),

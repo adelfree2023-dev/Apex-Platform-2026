@@ -30,12 +30,29 @@ export class SanitizerService {
 
     for (const key in obj) {
       if (typeof obj[key] === 'string') {
-        // ✅ STAGE 3: Proper type assertion without 'any'
         (obj as Record<string, unknown>)[key] = this.sanitize(obj[key] as string);
       } else if (typeof obj[key] === 'object') {
         this.sanitizeObject(obj[key]);
       }
     }
     return obj;
+  }
+
+  /**
+   * ✅ S3: Prevents Path Traversal attacks
+   */
+  sanitizePath(unsafePath: string): string {
+    if (!unsafePath || typeof unsafePath !== 'string') return unsafePath;
+
+    const path = require('path');
+    const normalized = path.normalize(unsafePath);
+
+    // Check if the normalized path attempts to escape the root
+    if (normalized.startsWith('..') || path.isAbsolute(normalized)) {
+      this.logger.warn(`محاولة Path Traversal حُجبت: ${unsafePath}`);
+      return normalized.replace(/^(\.\.[\/\\])+/, '').replace(/^[\/\\]/, '');
+    }
+
+    return normalized;
   }
 }

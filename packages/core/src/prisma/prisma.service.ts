@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { TenantContextService } from '../common/security/tenant-context/tenant-context.service';
 
@@ -46,19 +46,21 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
     return this._client.$disconnect();
   }
 
+  $transaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>, options?: { maxWait?: number, timeout?: number, isolationLevel?: Prisma.TransactionIsolationLevel }): Promise<T>;
+  $transaction<T>(promises: Promise<T>[]): Promise<T[]>;
   $transaction(arg: any, options?: any) {
     return this._client.$transaction(arg, options);
   }
 
-  $queryRaw(query: TemplateStringsArray | string, ...values: any[]) {
-    return (this._client as any).$queryRaw(query, ...values);
+  async $queryRaw<T = any>(query: TemplateStringsArray, ...values: any[]): Promise<T> {
+    return this._client.$queryRaw<T>(query, ...values);
   }
 
-  $queryRawUnsafe(query: string, ...values: any[]) {
-    return this._client.$queryRawUnsafe(query, ...values);
+  async $queryRawUnsafe<T = any>(query: string, ...values: any[]): Promise<T> {
+    return this._client.$queryRawUnsafe<T>(query, ...values);
   }
 
-  $executeRawUnsafe(query: string, ...values: any[]) {
+  async $executeRawUnsafe(query: string, ...values: any[]) {
     return this._client.$executeRawUnsafe(query, ...values);
   }
 

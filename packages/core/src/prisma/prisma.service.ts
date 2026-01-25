@@ -4,98 +4,99 @@ import { ConfigService } from '@nestjs/config';
 import { TenantContextService } from '../common/security/tenant-context/tenant-context.service';
 
 @Injectable()
-@Injectable()
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
-  public readonly client: PrismaClient;
-
-  // Explicitly define delegates for TypeScript and runtime visibility
-  public $connect: PrismaClient['$connect'];
-  public $disconnect: PrismaClient['$disconnect'];
-  public $transaction: PrismaClient['$transaction'];
-  public $queryRaw: PrismaClient['$queryRaw'];
-  public $queryRawUnsafe: PrismaClient['$queryRawUnsafe'];
-  public $executeRawUnsafe: PrismaClient['$executeRawUnsafe'];
-  public $on: any; // $on is tricky with types, keeping any for now but binding correctly
-  public $use: PrismaClient['$use'];
-  public $extends: PrismaClient['$extends'];
-
-  // Model delegates
-  public tenant: PrismaClient['tenant'];
-  public user: PrismaClient['user'];
-  public systemSetting: PrismaClient['systemSetting'];
-  public systemConfig: PrismaClient['systemConfig'];
-  public product: PrismaClient['product'];
-  public order: PrismaClient['order'];
-  public orderItem: PrismaClient['orderItem'];
-  public payment: PrismaClient['payment'];
-  public customer: PrismaClient['customer'];
-  public refund: PrismaClient['refund'];
-  public revokedToken: PrismaClient['revokedToken'];
+  private readonly _client: PrismaClient;
 
   constructor(
     private configService: ConfigService,
     private tenantContextService: TenantContextService,
   ) {
-    this.client = new PrismaClient({
+    this._client = new PrismaClient({
       log: [
         { level: 'error', emit: 'stdout' },
         { level: 'warn', emit: 'stdout' },
       ],
       errorFormat: 'pretty',
     });
-
-    // ⚡ Explicit binding to ensure properties are visible to proxies and scripts
-    this.$connect = this.client.$connect.bind(this.client);
-    this.$disconnect = this.client.$disconnect.bind(this.client);
-    this.$transaction = this.client.$transaction.bind(this.client);
-    this.$queryRaw = this.client.$queryRaw.bind(this.client);
-    this.$queryRawUnsafe = this.client.$queryRawUnsafe.bind(this.client);
-    this.$executeRawUnsafe = this.client.$executeRawUnsafe.bind(this.client);
-    this.$on = (this.client as any).$on?.bind(this.client);
-    this.$use = (this.client as any).$use?.bind(this.client);
-    this.$extends = (this.client as any).$extends?.bind(this.client);
-
-    // ⚡ Model mapping
-    this.tenant = this.client.tenant;
-    this.user = this.client.user;
-    this.systemSetting = this.client.systemSetting;
-    this.systemConfig = this.client.systemConfig;
-    this.product = this.client.product;
-    this.order = this.client.order;
-    this.orderItem = this.client.orderItem;
-    this.payment = this.client.payment;
-    this.customer = this.client.customer;
-    this.refund = this.client.refund;
-    this.revokedToken = this.client.revokedToken;
   }
 
+  // Standard NestJS lifecycle
   async onModuleInit() {
+    this.logger.log('📡 Initializing database connection...');
     try {
-      this.logger.log('📡 Verifying database connection...');
-      // Note: We don't necessarily need to call $connect() manually as Prisma 6+ handles it,
-      // but we do it here for proactive health check.
-      await this.$connect();
-      this.logger.log('✅ Prisma connected to database successfully');
-    } catch (error) {
-      this.logger.error('🚨 Prisma connection failed:', error);
-      // We don't exit here to allow NestJS to handle the failure or retry
+      await this._client.$connect();
+      this.logger.log('✅ Database connection successful');
+    } catch (error: any) {
+      this.logger.error(`❌ Database connection failed: ${error.message}`);
+      // Note: We don't exit here to allow NestJS to finish bootstrapping or main.ts to handle it
     }
   }
 
   async onModuleDestroy() {
-    await this.$disconnect();
+    await this._client.$disconnect();
   }
 
+  // ⚡ High-level methods for external use
+  async $connect() {
+    return this._client.$connect();
+  }
+
+  async $disconnect() {
+    return this._client.$disconnect();
+  }
+
+  $transaction(arg: any, options?: any) {
+    return this._client.$transaction(arg, options);
+  }
+
+  $queryRaw(query: TemplateStringsArray | string, ...values: any[]) {
+    return (this._client as any).$queryRaw(query, ...values);
+  }
+
+  $queryRawUnsafe(query: string, ...values: any[]) {
+    return this._client.$queryRawUnsafe(query, ...values);
+  }
+
+  $executeRawUnsafe(query: string, ...values: any[]) {
+    return this._client.$executeRawUnsafe(query, ...values);
+  }
+
+  $on(event: string, callback: any) {
+    return (this._client as any).$on(event, callback);
+  }
+
+  $use(callback: any) {
+    return (this._client as any).$use(callback);
+  }
+
+  $extends(options: any) {
+    return (this._client as any).$extends(options);
+  }
+
+  // ⚡ Model delegates (Getters are safe for Prisma model proxies)
+  get tenant() { return this._client.tenant; }
+  get user() { return this._client.user; }
+  get systemSetting() { return this._client.systemSetting; }
+  get systemConfig() { return this._client.systemConfig; }
+  get product() { return this._client.product; }
+  get order() { return this._client.order; }
+  get orderItem() { return this._client.orderItem; }
+  get payment() { return this._client.payment; }
+  get customer() { return this._client.customer; }
+  get refund() { return this._client.refund; }
+  get revokedToken() { return this._client.revokedToken; }
+
+  // ⚡ Maintenance helpers
   async connectWithRetry(maxRetries = 3, delayMs = 2000): Promise<void> {
     for (let i = 0; i < maxRetries; i++) {
       try {
         await this.$connect();
         return;
-      } catch (error) {
-        this.logger.warn(`Prisma connection attempt ${i + 1} failed: ${error.message}`);
+      } catch (error: any) {
+        this.logger.warn(`Connection attempt ${i + 1} failed: ${error.message}`);
         if (i === maxRetries - 1) throw error;
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        await new Promise(r => setTimeout(r, delayMs));
       }
     }
   }

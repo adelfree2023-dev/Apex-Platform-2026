@@ -9,6 +9,7 @@ import { DefenseInterceptor } from './common/presentation/interceptors/defense.i
 import { TenantContextService } from './common/security/tenant-context/tenant-context.service';
 import { AuditModule } from './common/monitoring/audit/audit.module';
 import { AccessControlModule } from './common/access-control/access-control.module';
+import { PresentationModule } from './common/presentation/presentation.module';
 import { AuthModule } from './auth/auth.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { EventsModule } from './events/events.module';
@@ -45,6 +46,7 @@ import { SystemHealthService } from './common/core/system-health.service';
     EventsModule,
     AuditModule,
     AccessControlModule,
+    PresentationModule,
     StorefrontModule,
     // SystemHealthModule, // Assuming this exists or will be created, commenting out if not to avoid break
   ],

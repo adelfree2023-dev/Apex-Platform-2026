@@ -62,15 +62,15 @@ export class SecurityContext implements OnModuleInit {
         try {
             await prisma.$queryRaw`SELECT 1`;
             this.staticLogger.log('✅ Database connection verified');
-        } catch (error) {
-            this.staticLogger.error('❌ Database connection failure', error.message);
+        } catch (error: any) {
+            console.error('❌ Database connection failure', error?.message || 'Unknown Error');
 
             // محاولة إعادة الاتصال
             try {
                 await prisma.$connect();
                 this.staticLogger.log('✅ Database reconnection successful');
-            } catch (reconnectError) {
-                this.staticLogger.error('❌ Database reconnection failed', reconnectError.message);
+            } catch (reconnectError: any) {
+                console.error('❌ Database reconnection failed', reconnectError?.message || 'Unknown Error');
                 throw new Error('Database connection failed - cannot start application');
             }
         }
@@ -88,7 +88,7 @@ export class SecurityContext implements OnModuleInit {
                 this.logger.warn(`🛡️ [AUDIT_FALLBACK] ${event}: ${JSON.stringify(details)}`);
             }
         } catch (error) {
-            this.logger.error('Failed to log security event', error);
+            console.error('Failed to log security event', error);
             // Safe fallback without throwing
             console.error(`[SECURITY_LOG_FAILURE] ${event}`, details);
         }
@@ -105,7 +105,7 @@ export class SecurityContext implements OnModuleInit {
                 this.logger.error(`🚨 [CRITICAL_AUDIT_FALLBACK] ${event}: ${JSON.stringify(details)}`);
             }
         } catch (error) {
-            this.logger.error('CRITICAL: Failed to log critical security event', error);
+            console.error('CRITICAL: Failed to log critical security event', error);
             console.error(`[CRITICAL_SECURITY_LOG_FAILURE] ${event}`, details);
         }
     }

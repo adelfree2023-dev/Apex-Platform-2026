@@ -31,7 +31,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
       await this.$connect();
       this.logger.log('✅ onModuleInit: Connection successful');
     } catch (error: any) {
-      this.logger.error(`❌ onModuleInit: Connection failed: ${error.message}`);
+      console.error(`❌ onModuleInit: Connection failed: ${error?.message || 'Unknown'}`);
     }
   }
 

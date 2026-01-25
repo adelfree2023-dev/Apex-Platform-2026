@@ -19,9 +19,9 @@ export class TenantScopedGuard implements CanActivate {
   private readonly logger = new Logger(TenantScopedGuard.name);
 
   constructor(
-    @Inject(Reflector) private reflector: Reflector,
-    private tenantContextService: TenantContextService,
-    private prisma: PrismaService,
+    @Inject(Reflector) private readonly reflector: Reflector,
+    private readonly tenantContextService: TenantContextService,
+    private readonly prisma: PrismaService,
     @Optional() @Inject(AuditService) private readonly auditService?: AuditService
   ) { }
 

@@ -26,9 +26,6 @@ import { CacheModule } from '@nestjs/cache-manager';
     controllers: [EventsController],
     providers: [
         EventsService,
-        TenantContextService,
-        AnomalyDetectionService,
-        Logger,
     ],
     exports: [EventsService],
 })

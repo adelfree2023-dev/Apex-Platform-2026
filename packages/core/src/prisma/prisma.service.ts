@@ -25,7 +25,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     this.logger.log('📡 Initializing database connection...');
     try {
-      await this._client.$connect();
+      await this.$connect();
       this.logger.log('✅ Database connection successful');
     } catch (error: any) {
       this.logger.error(`❌ Database connection failed: ${error.message}`);
@@ -34,7 +34,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    await this._client.$disconnect();
+    await this.$disconnect();
   }
 
   // ⚡ High-level methods for external use

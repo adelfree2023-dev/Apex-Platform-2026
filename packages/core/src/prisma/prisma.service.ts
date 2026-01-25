@@ -115,11 +115,16 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
       throw new Error('Tenant ID is required for tenant-scoped operations');
     }
 
+    if (!this._tenantContextService) {
+      this.logger.warn('TenantContextService not linked to PrismaService. Context isolation might be bypassed.');
+      return callback();
+    }
+
     try {
-      this.tenantContextService.setTenantId(tenantId);
+      this._tenantContextService.setTenantId(tenantId);
       return callback();
     } finally {
-      this.tenantContextService.clearTenantId();
+      this._tenantContextService.clearTenantId();
     }
   }
 }

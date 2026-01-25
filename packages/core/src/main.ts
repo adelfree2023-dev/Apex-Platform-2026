@@ -60,15 +60,13 @@ async function bootstrap() {
   logger.debug(`🔧 DATABASE_URL Check: ${appConfigService.get('DATABASE_URL') ? 'LOADED' : 'MISSING'}`);
   logger.debug(`🔧 Prisma Service exists: ${!!prismaService}`);
 
-  // ✅ S1: Database Connection Check with Retry
+  // ✅ S1: Database Connection Check
   try {
-    logger.log('📡 Attempting to connect to database...');
+    logger.log('📡 Verifying database connectivity...');
     await prismaService.$connect();
     logger.log('✅ Database connection established');
   } catch (error: any) {
-    logger.error('❌ Database connection failed');
-    logger.error(`Error Message: ${error?.message || 'No message'}`);
-    logger.error(`Error Stack: ${error?.stack || 'No stack'}`);
+    logger.error(`❌ Database connection failed: ${error.message}`);
     process.exit(1);
   }
 

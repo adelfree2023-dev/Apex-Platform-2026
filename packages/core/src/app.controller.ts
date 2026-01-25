@@ -22,7 +22,7 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import { SecurityContext } from './common/security/security.context';
 import { Public } from './common/decorators/public.decorator';
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { AllExceptionsFilter } from './common/presentation/filters/all-exceptions.filter';
 import { TenantScopedGuard } from './common/access-control/guards/tenant-scoped.guard';
 
 // 🔒 مخطط التحقق من صحة معلمات الصحة

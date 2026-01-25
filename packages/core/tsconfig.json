@@ -9,7 +9,7 @@
         "target": "ES2021",
         "sourceMap": true,
         "outDir": "./dist",
-        "rootDir": "./",
+        "rootDir": "src",
         "baseUrl": "./",
         "incremental": true,
         "skipLibCheck": true,
@@ -30,6 +30,8 @@
     ],
     "exclude": [
         "node_modules",
-        "dist"
+        "dist",
+        "**/*.spec.ts",
+        "test/**/*"
     ]
 }

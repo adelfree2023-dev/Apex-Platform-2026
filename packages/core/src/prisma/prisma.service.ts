@@ -7,7 +7,7 @@ import { TenantContextService } from '../common/security/tenant-context/tenant-c
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
 
-  // ✅ Direct initialization ensures availability even before constructor/onModuleInit
+  // ✅ Direct initialization ensures availability as a Singleton
   public readonly client = new PrismaClient({
     log: [
       { level: 'error', emit: 'stdout' },
@@ -16,11 +16,16 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
     errorFormat: 'pretty',
   });
 
+  // Re-enable setter for tenant context to avoid request-scope inheritance
+  private _tenantContextService: any;
+  set tenantContextService(service: any) {
+    this._tenantContextService = service;
+  }
+
   constructor(
     private configService: ConfigService,
-    private tenantContextService: TenantContextService,
   ) {
-    this.logger.log('🏗️ PrismaService instance created');
+    this.logger.log('🏗️ PrismaService Singleton initialized');
   }
 
   // Standard NestJS lifecycle

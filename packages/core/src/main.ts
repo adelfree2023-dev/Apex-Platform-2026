@@ -61,23 +61,11 @@ async function bootstrap() {
   try {
     logger.log('📡 Testing database connectivity...');
 
-    // 🔍 DEBUG: Inspect the injected service
-    console.log('--- PRISMA SERVICE DEBUG ---');
-    console.log('Type of prismaService:', typeof prismaService);
-    console.log('Is prismaService null/undefined?:', !prismaService);
-    if (prismaService) {
-      console.log('Constructor Name:', prismaService.constructor.name);
-      console.log('Available Keys:', Object.keys(prismaService));
-      console.log('Prototoype Keys:', Object.getOwnPropertyNames(Object.getPrototypeOf(prismaService)));
-      console.log('Has $connect?:', typeof (prismaService as any).$connect === 'function');
-    }
-    console.log('----------------------------');
-
     if (prismaService && typeof (prismaService as any).$connect === 'function') {
       await (prismaService as any).$connect();
       logger.log('✅ Database connectivity verified');
     } else {
-      throw new Error(`PrismaService check failed. Instance: ${prismaService ? prismaService.constructor.name : 'null'}, $connect type: ${prismaService ? typeof (prismaService as any).$connect : 'n/a'}`);
+      throw new Error(`PrismaService check failed. Instance state: ${prismaService ? 'Ghost Proxy' : 'Null'}`);
     }
   } catch (error: any) {
     logger.error(`❌ Database connection failed: ${error.message}`);

@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { TenantContextService } from '../common/security/tenant-context/tenant-context.service';
@@ -16,14 +16,10 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
     errorFormat: 'pretty',
   });
 
-  // Re-enable setter for tenant context to avoid request-scope inheritance
-  private _tenantContextService: any;
-  set tenantContextService(service: any) {
-    this._tenantContextService = service;
-  }
-
   constructor(
-    private configService: ConfigService,
+    private readonly configService: ConfigService,
+    @Inject(forwardRef(() => TenantContextService))
+    private readonly tenantContext: TenantContextService,
   ) {
     this.logger.log('🏗️ PrismaService Singleton initialized');
   }
@@ -116,16 +112,16 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
       throw new Error('Tenant ID is required for tenant-scoped operations');
     }
 
-    if (!this._tenantContextService) {
+    if (!this.tenantContext) {
       this.logger.warn('TenantContextService not linked to PrismaService. Context isolation might be bypassed.');
       return callback();
     }
 
     try {
-      this._tenantContextService.setTenantId(tenantId);
+      this.tenantContext.setTenantId(tenantId);
       return callback();
     } finally {
-      this._tenantContextService.clearTenantId();
+      this.tenantContext.clearTenantId();
     }
   }
 }

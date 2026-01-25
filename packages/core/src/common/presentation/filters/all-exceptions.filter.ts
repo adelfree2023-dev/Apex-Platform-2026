@@ -14,7 +14,7 @@ import * as crypto from 'crypto';
 @Catch()
 @Injectable()
 export class AllExceptionsFilter implements ExceptionFilter {
-  private readonly logger = new Logger(AllExceptionsFilter.name);
+  private static readonly logger = new Logger(AllExceptionsFilter.name);
 
   constructor(
     @Inject(SecurityContext) private readonly securityContext: SecurityContext,
@@ -51,7 +51,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         timestamp: new Date().toISOString(),
       });
     } catch (e) {
-      this.logger.error(`Critical: SecurityContext logging failed: ${e.message}`);
+      AllExceptionsFilter.logger.error(`Critical: SecurityContext logging failed: ${(e as any)?.message || 'Unknown'}`);
     }
 
     if (this.auditService) {
@@ -64,7 +64,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         status,
         timestamp: new Date().toISOString(),
       }).catch(auditError => {
-        this.logger.warn(`Audit logging failed: ${auditError.message}`);
+        AllExceptionsFilter.logger.warn(`Audit logging failed: ${auditError?.message || 'Unknown'}`);
       });
     }
 
@@ -82,9 +82,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const exceptionStack = exception?.stack || '';
 
     if (!isProduction) {
-      this.logger.error(`[${requestId}] ${request.method} ${request.url} - ${status}: ${exceptionMessage}`, exceptionStack);
+      AllExceptionsFilter.logger.error(`[${requestId}] ${request.method} ${request.url} - ${status}: ${exceptionMessage}`, exceptionStack);
     } else if (status >= 500) {
-      this.logger.error(`[${requestId}] ${request.method} ${request.url} - ${status}: Internal server error`);
+      AllExceptionsFilter.logger.error(`[${requestId}] ${request.method} ${request.url} - ${status}: Internal server error`);
     }
 
     response.status(status).json(errorResponse);

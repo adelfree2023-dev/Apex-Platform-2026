@@ -54,12 +54,14 @@ async function bootstrap() {
   // Get services from the main app context
   const appConfigService = app.get(ConfigService);
   const prismaService = app.get(PrismaService);
+  const auditService = app.get(AuditService);
+  const cspConfig = app.get(CSPConfig);
 
   // ✅ S1: Database Connection Check
   try {
     logger.log('📡 Testing database connectivity...');
-    if (prismaService && typeof prismaService.$connect === 'function') {
-      await prismaService.$connect();
+    if (prismaService && typeof (prismaService as any).$connect === 'function') {
+      await (prismaService as any).$connect();
       logger.log('✅ Database connectivity verified');
     } else {
       throw new Error('PrismaService is not properly initialized or missing $connect method');

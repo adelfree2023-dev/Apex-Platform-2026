@@ -2,8 +2,10 @@ import { Module, Global, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { EventsController } from './events.controller';
 import { PrismaModule } from '../prisma/prisma.module';
-import { TenantContextService } from '../common/security/tenant-context/tenant-context.service';
-import { AnomalyDetectionService } from '../common/access-control/services/anomaly-detection.service';
+import { TenantContextModule } from '../common/security/tenant-context/tenant-context.module';
+import { AccessControlModule } from '../common/access-control/access-control.module';
+import { AuditModule } from '../common/monitoring/audit/audit.module';
+import { SecurityContextModule } from '../common/security/security.context.module';
 import { SecurityContext } from '../common/security/security.context';
 import { Logger } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -22,6 +24,10 @@ import { CacheModule } from '@nestjs/cache-manager';
             ttl: 300000, // 5 دقائق
             max: 1000,
         }),
+        TenantContextModule,
+        AccessControlModule,
+        AuditModule,
+        SecurityContextModule,
     ],
     controllers: [EventsController],
     providers: [

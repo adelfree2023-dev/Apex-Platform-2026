@@ -13,6 +13,12 @@ import { SecurityContext } from '../common/security/security.context';
 import { InputValidatorService } from '../common/security/validation/input-validator.service';
 import { CacheModule } from '../common/caching/cache.module';
 import { JwtService } from '../common/security/session/jwt.service';
+import { TenantContextModule } from '../common/security/tenant-context/tenant-context.module';
+import { AuditModule } from '../common/monitoring/audit/audit.module';
+import { EncryptionModule } from '../common/security/encryption/encryption.module';
+import { AccessControlModule } from '../common/access-control/access-control.module';
+import { ValidationModule } from '../common/security/validation/validation.module';
+import { SecurityContextModule } from '../common/security/security.context.module';
 
 /**
  * 🏰 Digital Fortress: Auth Module
@@ -35,6 +41,12 @@ import { JwtService } from '../common/security/session/jwt.service';
                 },
             }),
         }),
+        TenantContextModule,
+        AuditModule,
+        EncryptionModule,
+        AccessControlModule,
+        ValidationModule,
+        SecurityContextModule,
     ],
     controllers: [AuthController],
     providers: [

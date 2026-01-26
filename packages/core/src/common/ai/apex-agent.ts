@@ -21,11 +21,12 @@ export const apexAgent = {
     name: 'Apex Security Monitor',
     config: {
         securityProtocol: 'ASMP/v2.3',
-        projectRoot: __dirname.includes('dist') ? join(__dirname, '../../..') : join(__dirname, '../../..'),
+        projectRoot: __dirname.includes('dist') ? join(__dirname, '../../../../') : join(__dirname, '../../..'),
         // Note: In both cases it points to packages/core, but we need to ensure it's absolute
         logFile: join(process.cwd(), 'logs/agent-report.log'),
         errorLogFile: join(process.cwd(), 'logs/agent-errors.log'),
-        devMode: process.env.AGENT_DEV_MODE === 'true'
+        devMode: process.env.AGENT_DEV_MODE === 'true',
+        monitoredPorts: [8080, 3000, 3001]
     },
 
     async activate() {
@@ -88,6 +89,22 @@ export const apexAgent = {
                 logger.log(`✅ المسار موجود: ${path}`);
             } catch (e) {
                 logger.warn(`⚠️ المسار غير موجود: ${path}`);
+            }
+        }
+
+        // 3. Check Ports (طلب القائد)
+        logger.log('🔍 فحص المنافذ المطلوبة (8080, 3000, 3001)...');
+        for (const port of this.config.monitoredPorts) {
+            try {
+                // محاكاة فحص المنفذ عبر netstat أو محاولة اتصال بسيطة
+                const { stdout } = await execAsync(`netstat -tan | grep LISTEN | grep :${port} || echo "not_found"`);
+                if (stdout.includes('LISTEN')) {
+                    logger.log(`✅ المنفذ ${port}: يعمل ويستقبل الاتصالات`);
+                } else {
+                    logger.warn(`❌ المنفذ ${port}: مغلق أو لا يستجيب`);
+                }
+            } catch (e) {
+                logger.error(`❌ خطأ أثناء فحص المنفذ ${port}`);
             }
         }
     },

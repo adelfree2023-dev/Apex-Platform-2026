@@ -55,7 +55,7 @@ export const apexAgent = {
 
     async initializeLogFile() {
         try {
-            const logDir = join(this.config.projectRoot, '../../logs');
+            const logDir = join(this.config.projectRoot, 'logs');
             await fs.mkdir(logDir, { recursive: true });
             const header = `===== Apex Agent Report - ${new Date().toISOString()} =====\n`;
             await fs.writeFile(this.config.logFile, header);
@@ -117,10 +117,25 @@ export const apexAgent = {
             const { stdout } = await execAsync('rm -rf dist && npx tsc --skipLibCheck --noEmitOnError --outDir dist');
             logger.log('✅ [APEX_AGENT] تم إصلاح عملية التجميع بنجاح');
 
-            // Quick verify
-            const mainJsPath = join(this.config.projectRoot, 'dist/main.js');
-            await fs.access(mainJsPath);
-            logger.log('✅ [APEX_AGENT] ملف التشغيل موجود: dist/main.js');
+            // Quick verify (S11: Smart Path Detection)
+            const possiblePaths = [
+                join(this.config.projectRoot, 'dist/main.js'),
+                join(this.config.projectRoot, 'dist/src/main.js')
+            ];
+
+            let found = false;
+            for (const path of possiblePaths) {
+                try {
+                    await fs.access(path);
+                    logger.log(`✅ [APEX_AGENT] ملف التشغيل موجود في: ${path}`);
+                    found = true;
+                    break;
+                } catch (e) { }
+            }
+
+            if (!found) {
+                throw new Error('لم يتم العثور على ملف main.js في أي من المسارات المتوقعة');
+            }
         } catch (error: any) {
             logger.error('❌ [APEX_AGENT] فشل في إصلاح عملية التجميع', error.message);
             // Attempt self-heal reinstall if critical

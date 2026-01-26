@@ -16,15 +16,8 @@ import { EventsModule } from './events/events.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AllExceptionsFilter } from './common/presentation/filters/all-exceptions.filter';
-import { SystemInitializationService } from './common/core/system-initialization.service';
-import { AuditService } from './common/monitoring/audit/audit.service';
-import { EncryptedFieldService } from './common/security/encryption/encrypted-field.service';
-import { AnomalyDetectionService } from './common/access-control/services/anomaly-detection.service';
-import { RateLimiterService } from './common/access-control/services/rate-limiter.service';
-import { StorefrontModule } from './modules/storefront/storefront.module';
-import { SystemHealthService } from './common/core/system-health.service';
-import { ApexConfigService } from './common/core/apex-config.service';
 import { SecurityContext } from './common/security/security.context';
+import { CoreModule } from './common/core/core.module';
 
 /**
 * 🏰 Digital Fortress: Root AppModule
@@ -55,7 +48,6 @@ import { SecurityContext } from './common/security/security.context';
   controllers: [AppController],
   providers: [
     AppService,
-    SystemInitializationService,
     // ✅ S2: Tenant Isolation Guard
     {
       provide: APP_GUARD,
@@ -82,10 +74,7 @@ import { SecurityContext } from './common/security/security.context';
       provide: APP_FILTER,
       useClass: AllExceptionsFilter,
     },
-    SystemHealthService,
-    ApexConfigService,
-    // Add other guards/interceptors if the classes exist
   ],
-  exports: [AppService, SystemInitializationService, SystemHealthService]
+  exports: [AppService]
 })
 export class AppModule { }

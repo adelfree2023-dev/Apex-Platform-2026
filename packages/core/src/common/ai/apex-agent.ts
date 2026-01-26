@@ -113,9 +113,14 @@ export const apexAgent = {
         logger.log('🔧 [APEX_AGENT] إصلاح أخطاء التجميع (Self-Healing)...');
 
         try {
-            // 🛡️ S11: Ensure clean dist and valid types
-            const { stdout } = await execAsync('rm -rf dist && npx tsc --skipLibCheck --noEmitOnError --outDir dist');
-            logger.log('✅ [APEX_AGENT] تم إصلاح عملية التجميع بنجاح');
+            // 🛡️ S11: Use local tsc and specific build config
+            const buildCmd = './node_modules/.bin/tsc -p tsconfig.build.json --skipLibCheck';
+            logger.log(`🚀 تنفيذ أمر البناء: ${buildCmd}`);
+
+            const { stdout, stderr } = await execAsync(buildCmd);
+            if (stderr) logger.warn(`⚠️ تنبيه تجميع: ${stderr}`);
+
+            logger.log('✅ [APEX_AGENT] تم استكمال محاولة التجميع');
 
             // Quick verify (S11: Smart Path Detection)
             const possiblePaths = [
@@ -134,15 +139,21 @@ export const apexAgent = {
             }
 
             if (!found) {
-                throw new Error('لم يتم العثور على ملف main.js في أي من المسارات المتوقعة');
+                // If not found, check what's actually in dist
+                try {
+                    const { stdout: files } = await execAsync('find dist -maxdepth 2');
+                    logger.warn(`📂 محتويات مجلد dist الحالية:\n${files}`);
+                } catch (e) { }
+                throw new Error('لم يتم العثور على ملف main.js بعد التجميع');
             }
         } catch (error: any) {
             logger.error('❌ [APEX_AGENT] فشل في إصلاح عملية التجميع', error.message);
+
             // Attempt self-heal reinstall if critical
-            if (error.message.includes('npm')) {
+            if (error.message.includes('npm') || error.message.includes('MODULE_NOT_FOUND')) {
                 logger.log('🔄 محاولة إعادة تثبيت التبعيات (Deep Healing)...');
                 await execAsync('npm install --force');
-                await execAsync('npx tsc --skipLibCheck --noEmitOnError --outDir dist');
+                await execAsync('./node_modules/.bin/tsc -p tsconfig.build.json --skipLibCheck');
             }
         }
     },

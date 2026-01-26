@@ -33,7 +33,6 @@ import { CoreModule } from './common/core/core.module';
       isGlobal: true,
       envFilePath: ['.env.local', '.env']
     }),
-    PrismaModule,
     SecurityContextModule,
     ValidationModule,
     TenantsModule,
@@ -43,7 +42,7 @@ import { CoreModule } from './common/core/core.module';
     AccessControlModule,
     PresentationModule,
     StorefrontModule,
-    // SystemHealthModule, // Assuming this exists or will be created, commenting out if not to avoid break
+    CoreModule,
   ],
   controllers: [AppController],
   providers: [

@@ -18,6 +18,7 @@ import { AppService } from './app.service';
 import { AllExceptionsFilter } from './common/presentation/filters/all-exceptions.filter';
 import { SecurityContext } from './common/security/security.context';
 import { CoreModule } from './common/core/core.module';
+import { StorefrontModule } from './modules/storefront/storefront.module';
 
 /**
 * 🏰 Digital Fortress: Root AppModule

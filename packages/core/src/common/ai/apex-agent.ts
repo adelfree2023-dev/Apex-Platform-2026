@@ -10,6 +10,7 @@ const logger = new Logger('ApexAgent');
 /**
  * 🤖 Apex Security Monitor (ASMP G8 Implementation)
  * This agent enforces the Apex Security Management Protocol (ASMP) S1-S8.
+ * It is now directed by the 'agent-mission.json' directive file.
  */
 export const apexAgent = {
     name: 'Apex Security Monitor',
@@ -28,14 +29,20 @@ export const apexAgent = {
             logger.log('🤖 [APEX_AGENT] بدء تشغيـل مراقـب الأمان المحتـرف (ASMP G8)...');
             await this.initializeLogFile();
 
+            // 📜 قراءة التوجيهات (Mission Control)
+            const mission = await this.loadMission();
+            logger.log(`🎯 المهمة الحالية: ${mission.description}`);
+
             // 🛡️ المرحلة الأولى: S1 - S8 Protocol Enforcement
-            await this.enforceASMPProtocol();
+            await this.enforceASMPProtocol(mission.activeLayers);
 
             // 🔍 المرحلة الثانية: التشخيص الذكي
             await this.diagnoseIssues();
 
             // 🔧 المرحلة الثالثة: الإصلاح التلقائي (Self-Healing)
-            await this.fixBuildIssues();
+            if (mission.autoHeal) {
+                await this.fixBuildIssues();
+            }
 
             logger.log('✅ [APEX_AGENT] اكتملت المهمة بنجاح - النظام مستقر وآمن');
             return { success: true, reportPath: this.config.logFile };
@@ -46,23 +53,29 @@ export const apexAgent = {
         }
     },
 
-    async enforceASMPProtocol() {
-        logger.log('🛡️ [ASMP] بدء فرض بروتوكول الأمان العالي (S1-S8)...');
+    async loadMission() {
+        try {
+            const missionPath = join(process.cwd(), 'agent-mission.json');
+            const data = await fs.readFile(missionPath, 'utf-8');
+            return JSON.parse(data);
+        } catch (e) {
+            logger.warn('⚠️ لم يتم العثور على ملف المهام، استخدام الإعدادات الافتراضية');
+            return {
+                description: 'Default Recovery Mission',
+                activeLayers: ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8'],
+                autoHeal: true
+            };
+        }
+    },
 
-        // S1: Environment Initialization
-        await this.verifyS1Environment();
+    async enforceASMPProtocol(layers: string[]) {
+        logger.log(`🛡️ [ASMP] فرض الطبقات الأمنية المحددة: [${layers.join(', ')}]`);
 
-        // S2: Tenant Isolation Check
-        await this.verifyS2Isolation();
-
-        // S3-S4: Validation & Auditing
-        await this.verifyS3S4Integrity();
-
-        // S5-S6: Error Handling & Rate Limiting
-        await this.verifyS5S6Defense();
-
-        // S7-S8: Encryption & Web Security
-        await this.verifyS7S8Protection();
+        if (layers.includes('S1')) await this.verifyS1Environment();
+        if (layers.includes('S2')) await this.verifyS2Isolation();
+        if (layers.includes('S3') || layers.includes('S4')) await this.verifyS3S4Integrity();
+        if (layers.includes('S5') || layers.includes('S6')) await this.verifyS5S6Defense();
+        if (layers.includes('S7') || layers.includes('S8')) await this.verifyS7S8Protection();
     },
 
     async verifyS1Environment() {
@@ -137,12 +150,10 @@ export const apexAgent = {
     async fixBuildIssues() {
         logger.log('🔧 [Self-Healing] بدء ترميم النظام وإصلاح التجميع...');
         try {
-            // S11: Smart Recovery Build
             const buildCmd = './node_modules/.bin/tsc -p tsconfig.build.json --skipLibCheck';
             logger.log(`🚀 تنفيذ: ${buildCmd}`);
             await execAsync(buildCmd);
 
-            // Verify and Report
             const mainJs = join(this.config.projectRoot, 'dist/src/main.js');
             await fs.access(mainJs);
             logger.log('✅ [Self-Healing] تم إنتاج ملف التشغيل بنجاح');

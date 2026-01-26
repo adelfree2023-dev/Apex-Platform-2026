@@ -1,0 +1,17 @@
+{
+    "mission": "FULL_RECOVERY",
+    "description": "إصلاح السيرفر بالكامل وفرض بروتوكول ASMP من S1 إلى S8",
+    "activeLayers": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8"
+    ],
+    "autoHeal": true,
+    "targetPort": 3001,
+    "severityThreshold": "high"
+}

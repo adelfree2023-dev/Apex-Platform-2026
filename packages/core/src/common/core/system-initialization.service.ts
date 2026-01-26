@@ -84,12 +84,12 @@ export class SystemInitializationService {
     // ✅ S1: التحقق من قوة الأسرار في الإنتاج
     if (env === 'production') {
       const jwtSecret = this.configService.get('JWT_SECRET', '');
-      if (jwtSecret.length < 32) {
+      if (jwtSecret && jwtSecret.length < 32) {
         throw new Error('مفتاح JWT يجب أن يكون 32 حرفاً على الأقل');
       }
 
       const encryptionKey = this.configService.get('ENCRYPTION_MASTER_KEY', '');
-      if (encryptionKey.length < 32) {
+      if (encryptionKey && encryptionKey.length < 32) {
         throw new Error('مفتاح التشفير يجب أن يكون 32 حرفاً على الأقل');
       }
     }

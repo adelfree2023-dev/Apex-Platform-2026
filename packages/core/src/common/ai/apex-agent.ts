@@ -177,7 +177,7 @@ export const apexAgent = {
         }
     },
 
-    private async logErrorDetails(error: any, context: string) {
+    async logErrorDetails(error: any, context: string) {
         const errorDetails = {
             timestamp: new Date().toISOString(),
             context,
@@ -200,7 +200,7 @@ export const apexAgent = {
         console.error(`🚨 [AGENT_ERROR] ${context}: ${error.message}`);
     },
 
-    private enableVerboseLogging() {
+    enableVerboseLogging() {
         const originalConsoleLog = console.log;
         const originalConsoleError = console.error;
         console.log = (...args) => {

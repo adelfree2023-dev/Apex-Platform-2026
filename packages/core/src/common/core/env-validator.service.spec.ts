@@ -12,6 +12,14 @@ describe('EnvValidatorService', () => {
         mockConfig = {
             isProduction: jest.fn().mockReturnValue(false),
             get: jest.fn().mockImplementation((key) => process.env[key]),
+            getNumber: jest.fn().mockImplementation((key, def) => {
+                const val = process.env[key];
+                return val ? parseInt(val, 10) : def;
+            }),
+            getBoolean: jest.fn().mockImplementation((key, def) => {
+                const val = process.env[key];
+                return val !== undefined ? val === 'true' : def;
+            }),
         };
 
         mockSecurityContext = {

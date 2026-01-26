@@ -17,7 +17,15 @@ describe('SystemInitializationService', () => {
             get: jest.fn().mockImplementation((key: string) => {
                 if (key === 'NODE_ENV') return 'development';
                 if (['DATABASE_URL', 'JWT_SECRET', 'ENCRYPTION_MASTER_KEY'].includes(key)) return 'test-value-long-enough-for-validation';
-                return null;
+                return process.env[key] || null;
+            }),
+            getNumber: jest.fn().mockImplementation((key, def) => {
+                const val = process.env[key];
+                return val ? parseInt(val, 10) : def;
+            }),
+            getBoolean: jest.fn().mockImplementation((key, def) => {
+                const val = process.env[key];
+                return val !== undefined ? val === 'true' : def;
             }),
         };
         mockSecurityContext = {

@@ -43,7 +43,7 @@ describe('SecurityContext', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SecurityContext,
-        { provide: ConfigService, useValue: mockConfigService },
+        { provide: ApexConfigService, useValue: mockConfigService },
       ],
     }).compile();
     const standaloneService = await module.resolve<SecurityContext>(SecurityContext);

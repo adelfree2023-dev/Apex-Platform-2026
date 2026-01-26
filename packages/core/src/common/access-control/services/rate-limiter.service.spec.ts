@@ -19,7 +19,15 @@ describe('RateLimiterService', () => {
             inspect: jest.fn(),
         };
         mockConfig = {
-            get: jest.fn().mockReturnValue(100),
+            get: jest.fn().mockImplementation((key) => process.env[key]),
+            getNumber: jest.fn().mockImplementation((key, def) => {
+                const val = process.env[key];
+                return val ? parseInt(val, 10) : def;
+            }),
+            getBoolean: jest.fn().mockImplementation((key, def) => {
+                const val = process.env[key];
+                return val !== undefined ? val === 'true' : def;
+            }),
         };
 
         const module: TestingModule = await Test.createTestingModule({

@@ -1,0 +1,1344 @@
+ npm test -- --reporters="summary" --verbose=false
+
+> @apex/core@0.0.1 test
+> jest --reporters=summary --verbose=false
+
+ts-jest[ts-jest-transformer] (WARN) Got a `.js` file to compile while `allowJs` option is not set to `true` (file: /home/adelfree2023/Apex-Platform-2026/packages/core/test/test-utils.js). To fix this:
+  - if you want TypeScript to process JS files, set `allowJs` to `true` in your TypeScript config (usually tsconfig.json)
+  - if you do not want TypeScript to process your `.js` files, in your Jest config change the `transform` key which value is `ts-jest` so that it does not match `.js` files anymore
+[Nest] 35123  - 01/26/2026, 12:23:19 AM   ERROR [AuthService] فشل في إبطال الرمز المميز
+[Nest] 35123  - 01/26/2026, 12:23:19 AM   ERROR [AuthService] Error: Cache Error
+[Nest] 35122  - 01/26/2026, 12:23:19 AM   ERROR [ShopService] Order creation failed:
+[Nest] 35122  - 01/26/2026, 12:23:19 AM   ERROR [ShopService] Error: Database transaction failed
+[Nest] 35121  - 01/26/2026, 12:23:19 AM   ERROR [PaymentService] Stripe payment intent creation failed:
+[Nest] 35121  - 01/26/2026, 12:23:19 AM   ERROR [PaymentService] HttpException: المبلغ خارج الحدود المسموح بها
+[Nest] 35121  - 01/26/2026, 12:23:19 AM   ERROR [PaymentService] Stripe payment intent creation failed:
+[Nest] 35121  - 01/26/2026, 12:23:19 AM   ERROR [PaymentService] HttpException: المبلغ خارج الحدود المسموح بها
+[Nest] 35121  - 01/26/2026, 12:23:19 AM   ERROR [PaymentService] Stripe payment intent creation failed:
+[Nest] 35121  - 01/26/2026, 12:23:19 AM   ERROR [PaymentService] Error: Stripe API Down
+[Nest] 35121  - 01/26/2026, 12:23:19 AM   ERROR [PaymentService] Webhook signature verification failed:
+[Nest] 35121  - 01/26/2026, 12:23:19 AM   ERROR [PaymentService] Error: Invalid sig
+[Nest] 35121  - 01/26/2026, 12:23:19 AM   ERROR [PaymentService] Failed to send payment confirmation:
+[Nest] 35121  - 01/26/2026, 12:23:19 AM   ERROR [PaymentService] TypeError: Cannot read properties of undefined (reading 'toLocaleString')
+[Nest] 35121  - 01/26/2026, 12:23:19 AM   ERROR [PaymentService] Stripe refund failed:
+[Nest] 35121  - 01/26/2026, 12:23:19 AM   ERROR [PaymentService] Error: Stripe Fail
+[Nest] 35122  - 01/26/2026, 12:23:20 AM   ERROR [TenantScopedGuard] معرف مستأجر غير صالح أو مفقود
+[Nest] 35122  - 01/26/2026, 12:23:20 AM   ERROR [TenantScopedGuard] Object:
+{
+  "tenantId": "invalid-uuid"
+}
+
+[Nest] 35122  - 01/26/2026, 12:23:20 AM   ERROR [TenantScopedGuard] فشل التحقق من عزل المخطط للمستأجر: 00000000-0000-0000-0000-000000000001
+[Nest] 35122  - 01/26/2026, 12:23:20 AM   ERROR [TenantScopedGuard] فشل التحقق من عزل المخطط للمستأجر: 00000000-0000-0000-0000-000000000001
+[Nest] 35122  - 01/26/2026, 12:23:20 AM   ERROR [TenantScopedGuard] معرف مستأجر غير صالح أو مفقود
+[Nest] 35122  - 01/26/2026, 12:23:20 AM   ERROR [TenantScopedGuard] Object:
+{
+  "tenantId": "invalid"
+}
+
+[Nest] 35122  - 01/26/2026, 12:23:20 AM   ERROR [TenantScopedGuard] معرف مستأجر غير صالح أو مفقود
+[Nest] 35122  - 01/26/2026, 12:23:20 AM   ERROR [TenantScopedGuard] Object:
+{
+  "tenantId": "invalid"
+}
+
+[Nest] 35122  - 01/26/2026, 12:23:20 AM   ERROR [TenantScopedGuard] فشل التحقق من المستأجر:
+Unexpected DB Error
+[Nest] 35121  - 01/26/2026, 12:23:21 AM   ERROR [DashboardService] Failed to get dashboard overview:
+[Nest] 35121  - 01/26/2026, 12:23:21 AM   ERROR [DashboardService] Error: DB Fail
+[Nest] 35121  - 01/26/2026, 12:23:21 AM   ERROR [DashboardService] Failed to get dashboard alerts:
+[Nest] 35121  - 01/26/2026, 12:23:21 AM   ERROR [DashboardService] Error: Fail
+[Nest] 35121  - 01/26/2026, 12:23:22 AM    WARN محاولة وصول غير مصرح به: المستأجر t2 يحاول الوصول إلى بيانات المستأجر t1
+[Nest] 35121  - 01/26/2026, 12:23:23 AM   ERROR [EncryptedFieldService] [S7] Encryption Failure: Crypto fail
+[Nest] 35121  - 01/26/2026, 12:23:23 AM   ERROR [EncryptedFieldService] [S7] Encryption Failure: Crypto error
+[Nest] 35121  - 01/26/2026, 12:23:25 AM   ERROR [AppController] خطأ في التحقق من الصحة: معلمات طلب التحقق من الصحة غير صالحة
+BadRequestException: معلمات طلب التحقق من الصحة غير صالحة
+    at AppController.healthCheck (/home/adelfree2023/Apex-Platform-2026/packages/core/src/app.controller.ts:78:15)
+    at /home/adelfree2023/Apex-Platform-2026/packages/core/node_modules/@nestjs/core/router/router-execution-context.js:38:29
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /home/adelfree2023/Apex-Platform-2026/packages/core/node_modules/@nestjs/core/router/router-execution-context.js:46:28
+    at /home/adelfree2023/Apex-Platform-2026/packages/core/node_modules/@nestjs/core/router/router-proxy.js:9:17
+[Nest] 35121  - 01/26/2026, 12:23:26 AM   ERROR [ProductService] Failed to find products for tenant tenant-123: نص البحث طويل جداً
+[Nest] 35121  - 01/26/2026, 12:23:26 AM   ERROR [ProductService] Product lookup failed: DB Error
+[Nest] 35121  - 01/26/2026, 12:23:26 AM   ERROR [AuditService] [AUDIT_FAILURE] Tenant: t1, Action: DB_FAIL_ACTION, Error: DB connection lost
+[Nest] 35121  - 01/26/2026, 12:23:26 AM   ERROR [AuditService] [AUDIT_FAILURE] Tenant: t1, Action: FAIL_MKDIR, Error: DB Fail
+[Nest] 35121  - 01/26/2026, 12:23:26 AM   ERROR [AuditService] CRITICAL: Audit fallback logger failed: mkdir fail
+[Nest] 35122  - 01/26/2026, 12:23:28 AM   ERROR [DefenseInterceptor] 🚨 [S8] BLOCKING REQUEST: Suspended tenant 00000000-0000-0000-0000-000000000001 - Path: /api/test
+[Nest] 35122  - 01/26/2026, 12:23:28 AM   ERROR [DefenseInterceptor] 🔥 [S6] RESOURCE QUOTA EXCEEDED. Blocking throttled tenant 00000000-0000-0000-0000-000000000001
+[Nest] 35122  - 01/26/2026, 12:23:29 AM   ERROR [LicenseGuard] License check failed for tenant t1: Upgrade required. This feature requires a PRO plan or higher.
+[Nest] 35122  - 01/26/2026, 12:23:29 AM   ERROR [LicenseGuard] License check failed for tenant t1: Upgrade required. This feature requires a PRO plan or higher.
+[Nest] 35122  - 01/26/2026, 12:23:29 AM   ERROR [LicenseGuard] License check failed for tenant t1: DB Down
+[Nest] 35121  - 01/26/2026, 12:23:33 AM   ERROR [SystemHealthService] Critical Memory Pressure: 95.00%
+[Nest] 35122  - 01/26/2026, 12:23:33 AM   ERROR [JwtService] Verification failed
+[Nest] 35122  - 01/26/2026, 12:23:33 AM   ERROR [JwtService] Error: تم إبطال الرمز المميز
+[Nest] 35122  - 01/26/2026, 12:23:33 AM   ERROR [JwtService] Verification failed
+[Nest] 35122  - 01/26/2026, 12:23:33 AM   ERROR [JwtService] Error: Invalid
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+
+Summary of all failing tests
+ FAIL  src/common/security/security.context.spec.ts
+  ● SecurityContext › should be defined
+
+    Nest can't resolve dependencies of the SecurityContext (AuditService, ?). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      19 |     };
+      20 |
+    > 21 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      22 |       providers: [
+      23 |         SecurityContext,
+      24 |         { provide: AuditService, useValue: mockAuditService },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/security/security.context.spec.ts:21:35)
+
+  ● SecurityContext › should log security events via audit service
+
+    Nest can't resolve dependencies of the SecurityContext (AuditService, ?). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      19 |     };
+      20 |
+    > 21 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      22 |       providers: [
+      23 |         SecurityContext,
+      24 |         { provide: AuditService, useValue: mockAuditService },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/security/security.context.spec.ts:21:35)
+
+  ● SecurityContext › should fallback to logger if audit service is missing
+
+    Nest can't resolve dependencies of the SecurityContext (AuditService, ?). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      19 |     };
+      20 |
+    > 21 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      22 |       providers: [
+      23 |         SecurityContext,
+      24 |         { provide: AuditService, useValue: mockAuditService },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/security/security.context.spec.ts:21:35)
+
+  ● SecurityContext › should log critical security events
+
+    Nest can't resolve dependencies of the SecurityContext (AuditService, ?). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      19 |     };
+      20 |
+    > 21 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      22 |       providers: [
+      23 |         SecurityContext,
+      24 |         { provide: AuditService, useValue: mockAuditService },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/security/security.context.spec.ts:21:35)
+
+  ● SecurityContext › should capture exceptions
+
+    Nest can't resolve dependencies of the SecurityContext (AuditService, ?). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      19 |     };
+      20 |
+    > 21 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      22 |       providers: [
+      23 |         SecurityContext,
+      24 |         { provide: AuditService, useValue: mockAuditService },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/security/security.context.spec.ts:21:35)
+
+  ● SecurityContext › should extract IP address safely from headers
+
+    Nest can't resolve dependencies of the SecurityContext (AuditService, ?). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      19 |     };
+      20 |
+    > 21 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      22 |       providers: [
+      23 |         SecurityContext,
+      24 |         { provide: AuditService, useValue: mockAuditService },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/security/security.context.spec.ts:21:35)
+
+  ● SecurityContext › should extract IP address from socket if headers missing
+
+    Nest can't resolve dependencies of the SecurityContext (AuditService, ?). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      19 |     };
+      20 |
+    > 21 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      22 |       providers: [
+      23 |         SecurityContext,
+      24 |         { provide: AuditService, useValue: mockAuditService },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/security/security.context.spec.ts:21:35)
+
+  ● SecurityContext › static methods › should validate environment variables
+
+    Nest can't resolve dependencies of the SecurityContext (AuditService, ?). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      19 |     };
+      20 |
+    > 21 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      22 |       providers: [
+      23 |         SecurityContext,
+      24 |         { provide: AuditService, useValue: mockAuditService },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/security/security.context.spec.ts:21:35)
+
+  ● SecurityContext › static methods › should throw if secret is too short in production
+
+    Nest can't resolve dependencies of the SecurityContext (AuditService, ?). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      19 |     };
+      20 |
+    > 21 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      22 |       providers: [
+      23 |         SecurityContext,
+      24 |         { provide: AuditService, useValue: mockAuditService },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/security/security.context.spec.ts:21:35)
+
+  ● SecurityContext › static methods › should verify database connection
+
+    Nest can't resolve dependencies of the SecurityContext (AuditService, ?). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      19 |     };
+      20 |
+    > 21 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      22 |       providers: [
+      23 |         SecurityContext,
+      24 |         { provide: AuditService, useValue: mockAuditService },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/security/security.context.spec.ts:21:35)
+
+  ● SecurityContext › static methods › should throw if database reconnection fails
+
+    Nest can't resolve dependencies of the SecurityContext (AuditService, ?). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      19 |     };
+      20 |
+    > 21 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      22 |       providers: [
+      23 |         SecurityContext,
+      24 |         { provide: AuditService, useValue: mockAuditService },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/security/security.context.spec.ts:21:35)
+
+  ● SecurityContext › static methods › should throw for missing env vars in production
+
+    Nest can't resolve dependencies of the SecurityContext (AuditService, ?). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      19 |     };
+      20 |
+    > 21 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      22 |       providers: [
+      23 |         SecurityContext,
+      24 |         { provide: AuditService, useValue: mockAuditService },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/security/security.context.spec.ts:21:35)
+
+  ● SecurityContext › onModuleInit › should warn if ConfigService is missing
+
+    Nest can't resolve dependencies of the SecurityContext (AuditService, ?). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      19 |     };
+      20 |
+    > 21 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      22 |       providers: [
+      23 |         SecurityContext,
+      24 |         { provide: AuditService, useValue: mockAuditService },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/security/security.context.spec.ts:21:35)
+
+  ● SecurityContext › error handling in logging › should catch errors in logSecurityEvent gracefully
+
+    Nest can't resolve dependencies of the SecurityContext (AuditService, ?). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      19 |     };
+      20 |
+    > 21 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      22 |       providers: [
+      23 |         SecurityContext,
+      24 |         { provide: AuditService, useValue: mockAuditService },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/security/security.context.spec.ts:21:35)
+
+  ● SecurityContext › error handling in logging › should catch errors in logCriticalSecurityEvent gracefully
+
+    Nest can't resolve dependencies of the SecurityContext (AuditService, ?). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      19 |     };
+      20 |
+    > 21 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+      22 |       providers: [
+      23 |         SecurityContext,
+      24 |         { provide: AuditService, useValue: mockAuditService },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/security/security.context.spec.ts:21:35)
+
+ FAIL  src/common/core/system-initialization.service.spec.ts
+  ● SystemInitializationService › should be defined
+
+    Nest can't resolve dependencies of the SystemInitializationService (PrismaService, ?, SecurityContext). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      25 |         };
+      26 |
+    > 27 |         const module: TestingModule = await Test.createTestingModule({
+         |                                       ^
+      28 |             providers: [
+      29 |                 SystemInitializationService,
+      30 |                 { provide: PrismaService, useValue: mockPrisma },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/core/system-initialization.service.spec.ts:27:39)
+
+  ● SystemInitializationService › should initialize system successfully when all checks pass
+
+    Nest can't resolve dependencies of the SystemInitializationService (PrismaService, ?, SecurityContext). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      25 |         };
+      26 |
+    > 27 |         const module: TestingModule = await Test.createTestingModule({
+         |                                       ^
+      28 |             providers: [
+      29 |                 SystemInitializationService,
+      30 |                 { provide: PrismaService, useValue: mockPrisma },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/core/system-initialization.service.spec.ts:27:39)
+
+  ● SystemInitializationService › should create default tenant if missing
+
+    Nest can't resolve dependencies of the SystemInitializationService (PrismaService, ?, SecurityContext). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      25 |         };
+      26 |
+    > 27 |         const module: TestingModule = await Test.createTestingModule({
+         |                                       ^
+      28 |             providers: [
+      29 |                 SystemInitializationService,
+      30 |                 { provide: PrismaService, useValue: mockPrisma },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/core/system-initialization.service.spec.ts:27:39)
+
+  ● SystemInitializationService › should initialize core settings if missing
+
+    Nest can't resolve dependencies of the SystemInitializationService (PrismaService, ?, SecurityContext). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      25 |         };
+      26 |
+    > 27 |         const module: TestingModule = await Test.createTestingModule({
+         |                                       ^
+      28 |             providers: [
+      29 |                 SystemInitializationService,
+      30 |                 { provide: PrismaService, useValue: mockPrisma },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/core/system-initialization.service.spec.ts:27:39)
+
+  ● SystemInitializationService › should throw error if critical environment variables are missing
+
+    Nest can't resolve dependencies of the SystemInitializationService (PrismaService, ?, SecurityContext). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      25 |         };
+      26 |
+    > 27 |         const module: TestingModule = await Test.createTestingModule({
+         |                                       ^
+      28 |             providers: [
+      29 |                 SystemInitializationService,
+      30 |                 { provide: PrismaService, useValue: mockPrisma },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/core/system-initialization.service.spec.ts:27:39)
+
+  ● SystemInitializationService › should retry database connection on failure
+
+    Nest can't resolve dependencies of the SystemInitializationService (PrismaService, ?, SecurityContext). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      25 |         };
+      26 |
+    > 27 |         const module: TestingModule = await Test.createTestingModule({
+         |                                       ^
+      28 |             providers: [
+      29 |                 SystemInitializationService,
+      30 |                 { provide: PrismaService, useValue: mockPrisma },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/core/system-initialization.service.spec.ts:27:39)
+
+  ● SystemInitializationService › should log failure after maximum retries
+
+    Nest can't resolve dependencies of the SystemInitializationService (PrismaService, ?, SecurityContext). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      25 |         };
+      26 |
+    > 27 |         const module: TestingModule = await Test.createTestingModule({
+         |                                       ^
+      28 |             providers: [
+      29 |                 SystemInitializationService,
+      30 |                 { provide: PrismaService, useValue: mockPrisma },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/core/system-initialization.service.spec.ts:27:39)
+
+  ● SystemInitializationService › should validate production secrets strength
+
+    Nest can't resolve dependencies of the SystemInitializationService (PrismaService, ?, SecurityContext). Please make sure that the argument ApexConfigService at index [1] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      25 |         };
+      26 |
+    > 27 |         const module: TestingModule = await Test.createTestingModule({
+         |                                       ^
+      28 |             providers: [
+      29 |                 SystemInitializationService,
+      30 |                 { provide: PrismaService, useValue: mockPrisma },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 1)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/core/system-initialization.service.spec.ts:27:39)
+
+ FAIL  src/common/access-control/services/rate-limiter.service.spec.ts
+  ● RateLimiterService › should be defined
+
+    Nest can't resolve dependencies of the RateLimiterService (?, TenantContextService, PrismaService, AnomalyDetectionService). Please make sure that the argument ApexConfigService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      23 |         };
+      24 |
+    > 25 |         const module: TestingModule = await Test.createTestingModule({
+         |                                       ^
+      26 |             providers: [
+      27 |                 RateLimiterService,
+      28 |                 { provide: ConfigService, useValue: mockConfig },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/access-control/services/rate-limiter.service.spec.ts:25:39)
+
+  ● RateLimiterService › should block requests for suspended tenants
+
+    Nest can't resolve dependencies of the RateLimiterService (?, TenantContextService, PrismaService, AnomalyDetectionService). Please make sure that the argument ApexConfigService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      23 |         };
+      24 |
+    > 25 |         const module: TestingModule = await Test.createTestingModule({
+         |                                       ^
+      26 |             providers: [
+      27 |                 RateLimiterService,
+      28 |                 { provide: ConfigService, useValue: mockConfig },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/access-control/services/rate-limiter.service.spec.ts:25:39)
+
+  ● RateLimiterService › should block requests if tenant is not found
+
+    Nest can't resolve dependencies of the RateLimiterService (?, TenantContextService, PrismaService, AnomalyDetectionService). Please make sure that the argument ApexConfigService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      23 |         };
+      24 |
+    > 25 |         const module: TestingModule = await Test.createTestingModule({
+         |                                       ^
+      26 |             providers: [
+      27 |                 RateLimiterService,
+      28 |                 { provide: ConfigService, useValue: mockConfig },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/access-control/services/rate-limiter.service.spec.ts:25:39)
+
+  ● RateLimiterService › should allow requests within limits
+
+    Nest can't resolve dependencies of the RateLimiterService (?, TenantContextService, PrismaService, AnomalyDetectionService). Please make sure that the argument ApexConfigService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      23 |         };
+      24 |
+    > 25 |         const module: TestingModule = await Test.createTestingModule({
+         |                                       ^
+      26 |             providers: [
+      27 |                 RateLimiterService,
+      28 |                 { provide: ConfigService, useValue: mockConfig },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/access-control/services/rate-limiter.service.spec.ts:25:39)
+
+  ● RateLimiterService › should block requests when tokens are exhausted
+
+    Nest can't resolve dependencies of the RateLimiterService (?, TenantContextService, PrismaService, AnomalyDetectionService). Please make sure that the argument ApexConfigService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      23 |         };
+      24 |
+    > 25 |         const module: TestingModule = await Test.createTestingModule({
+         |                                       ^
+      26 |             providers: [
+      27 |                 RateLimiterService,
+      28 |                 { provide: ConfigService, useValue: mockConfig },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/access-control/services/rate-limiter.service.spec.ts:25:39)
+
+  ● RateLimiterService › should trip circuit breaker on high request volume
+
+    Nest can't resolve dependencies of the RateLimiterService (?, TenantContextService, PrismaService, AnomalyDetectionService). Please make sure that the argument ApexConfigService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      23 |         };
+      24 |
+    > 25 |         const module: TestingModule = await Test.createTestingModule({
+         |                                       ^
+      26 |             providers: [
+      27 |                 RateLimiterService,
+      28 |                 { provide: ConfigService, useValue: mockConfig },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/access-control/services/rate-limiter.service.spec.ts:25:39)
+
+  ● RateLimiterService › should handle generic limits
+
+    Nest can't resolve dependencies of the RateLimiterService (?, TenantContextService, PrismaService, AnomalyDetectionService). Please make sure that the argument ApexConfigService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      23 |         };
+      24 |
+    > 25 |         const module: TestingModule = await Test.createTestingModule({
+         |                                       ^
+      26 |             providers: [
+      27 |                 RateLimiterService,
+      28 |                 { provide: ConfigService, useValue: mockConfig },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/access-control/services/rate-limiter.service.spec.ts:25:39)
+
+  ● RateLimiterService › should handle errors gracefully
+
+    Nest can't resolve dependencies of the RateLimiterService (?, TenantContextService, PrismaService, AnomalyDetectionService). Please make sure that the argument ApexConfigService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If ApexConfigService is a provider, is it part of the current RootTestModule?
+    - If ApexConfigService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing ApexConfigService */ ]
+      })
+
+      23 |         };
+      24 |
+    > 25 |         const module: TestingModule = await Test.createTestingModule({
+         |                                       ^
+      26 |             providers: [
+      27 |                 RateLimiterService,
+      28 |                 { provide: ConfigService, useValue: mockConfig },
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:254:19)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/core/injector/injector.js:207:33)
+      at TestingInjector.resolveComponentInstance (node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:128:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:143:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:70:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:97:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/common/access-control/services/rate-limiter.service.spec.ts:25:39)
+
+ FAIL  src/common/core/env-validator.service.spec.ts
+  ● Test suite failed to run
+
+    src/common/core/env-validator.service.spec.ts:3:31 - error TS2307: Cannot find module './config.service' or its corresponding type declarations.
+
+    3 import { ConfigService } from './config.service';
+                                    ~~~~~~~~~~~~~~~~~~
+
+ FAIL  src/common/core/apex-config.service.spec.ts
+  ● Test suite failed to run
+
+    src/common/core/apex-config.service.spec.ts:2:31 - error TS2307: Cannot find module './config.service' or its corresponding type declarations.
+
+    2 import { ConfigService } from './config.service';
+                                    ~~~~~~~~~~~~~~~~~~
+
+
+Test Suites: 5 failed, 55 passed, 60 total
+Tests:       31 failed, 310 passed, 341 total
+Snapshots:   0 total
+Time:        39.126 s
+Ran all test suites.
+adelfree2023@adel2026:~/Apex-Platform-2026/packages/core$ 

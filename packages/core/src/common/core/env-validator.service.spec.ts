@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EnvValidatorService } from './env-validator.service';
-import { ConfigService } from './config.service';
+import { ApexConfigService } from './apex-config.service';
 import { SecurityContext } from '../security/security.context';
 
 describe('EnvValidatorService', () => {
@@ -21,7 +21,7 @@ describe('EnvValidatorService', () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 EnvValidatorService,
-                { provide: ConfigService, useValue: mockConfig },
+                { provide: ApexConfigService, useValue: mockConfig },
                 { provide: SecurityContext, useValue: mockSecurityContext },
             ],
         }).compile();

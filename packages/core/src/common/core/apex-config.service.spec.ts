@@ -1,18 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigService } from './config.service';
+import { ApexConfigService } from './apex-config.service';
 
-describe('ConfigService', () => {
-    let service: ConfigService;
+describe('ApexConfigService', () => {
+    let service: ApexConfigService;
 
     beforeEach(async () => {
         // We need to clear env for some tests
         process.env.NODE_ENV = 'development';
 
         const module: TestingModule = await Test.createTestingModule({
-            providers: [ConfigService],
+            providers: [ApexConfigService],
         }).compile();
 
-        service = module.get<ConfigService>(ConfigService);
+        service = module.get<ApexConfigService>(ApexConfigService);
     });
 
     it('should be defined', () => {
@@ -34,7 +34,7 @@ describe('ConfigService', () => {
         process.env.NODE_ENV = 'production';
         delete process.env.DATABASE_URL;
 
-        expect(() => new ConfigService()).toThrow();
+        expect(() => new ApexConfigService()).toThrow();
     });
 
     it('should get numbers and booleans', () => {

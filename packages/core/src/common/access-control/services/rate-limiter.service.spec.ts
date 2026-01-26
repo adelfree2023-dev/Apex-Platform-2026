@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RateLimiterService } from './rate-limiter.service';
-import { ConfigService } from '@nestjs/config';
+import { ApexConfigService } from '../../core/apex-config.service';
 import { TenantContextService } from '../../security/tenant-context/tenant-context.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AnomalyDetectionService } from './anomaly-detection.service';
@@ -25,7 +25,7 @@ describe('RateLimiterService', () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 RateLimiterService,
-                { provide: ConfigService, useValue: mockConfig },
+                { provide: ApexConfigService, useValue: mockConfig },
                 { provide: TenantContextService, useValue: {} },
                 { provide: PrismaService, useValue: mockPrisma },
                 { provide: AnomalyDetectionService, useValue: mockAnomaly },

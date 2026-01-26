@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SecurityContext } from './security.context';
 import { AuditService } from '../monitoring/audit/audit.service';
-import { ConfigService } from '@nestjs/config';
+import { ApexConfigService } from '../core/apex-config.service';
 import { Request } from 'express';
 import { INestApplication } from '@nestjs/common';
 
@@ -22,7 +22,7 @@ describe('SecurityContext', () => {
       providers: [
         SecurityContext,
         { provide: AuditService, useValue: mockAuditService },
-        { provide: ConfigService, useValue: mockConfigService },
+        { provide: ApexConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
@@ -93,7 +93,7 @@ describe('SecurityContext', () => {
         return null;
       });
 
-      expect(() => SecurityContext.validateEnvironment(mockConfigService)).not.toThrow();
+      expect(() => SecurityContext.validateEnvironment(mockConfigService as any)).not.toThrow();
     });
 
     it('should throw if secret is too short in production', () => {
@@ -104,7 +104,7 @@ describe('SecurityContext', () => {
         return null;
       });
 
-      expect(() => SecurityContext.validateEnvironment(mockConfigService)).toThrow();
+      expect(() => SecurityContext.validateEnvironment(mockConfigService as any)).toThrow();
     });
 
     it('should verify database connection', async () => {
@@ -132,7 +132,7 @@ describe('SecurityContext', () => {
         return null;
       });
 
-      expect(() => SecurityContext.validateEnvironment(mockConfigService)).toThrow('CRITICAL: Missing environment variable');
+      expect(() => SecurityContext.validateEnvironment(mockConfigService as any)).toThrow('CRITICAL: Missing environment variable');
     });
   });
 
@@ -142,7 +142,7 @@ describe('SecurityContext', () => {
         providers: [
           SecurityContext,
           { provide: AuditService, useValue: mockAuditService },
-          { provide: ConfigService, useValue: mockConfigService },
+          { provide: ApexConfigService, useValue: mockConfigService },
         ],
       }).compile();
       const standalone = await module.resolve<SecurityContext>(SecurityContext);

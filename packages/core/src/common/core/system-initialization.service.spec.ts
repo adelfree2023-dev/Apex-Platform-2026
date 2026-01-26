@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SystemInitializationService } from './system-initialization.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ConfigService } from '@nestjs/config';
+import { ApexConfigService } from './apex-config.service';
 import { SecurityContext } from '../security/security.context';
 import { createMockPrisma } from '../../../test/test-utils';
 
@@ -28,7 +28,7 @@ describe('SystemInitializationService', () => {
             providers: [
                 SystemInitializationService,
                 { provide: PrismaService, useValue: mockPrisma },
-                { provide: ConfigService, useValue: mockConfig },
+                { provide: ApexConfigService, useValue: mockConfig },
                 { provide: SecurityContext, useValue: mockSecurityContext },
             ],
         }).compile();

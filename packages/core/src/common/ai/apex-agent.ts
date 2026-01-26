@@ -21,9 +21,10 @@ export const apexAgent = {
     name: 'Apex Security Monitor',
     config: {
         securityProtocol: 'ASMP/v2.3',
-        projectRoot: join(__dirname, '../../..'), // Points to packages/core root
-        logFile: join(__dirname, '../../../../logs/agent-report.log'),
-        errorLogFile: join(__dirname, '../../../../logs/agent-errors.log'),
+        projectRoot: __dirname.includes('dist') ? join(__dirname, '../../..') : join(__dirname, '../../..'),
+        // Note: In both cases it points to packages/core, but we need to ensure it's absolute
+        logFile: join(process.cwd(), 'logs/agent-report.log'),
+        errorLogFile: join(process.cwd(), 'logs/agent-errors.log'),
         devMode: process.env.AGENT_DEV_MODE === 'true'
     },
 
